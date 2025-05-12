@@ -1,0 +1,40 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to EC2 instance on Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2.13"
+
+      - name: Install Dependencies
+        run: composer install --ignore-platform-reqs
+
+      - name: Clear Cache Facade Value
+        run: php artisan cache:clear
+
+      - name: Clear Cache Config Value
+        run: php artisan config:clear
+
+      - name: Clear Cache Route Value
+        run: php artisan route:clear
+
+      - name: Deploy files
+        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ./api.revocubespaces.com/
