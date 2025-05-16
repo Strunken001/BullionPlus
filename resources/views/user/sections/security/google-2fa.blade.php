@@ -56,7 +56,7 @@
                             </p>
                             <div class="play-store-thumb text-center mb-20">
                                 <img class="mx-auto"
-                                    src="{{ asset('public/frontend/images/element/google-authenticator.webp') }}"
+                                    src="{{ asset('frontend/images/element/google-authenticator.webp') }}"
                                     alt="img">
                             </div>
                             <div class="2fa-btn pt-3">

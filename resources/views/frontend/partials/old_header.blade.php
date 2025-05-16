@@ -7,7 +7,7 @@
             <div class="container custom-container">
                 <div class="header-menu-content">
                     <nav class="navbar navbar-expand-lg p-0">
-                        <a class="site-logo site-title" href="index.html"><img src="{{ asset('public/frontend/images/logo/logo.png') }}" alt="site-logo"></a>
+                        <a class="site-logo site-title" href="index.html"><img src="{{ asset('frontend/images/logo/logo.png') }}" alt="site-logo"></a>
                         <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                             <span class="fas fa-bars"></span>

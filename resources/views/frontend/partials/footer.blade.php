@@ -2,7 +2,7 @@
     Start Footer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 <footer class="footer-section bg-overlay bg_img"
-    data-background="{{ asset('public/frontend/images/element/footer-bg.webp') }}">
+    data-background="{{ asset('frontend/images/element/footer-bg.webp') }}">
     <div class="container">
         <div class="footer-area">
             <div class="row justify-content-center text-center">

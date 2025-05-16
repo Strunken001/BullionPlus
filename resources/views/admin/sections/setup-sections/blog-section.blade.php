@@ -210,7 +210,7 @@
 @endsection
 
 @push('script')
-    <script src="{{ asset('public/backend/js/fontawesome-iconpicker.js') }}"></script>
+    <script src="{{ asset('backend/js/fontawesome-iconpicker.js') }}"></script>
     <script>
         // icon picker
         $('.icp-auto').iconpicker();

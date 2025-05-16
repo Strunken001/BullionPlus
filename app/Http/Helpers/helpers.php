@@ -347,16 +347,19 @@ function get_image($image_name, $path_type = null, $image_type = null, $size = n
 {
 
     if ($image_type == 'profile') {
-        $image =  asset('public/' . files_path('profile-default')->path);
+        $image =  asset(files_path('profile-default')->path);
+        // $image =  asset('public/' . files_path('profile-default')->path);
     } else {
-        $image =  asset('public/' . files_path('default')->path);
+        $image =  asset(files_path('default')->path);
+        // $image =  asset('public/' . files_path('default')->path);
     }
     if ($image_name != null) {
         if ($path_type != null) {
             $image_path = files_path($path_type)->path;
             $image_link = $image_path . "/" . $image_name;
             if (file_exists(public_path($image_link))) {
-                $image = asset('public/' . $image_link);
+                $image = asset($image_link);
+                // $image = asset('public/' . $image_link);
             }
         }
     }
@@ -459,7 +462,8 @@ function files_path($slug)
 function files_asset_path($slug)
 {
     $files_path = files_path($slug)->path;
-    return asset('public/' . $files_path);
+    return asset($files_path);
+    // return asset('public/' . $files_path);
 }
 
 function get_amount($amount, $currency = null, $precision = null)
@@ -1407,7 +1411,7 @@ function smsVerificationTemplate($user)
 
         if ($basic_settings->sms_verification == true) {
             $message = __("Your verification code is :code", ['code' => $code]);
-            sendAuthSms($user,$message);
+            sendAuthSms($user, $message);
         }
         UserAuthorization::where("user_id", $user->id)->delete();
         DB::table("user_authorizations")->insert($data);
@@ -1574,15 +1578,16 @@ function get_only_numeric_data($string)
 //     return $lang;
 // }
 
-function get_api_languages(){
-    $lang = Language::get()->map(function($data,$index){
-        if(file_exists(base_path('lang/') . $data->code . '.json') == false) return false;
-        $json = json_decode(file_get_contents(base_path('lang/') . $data->code . '.json'),true);
+function get_api_languages()
+{
+    $lang = Language::get()->map(function ($data, $index) {
+        if (file_exists(base_path('lang/') . $data->code . '.json') == false) return false;
+        $json = json_decode(file_get_contents(base_path('lang/') . $data->code . '.json'), true);
         $lan_key_values = [];
-        if($json != null) {
-            foreach($json as $lan_key=>$item) {
+        if ($json != null) {
+            foreach ($json as $lan_key => $item) {
                 $lan_key_original = $lan_key;
-                if(Str::startsWith($lan_key_original, "appL")) $lan_key_values[$lan_key] = $item;
+                if (Str::startsWith($lan_key_original, "appL")) $lan_key_values[$lan_key] = $item;
             }
         }
         return [
@@ -1590,9 +1595,9 @@ function get_api_languages(){
             'code'                  => $data->code,
             'status'                => $data->status,
             'dir'                   => $data->dir ?? "ltr",
-            'translate_key_values'  =>$lan_key_values,
+            'translate_key_values'  => $lan_key_values,
         ];
-    })->reject(function($value) {
+    })->reject(function ($value) {
         return $value == false;
     });
     return $lang;
@@ -1659,7 +1664,7 @@ function generate_google_2fa_auth_qr()
             'two_factor_secret' => $secret_key,
         ]);
     }
-    $qr_image = 'https://qrcode.tec-it.com/API/QRCode?data='.$generate_text;
+    $qr_image = 'https://qrcode.tec-it.com/API/QRCode?data=' . $generate_text;
     return $qr_image;
 }
 
@@ -1744,12 +1749,12 @@ function loginVerificationTemplate($user, $stay)
         ]);
         DB::table("user_authorizations")->insert($data);
         DB::commit();
-        sendAuthSms($user,$message);
+        sendAuthSms($user, $message);
     } catch (Exception $e) {
         DB::rollBack();
         return back()->with(['error' => ['Something went worng! Please try again']]);
     }
-    return redirect()->route('user.login.OTP', ['token' => $data['token'], 'user' => $data['user_id'],'stay' => $stay, 'time' => $otp_exp_sec])->with(['warning' => [__('Please verify your phone. Check your phone inbox to get verification code')]]);
+    return redirect()->route('user.login.OTP', ['token' => $data['token'], 'user' => $data['user_id'], 'stay' => $stay, 'time' => $otp_exp_sec])->with(['warning' => [__('Please verify your phone. Check your phone inbox to get verification code')]]);
 }
 
 function pageEnable($slug)
@@ -2003,10 +2008,11 @@ function totalAdminProfits()
 }
 
 
-function receiver_currency($code){
+function receiver_currency($code)
+{
     $receiver_currency = ExchangeRate::where(['currency_code' => $code])->first();
     return [
-        'rate' =>  $receiver_currency->rate??1,
+        'rate' =>  $receiver_currency->rate ?? 1,
         'currency' =>  $receiver_currency->currency_code,
     ];
 }

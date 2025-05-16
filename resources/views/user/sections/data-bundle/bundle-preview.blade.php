@@ -6,6 +6,9 @@
         <div class="row justify-content-center">
             <div class="col-lg-7 col-md-9 col-sm-12">
                 <div class="get-package-area">
+                    <a href="{{ url()->previous() }}" class="text--base d-inline-block mb-3">
+                        <i class="fas fa-arrow-left"></i> {{ __('Back') }}
+                    </a>
                     <h3 class="title"><i class="fas fa-info-circle text--base mb-20"></i>{{ __('Your Bundle') }}</h3>
                     <div class="plan-preview">
                         <div class="plan-name">
@@ -28,7 +31,7 @@
                             <span class="badge badge--base">{{ __('Price') }}</span>
                         </div>
                         <div class="plan-quantity">
-                            <span>{{ $charges['amount'] }} {{ $charges['bundle_currency'] }}</span>
+                            <span>{{ $info['bundle_amount'] }} {{ $charges['bundle_currency'] }}</span>
                         </div>
                     </div>
                     <div class="plan-preview">
@@ -44,7 +47,7 @@
                             <span class="badge badge--base">{{ __('Total Payable') }}</span>
                         </div>
                         <div class="plan-quantity">
-                            <span>{{ $charges['total_payable'] }} {{ $charges['wallet_currency_code'] }}</span>
+                            <span>{{ $info['bundle_amount'] * $charges['exchange_rate'] }} {{ $charges['wallet_currency_code'] }}</span>
                         </div>
                     </div>
                     <form action="{{ setRoute('user.data.bundle.buy') }}" method="POST">
@@ -55,10 +58,10 @@
                             </div>
                             <input type="number" name="phone" id="number-input" class="form--control"
                                 value="{{ auth()->user()->full_mobile }}">
-                            <input name="request_amount" class="d-none" value="{{ $charges['amount'] }}">
+                            <input name="request_amount" class="d-none" value="{{ $info['bundle_amount'] }}">
                             <input name="operator_id" class="d-none" value="{{ $charges['operator']['operatorId'] }}">
-                            <input name="geo_location" class="d-none" value="{{ $info['geo_location'] }}">
-                            <input name="iso2" class="d-none" value="{{ $info['iso2'] }}">
+                            {{-- <input name="geo_location" class="d-none" value="{{ $info['geo_location'] }}"> --}}
+                            <input name="iso2" class="d-none" value="{{ $info['mobile_code'] }}">
                             <input name="charges" class="d-none" value="{{ json_encode($charges) }}">
                             <div class="mobile-icon">
                                 <i class="las la-mobile"></i>

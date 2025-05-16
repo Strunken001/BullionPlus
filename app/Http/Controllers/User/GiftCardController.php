@@ -29,6 +29,7 @@ use App\Http\Helpers\Response;
 use App\Models\User;
 use App\Constants\SiteSectionConst;
 use App\Models\Admin\SiteSections;
+use Illuminate\Support\Facades\Log;
 
 class GiftCardController extends Controller
 {
@@ -41,11 +42,13 @@ class GiftCardController extends Controller
     public function index()
     {
         $page_title = __("My Gift Card");
-        $giftCards = GiftCard::auth()->user()->where('status',1)->latest()->paginate(20);
+        $giftCards = GiftCard::auth()->user()->where('status', 1)->latest()->paginate(20);
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
-        return view('user.page.gift-cards',compact(
-            'page_title','giftCards','footer'
+        return view('user.page.gift-cards', compact(
+            'page_title',
+            'giftCards',
+            'footer'
         ));
     }
     public function giftCards()
@@ -53,9 +56,9 @@ class GiftCardController extends Controller
         $page_title = __("Gift Cards");
         $products = (new GiftCardHelper())->getProducts([
             'size' => 500,
-            'page' =>0
+            'page' => 0
         ], true);
-        $products =$products['content'];
+        $products = $products['content'];
         $perPage = 18;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $currentItems = array_slice($products, ($currentPage - 1) * $perPage, $perPage);
@@ -64,8 +67,11 @@ class GiftCardController extends Controller
         $footer       = SiteSections::getData($section_slug)->first();
         $section_slug = Str::slug(SiteSectionConst::GIFT_CARD_SECTION);
         $section_data = SiteSections::getData($section_slug)->first();
-        return view('user.sections.gift-card.list',compact(
-            'page_title','products','footer','section_data'
+        return view('user.sections.gift-card.list', compact(
+            'page_title',
+            'products',
+            'footer',
+            'section_data'
         ));
     }
     public function details($productId)
@@ -73,37 +79,42 @@ class GiftCardController extends Controller
         $page_title = __("Gift Card Details");
         $product = (new GiftCardHelper())->getProductInfo($productId);
         $product_receiver_code = $product['recipientCurrencyCode'];
-        $check_receiver_currency_code = ExchangeRate::where('status', true)->where('currency_code',$product_receiver_code)->first();
-        if(!$check_receiver_currency_code){
-            return back()->with(['error' => [__("The system wallet does not have the currency code for the product currency code")." ".$product_receiver_code]]);
+        $check_receiver_currency_code = ExchangeRate::where('status', true)->where('currency_code', $product_receiver_code)->first();
+        if (!$check_receiver_currency_code) {
+            return back()->with(['error' => [__("The system wallet does not have the currency code for the product currency code") . " " . $product_receiver_code]]);
         }
         $currencies = Currency::where('status', true)->get();
-        $cardCharge = TransactionSetting::where('slug','gift_card')->where('status',1)->first();
+        $cardCharge = TransactionSetting::where('slug', 'gift_card')->where('status', 1)->first();
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
-        return view('user.sections.gift-card.details',compact(
-            'page_title','product','currencies','cardCharge','footer'
+        return view('user.sections.gift-card.details', compact(
+            'page_title',
+            'product',
+            'currencies',
+            'cardCharge',
+            'footer'
         ));
     }
-    public function giftCardOrder(Request $request){
-        try{
+    public function giftCardOrder(Request $request)
+    {
+        try {
             $form_data = $request->all();
             $product = (new GiftCardHelper())->getProductInfo($form_data['product_id']);
             $unit_price =  $form_data['g_unit_price'];
             $qty =  $form_data['g_qty'];
 
             $user = auth()->user();
-            $sender_country = Currency::where('code',$form_data['wallet_currency'])->first();
-            if(!$sender_country) return back()->with(['error' => [__('Sender Country Is Not Valid')]]);
+            $sender_country = Currency::where('code', $form_data['wallet_currency'])->first();
+            if (!$sender_country) return back()->with(['error' => [__('Sender Country Is Not Valid')]]);
 
             $userWallet = UserWallet::where(['user_id' => $user->id, 'currency_id' => $sender_country->id, 'status' => 1])->first();
-            if(!$userWallet) return back()->with(['error' => [__('User wallet not found')]]);
+            if (!$userWallet) return back()->with(['error' => [__('User wallet not found')]]);
 
-            $receiver_country = ExchangeRate::where('currency_code',$form_data['receiver_currency'])->first();
-            if(!$receiver_country) return back()->with(['error' => [__('Receiver Country Is Not Valid')]]);
-            $cardCharge = TransactionSetting::where('slug','gift_card')->where('status',1)->first();
-            $charges = $this->giftCardCharge( $form_data, $cardCharge,$userWallet,$sender_country,$receiver_country);
-            if($charges['payable'] > $userWallet->balance) return back()->with(['error' => [__("You don't have sufficient balance")]]);
+            $receiver_country = ExchangeRate::where('currency_code', $form_data['receiver_currency'])->first();
+            if (!$receiver_country) return back()->with(['error' => [__('Receiver Country Is Not Valid')]]);
+            $cardCharge = TransactionSetting::where('slug', 'gift_card')->where('status', 1)->first();
+            $charges = $this->giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country);
+            if ($charges['payable'] > $userWallet->balance) return back()->with(['error' => [__("You don't have sufficient balance")]]);
 
             //store data as per API requirement
             $orderData = [
@@ -116,28 +127,28 @@ class GiftCardController extends Controller
                     'countryCode'       => $form_data['g_recipient_iso'],
                     'phoneNumber'       => $form_data['g_recipient_phone'],
                 ],
-                'senderName'            => $form_data['g_from_name']??$user->fullname,
+                'senderName'            => $form_data['g_from_name'] ?? $user->fullname,
                 'unitPrice'             => $unit_price,
             ];
             $order = (new GiftCardHelper())->createOrder($orderData);
-            if(isset($order['status'])){
-               if($order['status'] == 'SUCCESSFUL'){
+            if (isset($order['status'])) {
+                if ($order['status'] == 'SUCCESSFUL') {
                     $status  = GlobalConst::SUCCESS;
-               }else{
+                } else {
                     $status  = GlobalConst::PENDING;
-               }
+                }
                 $giftCard['user_type']                  = GlobalConst::USER;
                 $giftCard['user_id']                    =  $user->id;
                 $giftCard['user_wallet_id']             =  $userWallet->id;
                 $giftCard['recipient_currency_id']      =  $receiver_country->id;
                 $giftCard['uuid']                       =  $order['customIdentifier'];
-                $giftCard['trx_id']                     = 'GC'.getTrxNum();
+                $giftCard['trx_id']                     = 'GC' . getTrxNum();
                 $giftCard['api_trx_id']                 =  $order['transactionId'];
                 $giftCard['card_amount']                = $charges['card_unit_price'];
                 $giftCard['card_total_amount']          = $charges['total_receiver_amount'];
                 $giftCard['card_currency']              = $charges['card_currency'];
                 $giftCard['card_name']                  = $product['productName'];
-                $giftCard['card_image']                 = $product['logoUrls'][0]??"";
+                $giftCard['card_image']                 = $product['logoUrls'][0] ?? "";
                 $giftCard['user_wallet_currency']       = $userWallet->currency->code;
                 $giftCard['exchange_rate']              = $charges['exchange_rate'];
                 $giftCard['default_currency']           = get_default_currency_code();
@@ -158,44 +169,45 @@ class GiftCardController extends Controller
                 $giftCard['pre_order']                  = $order['preOrdered'];
                 $giftCard['recipient_email']            = $order['recipientEmail'];
                 $giftCard['recipient_country_iso2']     = $form_data['g_recipient_iso'];
-                $giftCard['recipient_phone']            = remove_speacial_char($form_data['g_recipient_phone_code']).remove_speacial_char($form_data['g_recipient_phone']);
+                $giftCard['recipient_phone']            = remove_speacial_char($form_data['g_recipient_phone_code']) . remove_speacial_char($form_data['g_recipient_phone']);
                 $giftCard['status']                     = $status;
                 $giftCard['details']                    = json_encode($order);
-
             }
             //global transaction
             $card = GiftCard::create($giftCard);
             //send notification
-            try{
-                if( $this->basic_settings->email_notification == true){
+            try {
+                if ($this->basic_settings->email_notification == true) {
                     $notifyData = [
                         'charge_info'   => $charges,
                         'giftCard'      => $giftCard,
                         'title'      => __("Gift Card Order"),
                     ];
-                    $user->notify(new GiftCardMail($user,$notifyData));
+                    $user->notify(new GiftCardMail($user, $notifyData));
                 }
-            }catch(Exception $e){ }
+            } catch (Exception $e) {
+            }
 
-            $sender = $this->insertCardBuy($card->trx_id,$user,$userWallet,$charges,$giftCard,$status,$qty);
-            $this->insertBuyCardCharge( $sender,$charges,$user,$giftCard);
+            $sender = $this->insertCardBuy($card->trx_id, $user, $userWallet, $charges, $giftCard, $status, $qty);
+            $this->insertBuyCardCharge($sender, $charges, $user, $giftCard);
             //admin notification
-            $this->adminNotification($card->trx_id,$charges,$user,$giftCard,$status);
-        }catch(Exception $e){
+            $this->adminNotification($card->trx_id, $charges, $user, $giftCard, $status);
+        } catch (Exception $e) {
             return back()->with(['error' => [__($e->getMessage())]]);
         }
         return redirect()->route('user.dashboard')->with(['success' => [__('Your Gift Card Order Has Been Successfully Processed')]]);
     }
-    public function insertCardBuy( $trx_id,$user,$userWallet,$charges,$giftCard,$status,$qty) {
+    public function insertCardBuy($trx_id, $user, $userWallet, $charges, $giftCard, $status, $qty)
+    {
         $authWallet = $userWallet;
         $afterCharge = ($authWallet->balance - $charges['payable']);
-        $details =[
+        $details = [
             'card_info' =>   $giftCard,
             'charge_info' =>   $charges,
         ];
         DB::beginTransaction();
         // dd($details);
-        try{
+        try {
             $id = DB::table("transactions")->insertGetId([
                 'user_id'                       => $user->id,
                 'wallet_id'                     => $authWallet->id,
@@ -220,32 +232,33 @@ class GiftCardController extends Controller
                 'status'                        => $status,
                 'created_at'                    => now(),
             ]);
-            $this->updateSenderWalletBalance($authWallet,$afterCharge);
+            $this->updateSenderWalletBalance($authWallet, $afterCharge);
 
             DB::commit();
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw new Exception(__("Something went wrong! Please try again"));
         }
         return $id;
     }
-    public function insertBuyCardCharge($id,$charges,$user,$giftCard) {
+    public function insertBuyCardCharge($id, $charges, $user, $giftCard)
+    {
         DB::beginTransaction();
-        try{
+        try {
             DB::table('transaction_charges')->insert([
                 'transaction_id'    => $id,
-                'percent_charge'    =>$charges['percent_charge'],
-                'fixed_charge'      =>$charges['fixed_charge'],
-                'total_charge'      =>$charges['total_charge'],
+                'percent_charge'    => $charges['percent_charge'],
+                'fixed_charge'      => $charges['fixed_charge'],
+                'total_charge'      => $charges['total_charge'],
                 'created_at'        => now(),
             ]);
             DB::commit();
 
             //notification
             $notification_content = [
-                'title'         =>__("Gift Card"),
-                'message'       =>__("Buy card successful").' ('.$giftCard['card_name'].')',
-                'image'         => get_image($user->image,'user-profile'),
+                'title'         => __("Gift Card"),
+                'message'       => __("Buy card successful") . ' (' . $giftCard['card_name'] . ')',
+                'image'         => get_image($user->image, 'user-profile'),
             ];
 
             UserNotification::create([
@@ -254,28 +267,29 @@ class GiftCardController extends Controller
                 'message'   => $notification_content,
             ]);
             //Push Notification
-            try{
-                (new PushNotificationHelper())->prepare([$user->id],[
+            try {
+                (new PushNotificationHelper())->prepare([$user->id], [
                     'title' => $notification_content['title'],
                     'desc'  => $notification_content['message'],
                     'user_type' => 'user',
                 ])->send();
-                sendSms($user,'GIFT_CARD','',['amount' => $giftCard['card_total_amount'], 'request_currency' => $giftCard['card_currency'], 'trx' => $giftCard['trx_id'] ]);
+                sendSms($user, 'GIFT_CARD', '', ['amount' => $giftCard['card_total_amount'], 'request_currency' => $giftCard['card_currency'], 'trx' => $giftCard['trx_id']]);
+            } catch (Exception $e) {
             }
-            catch(Exception $e){}
-
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw new Exception(__("Something went wrong! Please try again"));
         }
     }
-    public function updateSenderWalletBalance($authWallet,$afterCharge) {
+    public function updateSenderWalletBalance($authWallet, $afterCharge)
+    {
         $authWallet->update([
             'balance'   => $afterCharge,
         ]);
     }
-    public function giftCardCharge($form_data, $cardCharge,$userWallet,$sender_country,$receiver_country) {
-        $exchange_rate = $sender_country->rate/$receiver_country->rate;
+    public function giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country)
+    {
+        $exchange_rate = $sender_country->rate / $receiver_country->rate;
 
         $data['exchange_rate']                      = $exchange_rate;
         $data['card_unit_price']                    = $form_data['g_unit_price'];
@@ -293,13 +307,14 @@ class GiftCardController extends Controller
 
         return $data;
     }
-    public function giftSearch(){
+    public function giftSearch()
+    {
         $page_title = __("Gift Cards");
         $country_iso = request()->country;
-        try{
+        try {
             $products = (new GiftCardHelper())->getProductInfoByIso($country_iso);
-        }catch (Exception $e) {
-            return redirect()->back()->with(['error' => [__($e->getMessage()??"")]]);
+        } catch (Exception $e) {
+            return redirect()->back()->with(['error' => [__($e->getMessage() ?? "")]]);
         }
         $perPage = 16;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
@@ -309,24 +324,27 @@ class GiftCardController extends Controller
         $footer       = SiteSections::getData($section_slug)->first();
         $section_slug = Str::slug(SiteSectionConst::GIFT_CARD_SECTION);
         $section_data = SiteSections::getData($section_slug)->first();
-        return view('user.sections.gift-card.search',compact(
-            'page_title','products','footer','section_data'
+        return view('user.sections.gift-card.search', compact(
+            'page_title',
+            'products',
+            'footer',
+            'section_data'
         ));
-
     }
-    public function webhookInfo(Request $request){
+    public function webhookInfo(Request $request)
+    {
         $response_data = $request->all();
         $custom_identifier = $response_data['data']['customIdentifier'];
-        $transaction = Transaction::where('type',PaymentGatewayConst::GIFTCARD)->where('callback_ref',$custom_identifier)->first();
-        $giftCard = GiftCard::where('uuid',$custom_identifier)->first();
-        if( $response_data ['data']['status'] =="SUCCESSFUL"){
+        $transaction = Transaction::where('type', PaymentGatewayConst::GIFTCARD)->where('callback_ref', $custom_identifier)->first();
+        $giftCard = GiftCard::where('uuid', $custom_identifier)->first();
+        if ($response_data['data']['status'] == "SUCCESSFUL") {
             $transaction->update([
                 'status' => true,
             ]);
             $giftCard->update([
                 'status' => true,
             ]);
-        }elseif($response_data ['data']['status'] !="SUCCESSFUL" ){
+        } elseif ($response_data['data']['status'] != "SUCCESSFUL") {
             $afterCharge = ($transaction->creator_wallet->balance + $transaction->details->charges->payable);
             $transaction->update([
                 'status' => PaymentGatewayConst::STATUSREJECTED,
@@ -341,63 +359,60 @@ class GiftCardController extends Controller
             ]);
         }
 
-        logger("Gift Card Order Success!", ['uuid' => $custom_identifier, 'status' => $response_data ['data']['status']]);
+        logger("Gift Card Order Success!", ['uuid' => $custom_identifier, 'status' => $response_data['data']['status']]);
     }
     //admin notification
-    public function adminNotification($trx_id,$charges,$user,$data,$status){
-        $exchange_rate = get_amount(1,$charges['card_currency'])." = ".get_amount($charges['exchange_rate'],$charges['card_currency']);
-        if($status == PaymentGatewayConst::STATUSSUCCESS){
-            $status ="success";
-        }elseif($status == PaymentGatewayConst::STATUSPENDING){
-            $status ="Pending";
-        }elseif($status == PaymentGatewayConst::STATUSHOLD){
-            $status ="Hold";
-        }elseif($status == PaymentGatewayConst::STATUSWAITING){
-            $status ="Waiting";
-        }elseif($status == PaymentGatewayConst::STATUSPROCESSING){
-            $status ="Processing";
+    public function adminNotification($trx_id, $charges, $user, $data, $status)
+    {
+        $exchange_rate = get_amount(1, $charges['card_currency']) . " = " . get_amount($charges['exchange_rate'], $charges['card_currency']);
+        if ($status == PaymentGatewayConst::STATUSSUCCESS) {
+            $status = "success";
+        } elseif ($status == PaymentGatewayConst::STATUSPENDING) {
+            $status = "Pending";
+        } elseif ($status == PaymentGatewayConst::STATUSHOLD) {
+            $status = "Hold";
+        } elseif ($status == PaymentGatewayConst::STATUSWAITING) {
+            $status = "Waiting";
+        } elseif ($status == PaymentGatewayConst::STATUSPROCESSING) {
+            $status = "Processing";
         }
         $notification_content = [
             //email notification
-            'subject' => __("Gift Card Order")." @" . @$user->username." (".@$user->email.")",
-            'greeting' =>__("Gift Card Information"),
-            'email_content' =>__("trx_id")." : ".$trx_id."<br>".__("Card Name")." : ".$data['card_name']."<br>".__("receiver Email").": @".$data['recipient_email']."<br>".__("Receiver Phone")." : ".$data['recipient_phone']."<br>".__("Card Unit Price")." : ".get_amount($charges['card_unit_price'],$charges['card_currency'])."<br>".__("Card Quantity")." : ".$charges['qty']."<br>".__("Card Total Price")." : ".get_amount($charges['total_receiver_amount'],$charges['card_currency'])."<br>".__("Exchange Rate")." : ".$exchange_rate."<br>".__("Payable Unit Price")." : ".get_amount($charges['sender_unit_price'],$charges['wallet_currency'])."<br>".__("Payable Amount")." : ".get_amount($charges['conversion_amount'],$charges['wallet_currency'])."<br>".__("Total Charge")." : ".get_amount($charges['total_charge'],$charges['wallet_currency'])."<br>".__("Total Payable Amount")." : ".get_amount($charges['payable'],$charges['wallet_currency'])."<br>".__("Status")." : ".__($status),
+            'subject' => __("Gift Card Order") . " @" . @$user->username . " (" . @$user->email . ")",
+            'greeting' => __("Gift Card Information"),
+            'email_content' => __("trx_id") . " : " . $trx_id . "<br>" . __("Card Name") . " : " . $data['card_name'] . "<br>" . __("receiver Email") . ": @" . $data['recipient_email'] . "<br>" . __("Receiver Phone") . " : " . $data['recipient_phone'] . "<br>" . __("Card Unit Price") . " : " . get_amount($charges['card_unit_price'], $charges['card_currency']) . "<br>" . __("Card Quantity") . " : " . $charges['qty'] . "<br>" . __("Card Total Price") . " : " . get_amount($charges['total_receiver_amount'], $charges['card_currency']) . "<br>" . __("Exchange Rate") . " : " . $exchange_rate . "<br>" . __("Payable Unit Price") . " : " . get_amount($charges['sender_unit_price'], $charges['wallet_currency']) . "<br>" . __("Payable Amount") . " : " . get_amount($charges['conversion_amount'], $charges['wallet_currency']) . "<br>" . __("Total Charge") . " : " . get_amount($charges['total_charge'], $charges['wallet_currency']) . "<br>" . __("Total Payable Amount") . " : " . get_amount($charges['payable'], $charges['wallet_currency']) . "<br>" . __("Status") . " : " . __($status),
 
             //push notification
-            'push_title' => __("Gift Card Order")." (".userGuard()['type'].")",
-            'push_content' => __('trx_id')." ".$trx_id." ".__("Card Name")." : ".$data['card_name']." ".__("Card Quantity")." : ".$charges['qty']." ".__("Total Payable Amount")." : ".get_amount($charges['payable'],$charges['wallet_currency']),
+            'push_title' => __("Gift Card Order") . " (" . userGuard()['type'] . ")",
+            'push_content' => __('trx_id') . " " . $trx_id . " " . __("Card Name") . " : " . $data['card_name'] . " " . __("Card Quantity") . " : " . $charges['qty'] . " " . __("Total Payable Amount") . " : " . get_amount($charges['payable'], $charges['wallet_currency']),
 
             //admin db notification
             'notification_type' =>  NotificationConst::GIFTCARD,
-            'admin_db_title' => "Gift Card Order"." (".userGuard()['type'].")",
-            'admin_db_message' => "Transaction ID"." : ".$trx_id.","."Card Name"." : ".$data['card_name'].","."Card Quantity"." : ".$charges['qty'].","."Total Payable Amount"." : ".get_amount($charges['payable'],$charges['wallet_currency'])." (".$user->email.")"
+            'admin_db_title' => "Gift Card Order" . " (" . userGuard()['type'] . ")",
+            'admin_db_message' => "Transaction ID" . " : " . $trx_id . "," . "Card Name" . " : " . $data['card_name'] . "," . "Card Quantity" . " : " . $charges['qty'] . "," . "Total Payable Amount" . " : " . get_amount($charges['payable'], $charges['wallet_currency']) . " (" . $user->email . ")"
         ];
 
-        try{
+        try {
             //notification
-            (new NotificationHelper())->admin(['admin.gift.card.logs','admin.gift.card.details','admin.gift.card.export.data'])
-                                    ->mail(ActivityNotification::class, [
-                                        'subject'   => $notification_content['subject'],
-                                        'greeting'  => $notification_content['greeting'],
-                                        'content'   => $notification_content['email_content'],
-                                    ])
-                                    ->push([
-                                        'user_type' => "admin",
-                                        'title' => $notification_content['push_title'],
-                                        'desc'  => $notification_content['push_content'],
-                                    ])
-                                    ->adminDbContent([
-                                        'type' => $notification_content['notification_type'],
-                                        'title' => $notification_content['admin_db_title'],
-                                        'message'  => $notification_content['admin_db_message'],
-                                    ])
-                                    ->send();
-
-
-        }catch(Exception $e) {
-
+            (new NotificationHelper())->admin(['admin.gift.card.logs', 'admin.gift.card.details', 'admin.gift.card.export.data'])
+                ->mail(ActivityNotification::class, [
+                    'subject'   => $notification_content['subject'],
+                    'greeting'  => $notification_content['greeting'],
+                    'content'   => $notification_content['email_content'],
+                ])
+                ->push([
+                    'user_type' => "admin",
+                    'title' => $notification_content['push_title'],
+                    'desc'  => $notification_content['push_content'],
+                ])
+                ->adminDbContent([
+                    'type' => $notification_content['notification_type'],
+                    'title' => $notification_content['admin_db_title'],
+                    'message'  => $notification_content['admin_db_message'],
+                ])
+                ->send();
+        } catch (Exception $e) {
         }
-
     }
 
 
@@ -432,12 +447,11 @@ class GiftCardController extends Controller
         }
 
         if (!$wallet) {
-            $error = ['error' => [__('Your').(' '). ($validated['target']) .(' '). __('wallet not found.')]];
+            $error = ['error' => [__('Your') . (' ') . ($validated['target']) . (' ') . __('wallet not found.')]];
             return Response::error($error, null, 404);
         }
 
         $success = ['success' => [__('Data collected successfully!')]];
         return Response::success($success, $wallet->balance, 200);
     }
-
 }

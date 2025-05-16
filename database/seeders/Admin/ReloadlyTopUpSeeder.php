@@ -15,8 +15,16 @@ class ReloadlyTopUpSeeder extends Seeder
     public function run()
     {
         $mobile_topup_apis = array(
-            array('provider' => 'RELOADLY','type' => 'MOBILE-TOPUP','credentials' => '{"client_id":"0Tac1xfwuxvloESuakKYpD34fYCJtqVB","secret_key":"p16MBCEYpy-9KJaYLzAhe7Ux80YmXx-GDXSiXjz9JjBU9EBC8hprAjDNTcHjSp7","production_base_url":"https://topups.reloadly.com","sandbox_base_url":"https://topups-sandbox.reloadly.com"}','status' => '1','env' => 'sandbox','created_at' =>now(),'updated_at' =>now())
-          );
+            array(
+                'provider' => 'RELOADLY',
+                'type' => 'MOBILE-TOPUP',
+                'credentials' => '{"client_id":"0Tac1xfwuxvloESuakKYpD34fYCJtqVB","secret_key":"p16MBCEYpy-9KJaYLzAhe7Ux80YmXx-GDXSiXjz9JjBU9EBC8hprAjDNTcHjSp7","production_base_url":"https://topups.reloadly.com","sandbox_base_url":"https://topups-sandbox.reloadly.com"}',
+                'status' => '1',
+                'env' => 'sandbox',
+                'created_at' => now(),
+                'updated_at' => now()
+            )
+        );
 
         ReloadlyApi::insert($mobile_topup_apis);
     }

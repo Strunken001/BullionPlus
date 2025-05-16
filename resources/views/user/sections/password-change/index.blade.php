@@ -7,7 +7,7 @@
                         <span class="account-cross-btn"></span>
                         <div class="account-logo text-center">
                             <a href="index.html" class="site-logo">
-                                <img src="{{ asset('public/frontend/images/logo/web_logo.webp') }}" alt="logo">
+                                <img src="{{ asset('frontend/images/logo/web_logo.webp') }}" alt="logo">
                             </a>
                         </div>
                         <form class="account-form ptb-30" action="{{ setRoute('user.profile.password.update') }}" method="POST">

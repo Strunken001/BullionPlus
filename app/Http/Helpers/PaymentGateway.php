@@ -25,15 +25,17 @@ use Illuminate\Validation\ValidationException;
 use App\Models\Admin\PaymentGateway as PaymentGatewayModel;
 use App\Notifications\User\AddMoney\ApprovedMail;
 use App\Traits\PaymentGateway\Flutterwave;
+use App\Traits\PaymentGateway\Paystack;
 use App\Traits\PaymentGateway\PerfectMoney;
 use App\Traits\PaymentGateway\Razorpay;
 use App\Traits\PaymentGateway\SslCommerz;
 use App\Traits\PaymentGateway\Stripe;
+use Illuminate\Support\Facades\Log;
 
 class PaymentGateway
 {
 
-    use Paypal, Gpay, CoinGate, QRPay, Tatum, Stripe, Flutterwave, SslCommerz, Razorpay, PerfectMoney;
+    use Paypal, Gpay, CoinGate, QRPay, Tatum, Stripe, Flutterwave, SslCommerz, Razorpay, PerfectMoney, Paystack;
 
     protected $request_data;
     protected $output;
@@ -399,6 +401,9 @@ class PaymentGateway
             case PaymentGatewayConst::PERFECT_MONEY:
                 return $response['PAYMENT_ID'] ?? "";
                 break;
+            case PaymentGatewayConst::PAYSTACK:
+                return $response['token'] ?? "";
+                break;
             default:
                 throw new Exception("Oops! Gateway not registered in getToken method");
         }
@@ -556,14 +561,16 @@ class PaymentGateway
             if ($output['invoice']) {
                 try {
                     SendSms($user, 'RECHARGE_INVOICE', '', ['trx_id' => $trx_id, 'request_amount' => $output['amount']->requested_amount, 'request_currency' => $output['wallet']->currency->code, 'payable_amount' => $output['amount']->total_amount, 'payable_currency' => $output['currency']->currency_code]);
-                } catch (Exception $e) { }
+                } catch (Exception $e) {
+                }
             }
             try {
                 $basic_setting = BasicSettings::first();
                 if ($basic_setting->email_notification) {
-                    $user->notify(new ApprovedMail($user, $output,$trx_id));
+                    $user->notify(new ApprovedMail($user, $output, $trx_id));
                 }
-            } catch (Exception $e){}
+            } catch (Exception $e) {
+            }
         } catch (Exception $e) {
             DB::rollBack();
             throw new Exception($e->getMessage());

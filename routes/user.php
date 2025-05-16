@@ -16,13 +16,14 @@ use App\Http\Controllers\User\MobileTopupController;
 use App\Http\Controllers\User\PurchaseController;
 use App\Http\Controllers\User\RechargeController;
 use App\Http\Controllers\User\SupportTicketController;
+use App\Http\Controllers\User\UtilityBillController;
 
 Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('dashboard', 'index')->name('dashboard');
         Route::get('recharge/history', 'rechargeHistory')->name('recharge.history');
         Route::get('/data/fetch', 'fetch')->name('data.fetch');
-        Route::post('logout', 'logout')->name('logout')->withoutMiddleware(['sms.verification.guard','user.google.two.factor']);
+        Route::post('logout', 'logout')->name('logout')->withoutMiddleware(['sms.verification.guard', 'user.google.two.factor']);
     });
 
     Route::controller(ProfileController::class)->prefix("profile")->name("profile.")->group(function () {
@@ -89,8 +90,8 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
         Route::post("callback/response/{gateway}", 'callback')->name('payment.callback')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
 
         // POST Route For Unauthenticated Request
-        Route::post('success/response/{gateway}', 'postSuccess')->name('payment.success')->withoutMiddleware(['auth', 'verification.guard', 'user.google.two.factor','sms.verification.guard']);
-        Route::post('cancel/response/{gateway}', 'postCancel')->name('payment.cancel')->withoutMiddleware(['auth', 'verification.guard', 'user.google.two.factor','sms.verification.guard']);
+        Route::post('success/response/{gateway}', 'postSuccess')->name('payment.success')->withoutMiddleware(['auth', 'verification.guard', 'user.google.two.factor', 'sms.verification.guard']);
+        Route::post('cancel/response/{gateway}', 'postCancel')->name('payment.cancel')->withoutMiddleware(['auth', 'verification.guard', 'user.google.two.factor', 'sms.verification.guard']);
 
         // redirect with HTML form route
         Route::get('redirect/form/{gateway}', 'redirectUsingHTMLForm')->name('payment.redirect.form')->withoutMiddleware(['auth', 'verification.guard', 'user.google.two.factor']);
@@ -131,11 +132,21 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
     //Bundle TopUp
     Route::controller(DataBundleController::class)->prefix('data-bundle')->name('data.bundle.')->group(function () {
         Route::get('get/operators/', 'getReloadlyOperators')->name('get.operators');
+        Route::get('get/bundle/index', 'index')->name('index');
         Route::post('get/bundle/preview', 'preview')->name('preview');
         Route::post('get/bundle/buy', 'buyBundle')->name('buy');
         Route::post('bundle/webhook', 'receiveWebhook')->name('webhook')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
+        Route::get('get/bundle/packages', 'getOperatorBundlePackage')->name('get.packages');
     });
 
+    Route::controller(UtilityBillController::class)->prefix('utility-bill')->name('utility.bill.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('get/billers', 'getUtiityBiller')->name('get.billers');
+        Route::post('preview', 'preview')->name('preview');
+        Route::post('pay', 'payBill')->name('pay');
+        // Route::get('history', 'history')->name('history');
+        // Route::get('details/{trx_id}', 'details')->name('details');
+    });
 });
 
 
