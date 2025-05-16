@@ -15,9 +15,14 @@ class TransactionSettingSeeder extends Seeder
      */
     public function run()
     {
-        $data = ['add' => 'Add Money Charge','gift_card' => 'Gift Card Charges','mobile_topup' => 'Mobile Topup Charges'];
+        $data = [
+            'add' => 'Add Money Charge',
+            'gift_card' => 'Gift Card Charges',
+            'mobile_topup' => 'Mobile Topup Charges',
+            'utility_payment' => 'Utility Payment Charges'
+        ];
         $create = [];
-        foreach($data as $slug => $item) {
+        foreach ($data as $slug => $item) {
             $create[] = [
                 'admin_id'          => 1,
                 'slug'              => $slug,

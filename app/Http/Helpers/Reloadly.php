@@ -9,6 +9,8 @@ use App\Models\MobileTopUp;
 use Illuminate\Http\Request;
 use App\Models\TemporaryData;
 use App\Constants\GlobalConst;
+use App\Constants\UtilityBillServiceTypeConst;
+use App\Constants\UtilityBillTypeConst;
 use App\Events\User\MobileTopUpEvent;
 use App\Http\Helpers\MobileTopUpHelper;
 use App\Models\Admin\Currency;
@@ -22,9 +24,11 @@ use App\Models\Transaction;
 use App\Traits\Transaction\MobileTopUp as TransactionMobileTopUp;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
-class Reloadly {
+class Reloadly
+{
 
     // use TransactionMobileTopUp;
 
@@ -96,11 +100,11 @@ class Reloadly {
     public array $charge_result = [
         'amount'                => null, // it wil convert to local amount
         'request_amount'        => null, // this is the input amount from frontend - sometimes it comes with merchant amount
-        'merchant_currency_code'=> null,
-        'merchant_currency_rate'=> null,
-        'merchant_exchange_rate'=> null,
+        'merchant_currency_code' => null,
+        'merchant_currency_rate' => null,
+        'merchant_exchange_rate' => null,
         'wallet_currency_code'  => null,
-        'receiver_currency_code'=> null,
+        'receiver_currency_code' => null,
         'default_currency_code' => null,
         'exchange_rate'         => null,
         'fixed_charge'          => null,
@@ -141,7 +145,7 @@ class Reloadly {
      * @param \App\Models\Admin\ReloadlyApi $provider
      * @return object
      */
-    public function setCredentials(ReloadlyApi $provider):object
+    public function setCredentials(ReloadlyApi $provider): object
     {
         $provider_credentials = $provider->credentials;
 
@@ -167,7 +171,7 @@ class Reloadly {
     /**
      * Authenticate API access token retrieve
      */
-    public function accessToken():array
+    public function accessToken(): array
     {
         // if(cache()->driver("file")->get(self::API_ACCESS_TOKEN)) {
 
@@ -180,7 +184,7 @@ class Reloadly {
         //     ];
         // }
 
-        if(!$this->credentials) $this->setCredentials($this->provider);
+        if (!$this->credentials) $this->setCredentials($this->provider);
 
         $request_endpoint = "https://auth.reloadly.com/oauth/token";
 
@@ -192,12 +196,12 @@ class Reloadly {
 
         // dd($this->credentials);
 
-        $response = Http::post($request_endpoint,[
+        $response = Http::post($request_endpoint, [
             "client_id" => $client_id,
             "client_secret" => $secret_key,
             "grant_type" => $grant_type,
             "audience" => $request_url,
-        ])->throw(function(Response $response, RequestException $exception) {
+        ])->throw(function (Response $response, RequestException $exception) {
             $response = $response->json();
 
             $message = $response['message'];
@@ -236,22 +240,22 @@ class Reloadly {
         $currency_codes = Currency::active()->pluck("code")->toArray();
 
         $supported_countries = collect($this->getCountries())->whereIn('currencyCode', $currency_codes)
-                                                            ->pluck("currencyCode", "isoName")
-                                                            ->toArray();
+            ->pluck("currencyCode", "isoName")
+            ->toArray();
 
         $user_country = $this->user->country_code ?? "";
 
-        return view('payment-gateway.mobile-topup.reloadly.index', compact('provider','page_title','supported_countries','user_country','user'));
+        return view('payment-gateway.mobile-topup.reloadly.index', compact('provider', 'page_title', 'supported_countries', 'user_country', 'user'));
     }
 
     /**
      * get all available countries from API
      * @return array
      */
-    public function getCountries():array
+    public function getCountries(): array
     {
 
-        if(cache()->driver("file")->get(self::COUNTRIES_CACHE_KEY))
+        if (cache()->driver("file")->get(self::COUNTRIES_CACHE_KEY))
             return cache()->driver("file")->get(self::COUNTRIES_CACHE_KEY);
 
         $provider = $this->provider;
@@ -264,7 +268,7 @@ class Reloadly {
         $response = Http::withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.topups-v1+json",
-        ])->get($endpoint)->throw(function(Response $response, RequestException $exception) {
+        ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -280,7 +284,7 @@ class Reloadly {
      * @param \App\Models\User $user
      * @return self
      */
-    public function user(User $user):self
+    public function user(User $user): self
     {
         $this->user = $user;
         return $this;
@@ -291,7 +295,7 @@ class Reloadly {
      * @param string $phone_number
      * @return self
      */
-    public function setPhone(string $phone_number):self
+    public function setPhone(string $phone_number): self
     {
         $this->phone_number = $phone_number;
         return $this;
@@ -302,7 +306,7 @@ class Reloadly {
      * @param string $country_iso2
      * @return self
      */
-    public function setCountry(string $country_iso2):self
+    public function setCountry(string $country_iso2): self
     {
         $this->country_iso2 = strtoupper($country_iso2);
         return $this;
@@ -313,7 +317,7 @@ class Reloadly {
      * @param string $topup_type
      * @return self
      */
-    public function setTopUpType(string $topup_type):self
+    public function setTopUpType(string $topup_type): self
     {
         $this->topup_type = $topup_type;
         return $this;
@@ -324,7 +328,7 @@ class Reloadly {
      * @param array $data
      * @return array
      */
-    public function getCharges(array $data):array
+    public function getCharges(array $data): array
     {
         $validated          = $this->validateChargeData($data);
         $operator           = $this->getOperator($validated['operator'], $validated['cache_key'] ?? null);
@@ -339,7 +343,7 @@ class Reloadly {
         $request_amount     = $amount = $validated['amount'] ?? 0; // $amount is local amount
         $isAmountLocal      = true;
 
-        if($isGeoPlan && !isset($validated['geo_location'])) {
+        if ($isGeoPlan && !isset($validated['geo_location'])) {
             throw ValidationException::withMessages([
                 'operator'      => "Geo location is required for this operator!",
             ]);
@@ -347,31 +351,29 @@ class Reloadly {
 
 
         // need to convert amount in local currency
-        if($denominationType == "FIXED" && $isGeoPlan) {
+        if ($denominationType == "FIXED" && $isGeoPlan) {
             // if local amount is not available then the incoming amount
             $geo_location = collect($operator['geographicalRechargePlans'])->where('locationCode', $validated['geo_location'])->first();
 
-            if(!$geo_location) {
+            if (!$geo_location) {
                 throw ValidationException::withMessages(['geo_location' => ['Invalid Geo Location Selected!']]);
             }
 
             $local_amounts = $geo_location['localAmounts'] ?? [];
 
-            if(count($local_amounts) == 0) $isAmountLocal = false;
-
-        }else {
+            if (count($local_amounts) == 0) $isAmountLocal = false;
+        } else {
             // check fixed amount is local or foreign
             $local_amounts = $operator['localFixedAmounts'] ?? [];
 
-            if(count($local_amounts) == 0) $isAmountLocal = false;
-
+            if (count($local_amounts) == 0) $isAmountLocal = false;
         }
 
-        if(!$isAmountLocal) {
+        if (!$isAmountLocal) {
             $amount = $amount * $rate; // convert amount to local amount
         }
 
-        $user_wallet        = auth()->user()->wallets;// GBP
+        $user_wallet        = auth()->user()->wallets; // GBP
         $wallet_currency    = $user_wallet->currency;
 
         $receiver_currency  = ExchangeRate::where('currency_code', $local_currency)->first(); // XOF
@@ -389,7 +391,7 @@ class Reloadly {
 
         $exchange_rate                      = $default_currency_exchange_amount * $wallet_currency->rate; // 1 USD = ? GBP, that means 1 XOF = ? GBP (wallet currency)
 
-        $transaction_charges    = TransactionSetting::where('slug','mobile_topup')->first();
+        $transaction_charges    = TransactionSetting::where('slug', 'mobile_topup')->first();
 
         $fixed_charge           = $transaction_charges->fixed_charge;
         $fixed_charge_calc      = $fixed_charge * $wallet_currency->rate;
@@ -462,7 +464,7 @@ class Reloadly {
             'geo_location'          => 'nullable|string', // is required for geo recharge plan supported operator
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             throw ValidationException::withMessages($validator->errors()->all());
         }
 
@@ -477,7 +479,7 @@ class Reloadly {
      * @param string $country_iso2
      * @return array
      */
-    public function autoDetectOperator(string $phone_number, string $country_iso2):array
+    public function autoDetectOperator(string $phone_number, string $country_iso2): array
     {
         $provider       = $this->provider;
         $credentials    = $this->credentials;
@@ -489,7 +491,7 @@ class Reloadly {
         $response = Http::withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.topups-v1+json",
-        ])->get($endpoint)->throw(function(Response $response, RequestException $exception) {
+        ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -513,7 +515,7 @@ class Reloadly {
         $response = Http::withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.topups-v1+json",
-        ])->get($endpoint, $filters)->throw(function(Response $response, RequestException $exception) {
+        ])->get($endpoint, $filters)->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -537,7 +539,7 @@ class Reloadly {
         $response = Http::timeout(180)->withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.topups-v1+json",
-        ])->get($endpoint, $filters)->throw(function(Response $response, RequestException $exception) {
+        ])->get($endpoint, $filters)->throw(function (Response $response, RequestException $exception) {
             $message = $response->json()['message'] ?? $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -551,9 +553,9 @@ class Reloadly {
      * @param string|null $cache_key
      * @return array $operator
      */
-    public function getOperator(string $operator_id, string $cache_key = null):array
+    public function getOperator(string $operator_id, string $cache_key = null): array
     {
-        if($cache_key && cache()->driver("file")->get($cache_key)) {
+        if ($cache_key && cache()->driver("file")->get($cache_key)) {
             $operator = collect(cache()->driver("file")->get($cache_key))->where('id', $operator_id)->first();
 
             return $operator;
@@ -570,7 +572,7 @@ class Reloadly {
         $response = Http::withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.topups-v1+json",
-        ])->get($endpoint)->throw(function(Response $response, RequestException $exception) {
+        ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -589,7 +591,7 @@ class Reloadly {
         $operator               = $this->getOperator($data['operator'], $validated['cache_key'] ?? null);
 
         $isGeoPlan          = $operator['supportsGeographicalRechargePlans'];
-        if($isGeoPlan) {
+        if ($isGeoPlan) {
             $geo_location = collect($operator['geographicalRechargePlans'])->where('locationCode', $data['geo_location'])->first();
 
             $operator['geographicalRechargePlans'] = [$geo_location];
@@ -600,14 +602,14 @@ class Reloadly {
         $data['mobile_topup_provider_model']    = $provider;
 
         // check operator limit
-        if($transaction_charges['operator_has_limit'] == true) {
-            if($transaction_charges['amount'] < $transaction_charges['operator_min_limit'] || $transaction_charges['amount'] > $transaction_charges['operator_max_limit']) {
+        if ($transaction_charges['operator_has_limit'] == true) {
+            if ($transaction_charges['amount'] < $transaction_charges['operator_min_limit'] || $transaction_charges['amount'] > $transaction_charges['operator_max_limit']) {
                 throw new Exception("Please follow the recharge limit!");
             }
         }
 
         // check transaction limit
-        if($transaction_charges['total_payable'] < $transaction_charges['min_limit_calc'] || $transaction_charges['total_payable'] > $transaction_charges['max_limit_calc']) {
+        if ($transaction_charges['total_payable'] < $transaction_charges['min_limit_calc'] || $transaction_charges['total_payable'] > $transaction_charges['max_limit_calc']) {
             throw new Exception("Please follow the transaction limit!");
         }
 
@@ -623,7 +625,7 @@ class Reloadly {
     {
         $provider = $this->provider;
 
-        return view('payment-gateway.mobile-topup.reloadly.preview', compact('page_title','provider','temp_data'));
+        return view('payment-gateway.mobile-topup.reloadly.preview', compact('page_title', 'provider', 'temp_data'));
     }
 
     /**
@@ -633,28 +635,27 @@ class Reloadly {
     public function topUp($request)
     {
         $operator = $request->operator ?? false;
-        if(!$operator) throw new Exception("Oops! Operator not found or invalid!");
+        if (!$operator) throw new Exception("Oops! Operator not found or invalid!");
 
         $extra_data         = $request;
         $denomination_type  = $operator['denominationType'];
         $isGeoPlanSupport   = $operator['supportsGeographicalRechargePlans'];
         $useLocalAmount     = true;
 
-        if($denomination_type == "FIXED" || $isGeoPlanSupport) {
+        if ($denomination_type == "FIXED" || $isGeoPlanSupport) {
 
-            if($isGeoPlanSupport){
+            if ($isGeoPlanSupport) {
                 $geo_location = $extra_data->geo_location ?? "";
                 $geo_plan = collect($operator['geographicalRechargePlans'] ?? [])->where('locationCode', $geo_location)->first();
 
                 $local_amounts = $geo_plan['localAmounts'] ?? [];
-            }else {
+            } else {
                 $local_amounts = $operator['localFixedAmounts'] ?? [];
             }
 
-            if(count($local_amounts) == 0) {
+            if (count($local_amounts) == 0) {
                 $useLocalAmount     = false;
             }
-
         }
 
         $api_topup = $this->sendTopUpRequest([
@@ -692,7 +693,7 @@ class Reloadly {
         $response = Http::withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.topups-v1+json",
-        ])->post($endpoint, $request_data)->throw(function(Response $response, RequestException $exception) {
+        ])->post($endpoint, $request_data)->throw(function (Response $response, RequestException $exception) {
             $message = $response->json()['message'] ?? $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -722,13 +723,13 @@ class Reloadly {
             return response("Invalid Payload Or Webhook Secret", 400);
         }
 
-        if($request_signature != $computed_signature) {
+        if ($request_signature != $computed_signature) {
             return response("Invalid Signature", 400);
         }
 
         $response_data = $request->all();
 
-        if($response_data['type'] == "airtime_transaction.status") {
+        if ($response_data['type'] == "airtime_transaction.status") {
 
             $api_status = $response_data['data']['status'] ?? $response_data['status'];
             $status     = $this->exchange_status[$api_status];
@@ -746,6 +747,200 @@ class Reloadly {
         }
     }
 
+    public function getOperatorBundlePackage(string $operator_id)
+    {
+        $provider       = $this->provider;
+        $credentials    = $this->credentials;
 
+        $base_url = $credentials->req_url;
+        $endpoint = rtrim($base_url, "/") . "/operators/$operator_id/plans";
+        $access_token = $this->access_token;
 
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.topups-v1+json",
+        ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
+            $message = $response->json()['message'] ?? $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response;
+    }
+
+    public function getUtilityBillers(string $country_iso2, ?string $type, ?string $service_type)
+    {
+        $credentials    = $this->credentials;
+
+        $base_url = $credentials->req_url;
+        $endpoint = rtrim($base_url, "/") . "/billers";
+        $access_token = $this->access_token;
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.utilities-v1+json",
+        ])->get($endpoint, [
+            'countryISOCode' => $country_iso2,
+            'type'          => $type,
+            'serviceType'   => $service_type,
+        ])->throw(function (Response $response, RequestException $exception) {
+            $message = $response->json()['message'] ?? $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response;
+    }
+
+    public function payBill(array $request_data)
+    {
+        $credentials    = $this->credentials;
+
+        $base_url = $credentials->req_url;
+        $endpoint = rtrim($base_url, "/") . "/pay";
+        $access_token = $this->access_token;
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.utilities-v1+json",
+        ])->post($endpoint, [
+            'billerId'       => $request_data['biller_id'],
+            'amount'         => $request_data['amount'],
+            'subscriberAccountNumber'  => $request_data['account_number'],
+            'referenceId' => $request_data['tx_ref'],
+            'useLocalAmount' => $request_data['useLocalAmount'],
+        ])->throw(function (Response $response, RequestException $exception) {
+            $message = $response->json()['message'] ?? $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response;
+    }
+
+    public function getUtilityBill(int $id)
+    {
+        $credentials    = $this->credentials;
+
+        $base_url = $credentials->req_url;
+        $endpoint = rtrim($base_url, "/") . "/billers?id=$id";
+        $access_token = $this->access_token;
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.utilities-v1+json",
+        ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
+            $message = $response->json()['message'] ?? $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response['content'][0];
+    }
+
+    public function getUtilityBillCharge(array $request_data)
+    {
+        $vaildate = Validator::make($request_data, [
+            'biller_id' => 'required|string',
+            'amount'   => 'required',
+            'account_number' => 'required|string',
+        ]);
+
+        if ($vaildate->fails()) {
+            throw ValidationException::withMessages($vaildate->errors()->all());
+        }
+
+        $request_data['referenceId'] = generate_unique_string('transactions', 'trx_id', 16);
+
+        $utility_bill = $this->getUtilityBill($request_data['biller_id']);
+
+        $currency_code = $utility_bill['localTransactionCurrencyCode'] ?? "USD";
+
+        $receiver_currency  = ExchangeRate::where('currency_code', $currency_code)->first(); // XOF
+        $merchant_currency  = ExchangeRate::where('currency_code', $utility_bill['internationalTransactionCurrencyCode'])->first(); // BDT
+        $default_currency   = Currency::default(); // USD
+
+        $name = $utility_bill['name'] ?? "--";
+        $rate = $utility_bill['fx']['rate'] ?? 1;
+        $amount = $request_data['amount'];
+        $fee = $utility_bill['localTransactionFee'] ?? 0;
+        $type = $utility_bill['type'] ?? "--";
+        $service_type = $utility_bill['serviceType'] ?? "--";
+
+        $user_wallet        = auth()->user()->wallets; // GBP
+        $wallet_currency    = $user_wallet->currency;
+
+        $transaction_charges    = TransactionSetting::where('slug', 'utility_bill')->first();
+
+        $fixed_charge           = $transaction_charges->fixed_charge;
+        $fixed_charge_calc      = $fixed_charge * $wallet_currency->rate;
+
+        $percent_charge         = $transaction_charges->percent_charge;
+        $percent_charge_calc    = (($amount / 100) * $percent_charge) * $rate;
+
+        $merchant_pay_amount        = $amount / $rate;
+        $default_currency_amount    = $merchant_pay_amount / $merchant_currency->rate; // USD
+
+        $exchange_wallet_amount     = $default_currency_amount * $wallet_currency->rate; // GBP
+
+        $total_charge_calc      = $fixed_charge_calc + $percent_charge_calc;
+        $total_payable          = $exchange_wallet_amount + $total_charge_calc;
+
+        $receiver_currency_exchange_rate    = 1 / $rate; // 1 XOF = ? BDT
+        $default_currency_exchange_amount   = $receiver_currency_exchange_rate / $merchant_currency->rate; // 1 XOF = ? USD
+
+        $exchange_rate                      = $default_currency_exchange_amount * $wallet_currency->rate; // 1 USD = ? GBP, that means 1 XOF = ? GBP (wallet currency)
+        $min_limit              = $transaction_charges->min_limit;
+        $max_limit              = $transaction_charges->max_limit;
+        $daily_limit            = $transaction_charges->daily_limit;
+        $monthly_limit          = $transaction_charges->monthly_limit;
+
+        $min_limit_calc         = $min_limit * $wallet_currency->rate;
+        $max_limit_calc         = $max_limit * $wallet_currency->rate;
+
+        $this->charge_result = [
+            'name'                          => $name,
+            'amount'                        => get_amount($amount),
+            'rate'                          => $exchange_rate,
+            'currency_code'                 => $currency_code,
+            'fee'                           => $fee,
+            'type'                          => $type,
+            'service_type'                  => $service_type,
+            'merchant_pay_amount'           => get_amount($amount) / $exchange_rate,
+            'wallet_currency_code'          => $wallet_currency->code,
+            'wallet_currency_rate'          => $wallet_currency->rate,
+            'fixed_charge'                   => get_amount($fixed_charge),
+            'percent_charge'                => get_amount($percent_charge, null, 2),
+            'fixed_charge_calc'              => get_amount($fixed_charge_calc),
+            'percent_charge_calc'           => get_amount($percent_charge_calc),
+            'total_charge_calc'             => get_amount($total_charge_calc),
+            'wallet_balance'                => get_amount($user_wallet->balance),
+            'charge_exchange_rate'          => get_amount($wallet_currency->rate),
+            'charge_currency'               => $wallet_currency->code,
+            'exchange_amount'               => get_amount($exchange_wallet_amount),
+            'total_payable'                 => get_amount($total_payable),
+            'min_limit'                     => get_amount($min_limit),
+            'max_limit'                     => get_amount($max_limit),
+            'min_limit_calc'                => get_amount($min_limit_calc),
+            'max_limit_calc'                => get_amount($max_limit_calc),
+            'bundle_currency'               => $currency_code ?? "--",
+        ];
+
+        return $this->charge_result;
+    }
+
+    public function getUtilityBillTransaction(string $trx_ref)
+    {
+        $credentials    = $this->credentials;
+
+        $base_url = $credentials->req_url;
+        $endpoint = rtrim($base_url, "/") . "/transactions?referenceId=$trx_ref";
+        $access_token = $this->access_token;
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.utilities-v1+json",
+        ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
+            $message = $response->json()['message'] ?? $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response['content'][0];
+    }
 }

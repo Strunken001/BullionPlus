@@ -1,9 +1,12 @@
 <?php
+
 namespace App\Constants;
+
 use App\Models\UserWallet;
 use Illuminate\Support\Str;
 
-class PaymentGatewayConst {
+class PaymentGatewayConst
+{
 
     const AUTOMATIC                 = "AUTOMATIC";
     const MANUAL                    = "MANUAL";
@@ -48,6 +51,7 @@ class PaymentGatewayConst {
     const SSLCOMMERZ                = 'sslcommerz';
     const RAZORPAY                  = 'razorpay';
     const PERFECT_MONEY             = 'perfect-money';
+    const PAYSTACK                  = 'paystack';
 
     const SEND                      = "SEND";
     const RECEIVED                  = "RECEIVED";
@@ -73,15 +77,18 @@ class PaymentGatewayConst {
 
     const REDIRECT_USING_HTML_FORM = "REDIRECT_USING_HTML_FORM";
 
-    public static function add_money_slug() {
+    public static function add_money_slug()
+    {
         return Str::slug(self::ADDMONEY);
     }
 
-    public static function money_out_slug() {
+    public static function money_out_slug()
+    {
         return Str::slug(self::MONEYOUT);
     }
 
-    public static function register($alias = null) {
+    public static function register($alias = null)
+    {
         $gateway_alias  = [
             self::PAYPAL        => "paypalInit",
             self::G_PAY         => "gpayInit",
@@ -92,33 +99,37 @@ class PaymentGatewayConst {
             self::FLUTTERWAVE   => 'flutterwaveInit',
             self::SSLCOMMERZ    => 'sslCommerzInit',
             self::RAZORPAY      => 'razorpayInit',
-            self::PERFECT_MONEY => 'perfectMoneyInit'
+            self::PERFECT_MONEY => 'perfectMoneyInit',
+            self::PAYSTACK      => 'paystackInit',
         ];
 
-        if($alias == null) {
+        if ($alias == null) {
             return $gateway_alias;
         }
 
-        if(array_key_exists($alias,$gateway_alias)) {
+        if (array_key_exists($alias, $gateway_alias)) {
             return $gateway_alias[$alias];
         }
         return "init";
     }
 
-    public static function registerWallet() {
+    public static function registerWallet()
+    {
         return [
             'web'       => UserWallet::class,
             'api'       => UserWallet::class,
         ];
     }
 
-    public static function apiAuthenticateGuard() {
+    public static function apiAuthenticateGuard()
+    {
         return [
             'api'   => 'web',
         ];
     }
 
-    public static function registerRedirection() {
+    public static function registerRedirection()
+    {
         return [
             'web'       => [
                 'return_url'    => 'user.recharge.payment.success',
@@ -137,7 +148,8 @@ class PaymentGatewayConst {
         ];
     }
 
-    public static function registerGatewayRecognization() {
+    public static function registerGatewayRecognization()
+    {
         return [
             'isGpay'            => self::G_PAY,
             'isPaypal'          => self::PAYPAL,
@@ -149,7 +161,7 @@ class PaymentGatewayConst {
             'isSslCommerz'      => self::SSLCOMMERZ,
             'isRazorpay'        => self::RAZORPAY,
             'isPerfectMoney'    => self::PERFECT_MONEY,
+            'isPaystack'        => self::PAYSTACK,
         ];
     }
-
 }

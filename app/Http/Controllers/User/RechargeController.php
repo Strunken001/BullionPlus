@@ -23,98 +23,105 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Admin\CryptoTransaction;
 use Illuminate\Support\Str;
 use App\Models\Admin\SiteSections;
+use Illuminate\Support\Facades\Log;
 
 class RechargeController extends Controller
 {
     use ControlDynamicInputFields;
 
-    public function addMoneyPreview(Request $request){
-        $validated = Validator::make($request->all(),[
+    public function addMoneyPreview(Request $request)
+    {
+        $validated = Validator::make($request->all(), [
             'amount'                      => 'required|numeric|gt:0',
             'gateway_currency'            => 'required',
         ])->validate();
-        $currency_details = PaymentGatewayCurrency::where('alias',$request->gateway_currency)->first();
-        $total_charge = ((($request->amount*$currency_details->rate)*$currency_details->percent_charge)/100)+ $currency_details->fixed_charge;
+        $currency_details = PaymentGatewayCurrency::where('alias', $request->gateway_currency)->first();
+        $total_charge = ((($request->amount * $currency_details->rate) * $currency_details->percent_charge) / 100) + $currency_details->fixed_charge;
         $details = [
             'amount'            => $request->amount,
             'currency'          => $currency_details->currency_code,
             'payment_method'    => $currency_details->gateway->name,
             'total_charge'      => $total_charge,
-            'total_payable'     => $total_charge + $request->amount*$currency_details->rate,
+            'total_payable'     => $total_charge + $request->amount * $currency_details->rate,
             'invoice'           => $request->invoice ?? null,
         ];
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
-        return view('user.page.recharge-preview',compact('request','details','footer'));
+        return view('user.page.recharge-preview', compact('request', 'details', 'footer'));
     }
 
-    public function submitAmount(Request $request) {
+    public function submitAmount(Request $request)
+    {
 
-        $validated = Validator::make($request->all(),[
+        $validated = Validator::make($request->all(), [
             'amount'            => 'required|numeric|gt:0',
         ])->validate();
 
-        return redirect()->route('user.recharge.recharge.view',$request->amount);
+        return redirect()->route('user.recharge.recharge.view', $request->amount);
     }
 
-    public function rechargeView($amount) {
+    public function rechargeView($amount)
+    {
         $payment_gateways = PaymentGateway::addMoney()->active()->with('currencies')->has("currencies")->get();
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
-        return view('user.page.recharge',compact('amount','payment_gateways','footer'));
+        return view('user.page.recharge', compact('amount', 'payment_gateways', 'footer'));
     }
 
-    public function submit(Request $request, PaymentGatewayCurrency $gateway_currency) {
+    public function submit(Request $request, PaymentGatewayCurrency $gateway_currency)
+    {
 
-        $validated = Validator::make($request->all(),[
+        $validated = Validator::make($request->all(), [
             'amount'            => 'required|numeric|gt:0',
-            'gateway_currency'  => 'required|string|exists:'.$gateway_currency->getTable().',alias',
+            'gateway_currency'  => 'required|string|exists:' . $gateway_currency->getTable() . ',alias',
         ])->validate();
         $request->merge(['currency' => $validated['gateway_currency']]);
 
-        try{
+        try {
             $instance = PaymentGatewayHelper::init($request->all())->type(PaymentGatewayConst::TYPEADDMONEY)->setProjectCurrency(PaymentGatewayConst::PROJECT_CURRENCY_SINGLE)->gateway()->render();
 
-            if($instance instanceof RedirectResponse === false && isset($instance['gateway_type']) && $instance['gateway_type'] == PaymentGatewayConst::MANUAL) {
+            if ($instance instanceof RedirectResponse === false && isset($instance['gateway_type']) && $instance['gateway_type'] == PaymentGatewayConst::MANUAL) {
                 $manual_handler = $instance['distribute'];
                 return $this->$manual_handler($instance);
             }
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return back()->with(['error' => [$e->getMessage()]]);
         }
         return $instance;
     }
 
-    public function success(Request $request, $gateway){
-        try{
-            $token = PaymentGatewayHelper::getToken($request->all(),$gateway);
-            $temp_data = TemporaryData::where("type",PaymentGatewayConst::TYPEADDMONEY)->where("identifier",$token)->first();
-            if(Transaction::where('callback_ref', $token)->exists()) {
-                if(!$temp_data) return redirect()->route('user.dashboard')->with(['success' => [__('Transaction request sended successfully!')]]);;
-            }else {
-                if(!$temp_data) return redirect()->route('user.dashboard')->with(['error' => [__('Transaction failed. Record didn\'t saved properly. Please try again.')]]);
+    public function success(Request $request, $gateway)
+    {
+        try {
+            $token = PaymentGatewayHelper::getToken($request->all(), $gateway);
+            $temp_data = TemporaryData::where("type", PaymentGatewayConst::TYPEADDMONEY)->where("identifier", $token)->first();
+            if (Transaction::where('callback_ref', $token)->exists()) {
+                if (!$temp_data) return redirect()->route('user.dashboard')->with(['success' => [__('Transaction request sended successfully!')]]);;
+            } else {
+                if (!$temp_data) return redirect()->route('user.dashboard')->with(['error' => [__('Transaction failed. Record didn\'t saved properly. Please try again.')]]);
             }
 
-            $update_temp_data = json_decode(json_encode($temp_data->data),true);
+            $update_temp_data = json_decode(json_encode($temp_data->data), true);
             $update_temp_data['callback_data']  = $request->all();
             $temp_data->update([
                 'data'  => $update_temp_data,
             ]);
             $temp_data = $temp_data->toArray();
             $instance = PaymentGatewayHelper::init($temp_data)->type(PaymentGatewayConst::TYPEADDMONEY)->setProjectCurrency(PaymentGatewayConst::PROJECT_CURRENCY_SINGLE)->responseReceive();
-            if($instance instanceof RedirectResponse) return $instance;
-        }catch(Exception $e) {
+            if ($instance instanceof RedirectResponse) return $instance;
+        } catch (Exception $e) {
             return back()->with(['error' => [$e->getMessage()]]);
         }
 
         return redirect()->route("user.dashboard")->with(['success' => [__('Successfully added money')]]);
     }
 
-    public function cancel(Request $request, $gateway) {
+    public function cancel(Request $request, $gateway)
+    {
 
-        $token = PaymentGatewayHelper::getToken($request->all(),$gateway);
+        $token = PaymentGatewayHelper::getToken($request->all(), $gateway);
 
-        if($temp_data = TemporaryData::where("type",PaymentGatewayConst::TYPEADDMONEY)->where("identifier",$token)->first()) {
+        if ($temp_data = TemporaryData::where("type", PaymentGatewayConst::TYPEADDMONEY)->where("identifier", $token)->first()) {
             $temp_data->delete();
         }
 
@@ -123,11 +130,11 @@ class RechargeController extends Controller
 
     public function postSuccess(Request $request, $gateway)
     {
-        try{
-            $token = PaymentGatewayHelper::getToken($request->all(),$gateway);
-            $temp_data = TemporaryData::where("type",PaymentGatewayConst::TYPEADDMONEY)->where("identifier",$token)->first();
+        try {
+            $token = PaymentGatewayHelper::getToken($request->all(), $gateway);
+            $temp_data = TemporaryData::where("type", PaymentGatewayConst::TYPEADDMONEY)->where("identifier", $token)->first();
             Auth::guard($temp_data->data->creator_guard)->loginUsingId($temp_data->data->creator_id);
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return redirect()->route('frontend.index');
         }
 
@@ -136,25 +143,26 @@ class RechargeController extends Controller
 
     public function postCancel(Request $request, $gateway)
     {
-        try{
-            $token = PaymentGatewayHelper::getToken($request->all(),$gateway);
-            $temp_data = TemporaryData::where("type",PaymentGatewayConst::TYPEADDMONEY)->where("identifier",$token)->first();
+        try {
+            $token = PaymentGatewayHelper::getToken($request->all(), $gateway);
+            $temp_data = TemporaryData::where("type", PaymentGatewayConst::TYPEADDMONEY)->where("identifier", $token)->first();
             Auth::guard($temp_data->data->creator_guard)->loginUsingId($temp_data->data->creator_id);
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return redirect()->route('frontend.index');
         }
 
         return $this->cancel($request, $gateway);
     }
 
-    public function callback(Request $request,$gateway) {
+    public function callback(Request $request, $gateway)
+    {
 
         $callback_token = $request->get('token');
         $callback_data = $request->all();
 
-        try{
-            PaymentGatewayHelper::init([])->type(PaymentGatewayConst::TYPEADDMONEY)->setProjectCurrency(PaymentGatewayConst::PROJECT_CURRENCY_SINGLE)->handleCallback($callback_token,$callback_data,$gateway);
-        }catch(Exception $e) {
+        try {
+            PaymentGatewayHelper::init([])->type(PaymentGatewayConst::TYPEADDMONEY)->setProjectCurrency(PaymentGatewayConst::PROJECT_CURRENCY_SINGLE)->handleCallback($callback_token, $callback_data, $gateway);
+        } catch (Exception $e) {
             // handle Error
             logger($e);
         }
@@ -165,7 +173,7 @@ class RechargeController extends Controller
     public function redirectUsingHTMLForm(Request $request, $gateway)
     {
         $temp_data = TemporaryData::where('identifier', $request->token)->first();
-        if(!$temp_data || $temp_data->data->action_type != PaymentGatewayConst::REDIRECT_USING_HTML_FORM) return back()->with(['error' => [__('Request token is invalid!')]]);
+        if (!$temp_data || $temp_data->data->action_type != PaymentGatewayConst::REDIRECT_USING_HTML_FORM) return back()->with(['error' => [__('Request token is invalid!')]]);
         $redirect_form_data = $temp_data->data->redirect_form_data;
         $action_url         = $temp_data->data->action_url;
         $form_method        = $temp_data->data->form_method;
@@ -178,18 +186,19 @@ class RechargeController extends Controller
      */
     public function redirectBtnPay(Request $request, $gateway)
     {
-        try{
+        try {
             return PaymentGatewayHelper::init([])->setProjectCurrency(PaymentGatewayConst::PROJECT_CURRENCY_SINGLE)->handleBtnPay($gateway, $request->all());
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return redirect()->route('user.dashboard')->with(['error' => [$e->getMessage()]]);
         }
     }
 
-    public function handleManualPayment($payment_info) {
+    public function handleManualPayment($payment_info)
+    {
         // Insert temp data
         $data = [
             'type'          => PaymentGatewayConst::TYPEADDMONEY,
-            'identifier'    => generate_unique_string("temporary_datas","identifier",16),
+            'identifier'    => generate_unique_string("temporary_datas", "identifier", 16),
             'data'          => [
                 'gateway_currency_id'    => $payment_info['currency']->id,
                 'amount'                 => $payment_info['amount'],
@@ -198,56 +207,58 @@ class RechargeController extends Controller
             'invoice' => $payment_info['invoice'],
         ];
 
-        try{
+        try {
             TemporaryData::create($data);
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return redirect()->route('user.dashboard')->with(['error' => [__('Failed to save data. Please try again')]]);
         }
-        return redirect()->route('user.recharge.manual.form',$data['identifier']);
+        return redirect()->route('user.recharge.manual.form', $data['identifier']);
     }
 
-    public function showManualForm($token) {
+    public function showManualForm($token)
+    {
         $tempData = TemporaryData::search($token)->first();
-        if(!$tempData || $tempData->data == null || !isset($tempData->data->gateway_currency_id)) return redirect()->route('user.add.money.index')->with(['error' => [__('Invalid request')]]);
+        if (!$tempData || $tempData->data == null || !isset($tempData->data->gateway_currency_id)) return redirect()->route('user.add.money.index')->with(['error' => [__('Invalid request')]]);
         $gateway_currency = PaymentGatewayCurrency::find($tempData->data->gateway_currency_id);
-        if(!$gateway_currency || !$gateway_currency->gateway->isManual()) return redirect()->route('user.add.money.index')->with(['error' => [__('Selected gateway is invalid')]]);
+        if (!$gateway_currency || !$gateway_currency->gateway->isManual()) return redirect()->route('user.add.money.index')->with(['error' => [__('Selected gateway is invalid')]]);
         $gateway = $gateway_currency->gateway;
-        if(!$gateway->input_fields || !is_array($gateway->input_fields)) return redirect()->route('user.add.money.index')->with(['error' => [__('This payment gateway is under constructions. Please try with another payment gateway')]]);
+        if (!$gateway->input_fields || !is_array($gateway->input_fields)) return redirect()->route('user.add.money.index')->with(['error' => [__('This payment gateway is under constructions. Please try with another payment gateway')]]);
         $amount = $tempData->data->amount;
 
         $page_title = "Payment Instructions";
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
-        return view('user.page.manual-recharge-form',compact("gateway","page_title","token","amount",'footer'));
+        return view('user.page.manual-recharge-form', compact("gateway", "page_title", "token", "amount", 'footer'));
     }
 
-    public function manualSubmit(Request $request,$token) {
+    public function manualSubmit(Request $request, $token)
+    {
         $request->merge(['identifier' => $token]);
-        $tempDataValidate = Validator::make($request->all(),[
+        $tempDataValidate = Validator::make($request->all(), [
             'identifier'        => "required|string|exists:temporary_datas",
         ])->validate();
 
         $tempData = TemporaryData::search($tempDataValidate['identifier'])->first();
-        if(!$tempData || $tempData->data == null || !isset($tempData->data->gateway_currency_id)) return redirect()->route('user.add.money.index')->with(['error' => ['Invalid request']]);
+        if (!$tempData || $tempData->data == null || !isset($tempData->data->gateway_currency_id)) return redirect()->route('user.add.money.index')->with(['error' => ['Invalid request']]);
         $gateway_currency = PaymentGatewayCurrency::find($tempData->data->gateway_currency_id);
-        if(!$gateway_currency || !$gateway_currency->gateway->isManual()) return redirect()->route('user.add.money.index')->with(['error' => [__('Selected gateway is invalid')]]);
+        if (!$gateway_currency || !$gateway_currency->gateway->isManual()) return redirect()->route('user.add.money.index')->with(['error' => [__('Selected gateway is invalid')]]);
         $gateway = $gateway_currency->gateway;
         $amount = $tempData->data->amount ?? null;
-        if(!$amount) return redirect()->route('user.dashboard')->with(['error' => [__('Transaction Failed. Failed to save information. Please try again')]]);
+        if (!$amount) return redirect()->route('user.dashboard')->with(['error' => [__('Transaction Failed. Failed to save information. Please try again')]]);
         $wallet = UserWallet::find($tempData->data->wallet_id ?? null);
-        if(!$wallet) return redirect()->route('user.dashboard')->with(['error' => [__('Your wallet is invalid!')]]);
+        if (!$wallet) return redirect()->route('user.dashboard')->with(['error' => [__('Your wallet is invalid!')]]);
 
         $this->file_store_location = "transaction";
         $dy_validation_rules = $this->generateValidationRules($gateway->input_fields);
 
-        $validated = Validator::make($request->all(),$dy_validation_rules)->validate();
-        $get_values = $this->placeValueWithFields($gateway->input_fields,$validated);
+        $validated = Validator::make($request->all(), $dy_validation_rules)->validate();
+        $get_values = $this->placeValueWithFields($gateway->input_fields, $validated);
         // Make Transaction
         DB::beginTransaction();
-        try{
+        try {
             $id = DB::table("transactions")->insertGetId([
                 'type'                          => PaymentGatewayConst::TYPEADDMONEY,
-                'trx_id'                        => generate_unique_string('transactions','trx_id',16),
+                'trx_id'                        => generate_unique_string('transactions', 'trx_id', 16),
                 'user_type'                     => GlobalConst::USER,
                 'user_id'                       => $wallet->user->id,
                 'wallet_id'                     => $wallet->id,
@@ -270,11 +281,11 @@ class RechargeController extends Controller
                 'created_at'                    => now(),
             ]);
 
-            DB::table("temporary_datas")->where("identifier",$token)->delete();
+            DB::table("temporary_datas")->where("identifier", $token)->delete();
             DB::commit();
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
-            return redirect()->route('user.recharge.manual.form',$token)->with(['error' => [__('Something went wrong! Please try again')]]);
+            return redirect()->route('user.recharge.manual.form', $token)->with(['error' => [__('Something went wrong! Please try again')]]);
         }
         return redirect()->route('user.dashboard')->with(['success' => [__('Transaction Success. Please wait for admin confirmation')]]);
     }
@@ -283,12 +294,13 @@ class RechargeController extends Controller
 
 
 
-    public function cryptoPaymentAddress(Request $request, $trx_id) {
+    public function cryptoPaymentAddress(Request $request, $trx_id)
+    {
 
         $page_title = "Crypto Payment Address";
         $transaction = Transaction::where('trx_id', $trx_id)->firstOrFail();
 
-        if($transaction->gateway_currency->gateway->isCrypto() && $transaction->details?->payment_info?->receiver_address ?? false) {
+        if ($transaction->gateway_currency->gateway->isCrypto() && $transaction->details?->payment_info?->receiver_address ?? false) {
             return view('user.sections.add-money.payment.crypto.address', compact(
                 'transaction',
                 'page_title',
@@ -300,44 +312,44 @@ class RechargeController extends Controller
 
     public function cryptoPaymentConfirm(Request $request, $trx_id)
     {
-        $transaction = Transaction::where('trx_id',$trx_id)->where('status', PaymentGatewayConst::STATUSWAITING)->firstOrFail();
+        $transaction = Transaction::where('trx_id', $trx_id)->where('status', PaymentGatewayConst::STATUSWAITING)->firstOrFail();
 
         $dy_input_fields = $transaction->details->payment_info->requirements ?? [];
         $validation_rules = $this->generateValidationRules($dy_input_fields);
 
         $validated = [];
-        if(count($validation_rules) > 0) {
+        if (count($validation_rules) > 0) {
             $validated = Validator::make($request->all(), $validation_rules)->validate();
         }
 
-        if(!isset($validated['txn_hash'])) return back()->with(['error' => [__('Transaction hash is required for verify')]]);
+        if (!isset($validated['txn_hash'])) return back()->with(['error' => [__('Transaction hash is required for verify')]]);
 
         $receiver_address = $transaction->details->payment_info->receiver_address ?? "";
 
         // check hash is valid or not
         $crypto_transaction = CryptoTransaction::where('txn_hash', $validated['txn_hash'])
-                                                ->where('receiver_address', $receiver_address)
-                                                ->where('asset',$transaction->gateway_currency->currency_code)
-                                                ->where(function($query) {
-                                                    return $query->where('transaction_type',"Native")
-                                                                ->orWhere('transaction_type', "native");
-                                                })
-                                                ->where('status',PaymentGatewayConst::NOT_USED)
-                                                ->first();
+            ->where('receiver_address', $receiver_address)
+            ->where('asset', $transaction->gateway_currency->currency_code)
+            ->where(function ($query) {
+                return $query->where('transaction_type', "Native")
+                    ->orWhere('transaction_type', "native");
+            })
+            ->where('status', PaymentGatewayConst::NOT_USED)
+            ->first();
 
-        if(!$crypto_transaction) return back()->with(['error' => [__('Transaction hash is not valid! Please input a valid hash')]]);
+        if (!$crypto_transaction) return back()->with(['error' => [__('Transaction hash is not valid! Please input a valid hash')]]);
 
-        if($crypto_transaction->amount >= $transaction->total_payable == false) {
-            if(!$crypto_transaction) return back()->with(['error' => [__('Insufficient amount added. Please contact with system administrator')]]);
+        if ($crypto_transaction->amount >= $transaction->total_payable == false) {
+            if (!$crypto_transaction) return back()->with(['error' => [__('Insufficient amount added. Please contact with system administrator')]]);
         }
 
         DB::beginTransaction();
-        try{
+        try {
 
             // Update user wallet balance
             DB::table($transaction->creator_wallet->getTable())
-                ->where('id',$transaction->creator_wallet->id)
-                ->increment('balance',$transaction->receive_amount);
+                ->where('id', $transaction->creator_wallet->id)
+                ->increment('balance', $transaction->receive_amount);
 
             // update crypto transaction as used
             DB::table($crypto_transaction->getTable())->where('id', $crypto_transaction->id)->update([
@@ -354,8 +366,7 @@ class RechargeController extends Controller
             ]);
 
             DB::commit();
-
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             return back()->with(['error' => [__('Something went wrong! Please try again')]]);
         }

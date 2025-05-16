@@ -60,7 +60,7 @@
                                         </a>
                                     @else
                                         <a href="javascript:void(0);" class="profile-action-btn">
-                                            <img src="{{ asset('public/frontend/images/default/profile-default.webp') }}"
+                                            <img src="{{ asset('frontend/images/default/profile-default.webp') }}"
                                                 alt="img">
                                         </a>
                                     @endif
@@ -89,6 +89,18 @@
                                             <li>
                                                 <div class="title-area">
                                                     <a href="{{ setRoute('user.mobile.topup.automatic.index') }}">{{ __('Mobile Topup') }}</a>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="title-area">
+                                                    <a
+                                                        href="{{ setRoute('user.utility.bill.index') }}">{{ __('Utility Bill') }}</a>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="title-area">
+                                                    <a
+                                                        href="{{ setRoute('user.data.bundle.index') }}">{{ __('Data Bundle') }}</a>
                                                 </div>
                                             </li>
                                             <li>

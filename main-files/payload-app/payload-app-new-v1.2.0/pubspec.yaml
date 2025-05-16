@@ -1,0 +1,59 @@
+name: payloadui
+description: "A new Flutter project."
+
+publish_to: "none"
+
+version: 1.2.0+2
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  get: ^4.6.6
+  flutter_screenutil: ^5.9.3
+  permission_handler:
+  image_picker:
+  get_storage: ^2.1.1
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.16
+  flutter_spinkit:
+  logger:
+  http:
+  pin_code_fields: 8.0.1
+  intl:
+  flutter_inappwebview: ^6.1.5
+  flutter_animate:
+  dropdown_button2: ^2.3.9
+  dynamic_languages:
+    git:
+      url: https://github.com/appdevsx/dynamic_languages
+      ref: main
+  restart_app: ^1.3.2
+  dart_code_metrics: ^4.19.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:
+#  flutter_launcher_icons:
+#  change_app_package_name:
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/logo/app_launcher.png" #need change logo path
+
+flutter_gen:
+  output: lib/custom_assets/ # Optional (default: lib/gen/)
+  line_length: 80 # Optional (default: 80)
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/images/
+    - assets/logo/

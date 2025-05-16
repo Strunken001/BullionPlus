@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to EC2 instance on Production
+    name: Deploy to Production
     runs-on: ubuntu-latest
 
     steps:
@@ -19,17 +19,25 @@ jobs:
         with:
           php-version: "8.2.13"
 
-      - name: Install Dependencies
-        run: composer install --ignore-platform-reqs
+      - name: Install Composer Dependencies
+        run: composer install --ignore-platform-reqs --no-dev --optimize-autoloader
 
-      - name: Clear Cache Facade Value
-        run: php artisan cache:clear
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
 
-      - name: Clear Cache Config Value
-        run: php artisan config:clear
+      - name: Install NPM Dependencies
+        run: npm ci
 
-      - name: Clear Cache Route Value
-        run: php artisan route:clear
+      - name: Build Assets with Vite
+        run: npm run build
+
+      - name: Clear Cache
+        run: |
+          php artisan cache:clear
+          php artisan config:clear
+          php artisan route:clear
 
       - name: Deploy files
         uses: SamKirkland/FTP-Deploy-Action@4.0.0
@@ -37,4 +45,4 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./api.revocubespaces.com/
+          server-dir: ./bullion-plus.com/
