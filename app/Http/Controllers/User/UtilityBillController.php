@@ -133,7 +133,7 @@ class UtilityBillController extends Controller
                 'user_id'                       => $sender_wallet->user->id,
                 'wallet_id'                     => $authWallet->id,
                 'payment_gateway_currency_id'   => null,
-                'type'                          => $utility_bill_transaction['transaction']['billDetails']['type'],
+                'type'                          => NotificationConst::BILL_PAY,
                 'trx_id'                        => $trx_id,
                 'request_amount'                => $charges->amount,
                 'exchange_rate'                 => $charges->rate,

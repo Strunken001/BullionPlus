@@ -116,12 +116,6 @@
                                                     <a href="{{ setRoute('user.security.google.2fa') }}">{{ __('2FA Verification') }}</a>
                                                 </div>
                                             </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.security.google.2fa') }}">{{ __('2FA Verification') }}</a>
-                                                </div>
-                                            </li>
                                             @if ($basic_settings->kyc_verification)
                                                 <li>
                                                     <div class="title-area">

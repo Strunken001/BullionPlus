@@ -29,7 +29,7 @@
                 <div class="left-side">
                     <div class="copyright-text">
                         <p>{{ __('Copyright') }} &copy; {{ "2024" }},{{ __('All Right Reserved') }} <a
-                                href="{{ setRoute('frontend.index') }}"><span>{{ __('Payload') }}</span></a>
+                                href="{{ setRoute('frontend.index') }}"><span>{{ $basic_settings->site_name }}</span></a>
                         </p>
                     </div>
                 </div>

@@ -154,7 +154,7 @@ class DataBundleController extends Controller
                 'user_id'                       => $sender_wallet->user->id,
                 'wallet_id'                     => $authWallet->id,
                 'payment_gateway_currency_id'   => null,
-                'type'                          => DataBundleConst::TOPUP_BUNDLE,
+                'type'                          => NotificationConst::DATA_BUNDLE,
                 'trx_id'                        => $trx_id,
                 'request_amount'                => $charges->request_amount,
                 'exchange_rate'                 => $charges->exchange_rate,
