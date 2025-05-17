@@ -37,7 +37,7 @@
                                 </div>
                                 <div class="col-xl-6 col-lg-6 form-group">
                                     <label>{{ __('Data Bundle')}}<span>*</span></label>
-                                    <select id="bundle-select" class="select2-auto-tokenize" name="bundle_amount" required>
+                                    <select id="bundle-select" class="select2-auto-tokenize" name="amount" required>
                                         <option value="">{{ __('Select Bundle') }}</option>
                                     </select>
                                 </div>
@@ -152,8 +152,8 @@
             bundleSelect.empty();
             bundleSelect.append('<option value="">{{ __("Select Bundle") }}</option>');
 
-            if (operatorData && operatorData.localFixedAmountsDescriptions) {
-                Object.entries(operatorData.localFixedAmountsDescriptions).forEach(([amount, description]) => {
+            if (operatorData && operatorData.fixedAmountsDescriptions) {
+                Object.entries(operatorData.fixedAmountsDescriptions).forEach(([amount, description]) => {
                     bundleSelect.append(`<option value="${amount}">${description}</option>`);
                 });
             } else {

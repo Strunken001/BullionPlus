@@ -66,8 +66,10 @@ class DataBundleController extends Controller
 
         $operators = collect($get_operators);
 
-        $operators = array_values($operators->where('bundle', true)->toArray());
+        // $operators = array_values($operators->where('bundle', true)->toArray());
+        $operators = array_values($operators->where('data', true)->toArray());
 
+        // 
         // cache data for 20 min
         // cache()->driver("file")->put($cache_key, $operators, 14200);
 
@@ -118,6 +120,7 @@ class DataBundleController extends Controller
 
             $id = $this->insertTransaction($trx_ref, auth()->user()->wallets, $charges, $operator, $topup['response']['recipientPhone'], $topup['response']);
         } catch (Exception $e) {
+            Log::error('Data Bundle Error: ' . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return redirect()->route("user.dashboard")->with(['error' => [__($message)]]);

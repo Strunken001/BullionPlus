@@ -39,7 +39,7 @@
                                     @else
                                         <div class="avatar-preview">
                                             <div class="profilePicPreview bg_img"
-                                                data-background="{{ asset('frontend/images/element/user.png') }}">
+                                                data-background="{{ asset('public/frontend/images/element/user.png') }}">
                                             </div>
                                         </div>
                                     @endif

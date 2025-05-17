@@ -63,7 +63,7 @@
                                         </a>
                                     @else
                                         <a href="javascript:void(0);" class="profile-action-btn">
-                                            <img src="{{ asset('frontend/images/default/profile-default.webp') }}"
+                                            <img src="{{ asset('public/frontend/images/default/profile-default.webp') }}"
                                                 alt="img">
                                         </a>
                                     @endif

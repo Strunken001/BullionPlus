@@ -69,13 +69,17 @@ class UtilityBillController extends Controller
             $payment = (new UtilityPaymentHelper())->getInstance()->payBill($request->all());
             $txr_ref = $payment['referenceId'];
 
+            sleep(20);
+
             $utility_bill_transaction = (new UtilityPaymentHelper())->getInstance()->getUtilityBillTransaction($txr_ref);
 
             $charges = json_decode($request->charges);
 
+            $account_number = $utility_bill_transaction['transaction']['billDetails']['subscriberDetails']['accountNumber'];
 
-            $this->insertTransaction($txr_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $utility_bill_transaction['transaction']['billDetails']['subscriberDetails']['accountNumber']);
+            $this->insertTransaction($txr_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
         } catch (Exception $e) {
+            Log::error("Utility Bill Payment Error: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             // return Response::error([$message], [], 500);
@@ -90,6 +94,10 @@ class UtilityBillController extends Controller
         $info = $request->all();
         try {
             $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($info);
+
+            if ($charges['total_payable'] < $charges['min_limit_calc'] || $charges['total_payable'] > $charges['max_limit_calc']) {
+                throw new Exception("Please follow the transaction limit!");
+            }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
@@ -102,17 +110,20 @@ class UtilityBillController extends Controller
     {
         if (isset($utility_bill_transaction) && isset($utility_bill_transaction['transaction']['status']) && $utility_bill_transaction['transaction']['status'] === "SUCCESSFUL") {
             $status = PaymentGatewayConst::STATUSSUCCESS;
+        } else if (isset($utility_bill_transaction) && isset($utility_bill_transaction['transaction']['status']) && $utility_bill_transaction['transaction']['status'] === "PROCESSING") {
+            $status = PaymentGatewayConst::STATUSPENDING;
         }
 
         $trx_id = $trx_id;
         $authWallet = $sender_wallet;
-        $afterCharge =  ($authWallet->balance - $charges->merchant_pay_amount);
+        $afterCharge =  ($authWallet->balance - $charges->total_payable);
         $details = [
             'name'                  => $utility_bill_transaction['transaction']['billDetails']['billerName'] ?? '',
             'biller_id'             => $utility_bill_transaction['transaction']['billDetails']['billerId'] ?? '',
             'type'                  => $utility_bill_transaction['transaction']['billDetails']['type'] ?? '',
             'service_type'          => $utility_bill_transaction['transaction']['billDetails']['serviceType'] ?? '',
             'subscription_details'  => $utility_bill_transaction['transaction']['billDetails']['subscriptionDetails'] ?? '',
+            'billDetails'           => $utility_bill_transaction['transaction']['billDetails'],
             'charges'               => $charges,
             'api_response'          => $utility_bill_transaction ?? [],
         ];
@@ -124,8 +135,8 @@ class UtilityBillController extends Controller
                 'payment_gateway_currency_id'   => null,
                 'type'                          => $utility_bill_transaction['transaction']['billDetails']['type'],
                 'trx_id'                        => $trx_id,
-                'request_amount'                => $charges->request_amount,
-                'exchange_rate'                 => $charges->exchange_rate,
+                'request_amount'                => $charges->amount,
+                'exchange_rate'                 => $charges->rate,
                 'percent_charge'                => $charges->percent_charge,
                 'fixed_charge'                   => $charges->fixed_charge,
                 'total_charge'                  => $charges->total_charge_calc,
@@ -152,11 +163,12 @@ class UtilityBillController extends Controller
                         'trx_id'            => $trx_id,
                         'operator_name'     => $operator['name'] ?? '',
                         'account_number'    => $account_number,
-                        'request_amount'    => get_amount($charges->request_amount, $charges->bundle_currency),
-                        'exchange_rate'     => get_amount(1, $charges->bundle_currency) . " = " . get_amount($charges->exchange_rate, $charges->wallet_currency_code, 4),
+                        'request_amount'    => get_amount($charges->amount, $charges->bundle_currency),
+                        'exchange_rate'     => get_amount(1, $charges->bundle_currency) . " = " . get_amount($charges->rate, $charges->wallet_currency_code, 4),
                         'charges'           => get_amount($charges->total_charge_calc, $charges->wallet_currency_code),
                         'payable'           => get_amount($charges->total_payable, $charges->wallet_currency_code),
                         'current_balance'   => get_amount($sender_wallet->balance, $charges->wallet_currency_code),
+                        'token'             => $utility_bill_transaction['transaction']['billDetails']['pinDetails']['token'] ?? "--",
                         'status'            => __("Successful"),
                     ];
                     try {
@@ -167,11 +179,13 @@ class UtilityBillController extends Controller
                 //admin notification
                 $this->adminNotificationAutomatic($trx_id, $charges, $user, $account_number, $utility_bill_transaction);
             } catch (Exception $e) {
+                Log::error("Utility Bill Payment Error: " . $e->getMessage());
                 return back()->with(['error' => [__("Something went wrong! Please try again.")]]);
             }
 
             DB::commit();
         } catch (Exception $e) {
+            Log::error("Utility Bill Payment Error: " . $e->getMessage());
             DB::rollBack();
             throw new Exception(__("Something went wrong! Please try again."));
         }
@@ -232,25 +246,27 @@ class UtilityBillController extends Controller
     //admin notification
     public function adminNotificationAutomatic($trx_id, $charges, $user, $account_number, $utility_bill_transaction)
     {
-        $exchange_rate = get_amount(1, $charges->amount) . " = " . get_amount($charges->exchange_rate, $charges->wallet_currency_code, 4);
+        $exchange_rate = get_amount(1, $charges->amount) . " = " . get_amount($charges->rate, $charges->wallet_currency_code, 4);
         if (isset($utility_bill_transaction) && isset($utility_bill_transaction['transaction']['status']) && $utility_bill_transaction['transaction']['status'] === "SUCCESSFUL") {
             $status = PaymentGatewayConst::STATUSSUCCESS;
+        } else if (isset($utility_bill_transaction) && isset($utility_bill_transaction['transaction']['status']) && $utility_bill_transaction['transaction']['status'] === "PROCESSING") {
+            $status = PaymentGatewayConst::STATUSPENDING;
         }
 
         $notification_content = [
             //email notification
-            'subject' => __("Utility Payment For") . " " . $charges['name'] . ' (' . $account_number . ' )',
-            'greeting' => __("Utility Payment request successful") . " (" . $charges['name'] . "-" . $account_number . " )",
-            'email_content' => __("trx_id") . " : " . $trx_id . "<br>" . __("Account Number") . " : " . $account_number . "<br>" . __("Utility Bill") . " : " . $charges['name'] . "<br>" . __("request Amount") . " : " . get_amount($charges->amount, $charges->bundle_currency) . "<br>" . __("Exchange Rate") . " : " . $exchange_rate . "<br>" . __("Fees & Charges") . " : " . get_amount($charges->total_charge_calc, $charges->bundle_currency) . "<br>" . __("Total Payable Amount") . " : " . get_amount($charges->total_payable, $charges->bundle_currency) . "<br>" . __("Status") . " : " . __($status),
+            'subject' => __("Utility Payment For") . " " . $charges->name . ' (' . $account_number . ' )',
+            'greeting' => __("Utility Payment request successful") . " (" . $charges->name . "-" . $account_number . " )",
+            'email_content' => __("trx_id") . " : " . $trx_id . "<br>" . __("Account Number") . " : " . $account_number . "<br>" . __("Utility Bill") . " : " . $charges->name . "<br>" . __("request Amount") . " : " . get_amount($charges->amount, $charges->bundle_currency) . "<br>" . __("Exchange Rate") . " : " . $exchange_rate . "<br>" . __("Fees & Charges") . " : " . get_amount($charges->total_charge_calc, $charges->bundle_currency) . "<br>" . __("Total Payable Amount") . " : " . get_amount($charges->total_payable, $charges->bundle_currency) . "<br>" . __("Status") . " : " . __($status),
 
             //push notification
             'push_title' => __("Utility Payment request successful") . " (" . userGuard()['type'] . ")",
-            'push_content' => __('trx_id') . " : " . $trx_id . "," . __("request Amount") . " : " . get_amount($charges->amount, $charges->bundle_currency) . "," . __("Operator Name") . " : " . $charges['name'] . "," . __("Account Number") . " : " . $account_number,
+            'push_content' => __('trx_id') . " : " . $trx_id . "," . __("request Amount") . " : " . get_amount($charges->amount, $charges->bundle_currency) . "," . __("Operator Name") . " : " . $charges->name . "," . __("Account Number") . " : " . $account_number,
 
             //admin db notification
             'notification_type' =>  NotificationConst::BILL_PAY,
             'admin_db_title' => "Mobile topup request successful" . " (" . userGuard()['type'] . ")",
-            'admin_db_message' => "Transaction ID" . " : " . $trx_id . "," . "Request Amount" . " : " . get_amount($charges->amount, $charges->bundle_currency) . "," . "Operator Name" . " : " . $charges['name'] . "," . "Account Number" . " : " . $account_number . "," . "Total Payable Amount" . " : " . get_amount($charges->total_payable, $charges->wallet_currency_code) . " (" . $user->email . ")"
+            'admin_db_message' => "Transaction ID" . " : " . $trx_id . "," . "Request Amount" . " : " . get_amount($charges->amount, $charges->bundle_currency) . "," . "Operator Name" . " : " . $charges->name . "," . "Account Number" . " : " . $account_number . "," . "Total Payable Amount" . " : " . get_amount($charges->total_payable, $charges->wallet_currency_code) . " (" . $user->email . ")"
         ];
         try {
             //notification

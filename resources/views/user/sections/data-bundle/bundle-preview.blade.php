@@ -31,7 +31,7 @@
                             <span class="badge badge--base">{{ __('Price') }}</span>
                         </div>
                         <div class="plan-quantity">
-                            <span>{{ $info['bundle_amount'] }} {{ $charges['bundle_currency'] }}</span>
+                            <span>{{ $info['amount'] }} {{ $charges['bundle_currency'] }}</span>
                         </div>
                     </div>
                     <div class="plan-preview">
@@ -47,7 +47,7 @@
                             <span class="badge badge--base">{{ __('Total Payable') }}</span>
                         </div>
                         <div class="plan-quantity">
-                            <span>{{ $info['bundle_amount'] * $charges['exchange_rate'] }} {{ $charges['wallet_currency_code'] }}</span>
+                            <span>{{ $info['amount'] * $charges['exchange_rate'] }} {{ $charges['wallet_currency_code'] }}</span>
                         </div>
                     </div>
                     <form action="{{ setRoute('user.data.bundle.buy') }}" method="POST">
@@ -57,8 +57,8 @@
                                 <label>{{ __('For Number') }} :</label>
                             </div>
                             <input type="number" name="phone" id="number-input" class="form--control"
-                                value="{{ auth()->user()->full_mobile }}">
-                            <input name="request_amount" class="d-none" value="{{ $info['bundle_amount'] }}">
+                                value="{{ get_country_phone_code_by_iso2($info['mobile_code']) }}{{ $info['mobile_number'] }}">
+                            <input name="amount" class="d-none" value="{{ $info['amount'] }}">
                             <input name="operator_id" class="d-none" value="{{ $charges['operator']['operatorId'] }}">
                             {{-- <input name="geo_location" class="d-none" value="{{ $info['geo_location'] }}"> --}}
                             <input name="iso2" class="d-none" value="{{ $info['mobile_code'] }}">

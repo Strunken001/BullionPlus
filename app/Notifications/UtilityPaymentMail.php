@@ -63,6 +63,7 @@ class UtilityPaymentMail extends Notification
             ->line(__("Current Balance") . ": " . $data->current_balance)
             ->line(__("Status") . ": " . $data->status)
             ->line(__("Date And Time") . ": " . $dateTime)
+            ->line(__("Token") . ": " . $data->token)
             ->line(__('Thank you for using our application!'));
     }
 

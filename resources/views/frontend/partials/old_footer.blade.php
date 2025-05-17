@@ -52,7 +52,7 @@
         </div>
         <div class="footer-bottom-area">
             <div class="footer-logo">
-                <a class="site-logo" href="index.html"><img src="{{ asset('frontend/images/logo/logo.png') }}" alt="logo"></a>
+                <a class="site-logo" href="index.html"><img src="{{ asset('public/frontend/images/logo/logo.png') }}" alt="logo"></a>
             </div>
             <div class="copyright-area">
                 <p>Copyright ©2022. All Rights Reserved. — Designed with love by <span>AppDevs</span></p>

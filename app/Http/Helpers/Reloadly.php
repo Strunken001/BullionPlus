@@ -370,7 +370,7 @@ class Reloadly
         }
 
         if (!$isAmountLocal) {
-            $amount = $amount * $rate; // convert amount to local amount
+            $amount = $request_amount * $rate; // convert amount to local amount
         }
 
         $user_wallet        = auth()->user()->wallets; // GBP
@@ -380,7 +380,7 @@ class Reloadly
         $merchant_currency  = ExchangeRate::where('currency_code', $operator['senderCurrencyCode'])->first(); // BDT
         $default_currency   = Currency::default(); // USD
 
-        $merchant_pay_amount        = $amount / $rate;
+        $merchant_pay_amount        = $request_amount;
         $default_currency_amount    = $merchant_pay_amount / $merchant_currency->rate; // USD
 
         $exchange_wallet_amount     = $default_currency_amount * $wallet_currency->rate; // GBP
@@ -397,7 +397,7 @@ class Reloadly
         $fixed_charge_calc      = $fixed_charge * $wallet_currency->rate;
 
         $percent_charge         = $transaction_charges->percent_charge;
-        $percent_charge_calc    = (($amount / 100) * $percent_charge) * $exchange_rate;
+        $percent_charge_calc    = (($request_amount / 100) * $percent_charge) * $exchange_rate;
 
         $total_charge_calc      = $fixed_charge_calc + $percent_charge_calc;
         $total_payable          = $exchange_wallet_amount + $total_charge_calc;
@@ -659,7 +659,7 @@ class Reloadly
         }
 
         $api_topup = $this->sendTopUpRequest([
-            'amount'            => $request->request_amount,
+            'amount'            => $request->amount,
             'customIdentifier'  => $request->trx_ref,
             'operatorId'        => $operator['id'],
             'recipientPhone'    => [
@@ -767,7 +767,7 @@ class Reloadly
         return $response;
     }
 
-    public function getUtilityBillers(string $country_iso2, ?string $type, ?string $service_type)
+    public function getUtilityBillers(string $country_iso2, ?string $type, ?string $service_type, ?string $biller_id)
     {
         $credentials    = $this->credentials;
 
@@ -782,6 +782,7 @@ class Reloadly
             'countryISOCode' => $country_iso2,
             'type'          => $type,
             'serviceType'   => $service_type,
+            'id'            => $biller_id,
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $response->json()['message'] ?? $exception->getMessage();
             throw new Exception($message);
@@ -808,6 +809,7 @@ class Reloadly
             'referenceId' => $request_data['tx_ref'],
             'useLocalAmount' => $request_data['useLocalAmount'],
         ])->throw(function (Response $response, RequestException $exception) {
+
             $message = $response->json()['message'] ?? $exception->getMessage();
             throw new Exception($message);
         })->json();
@@ -874,7 +876,7 @@ class Reloadly
         $percent_charge         = $transaction_charges->percent_charge;
         $percent_charge_calc    = (($amount / 100) * $percent_charge) * $rate;
 
-        $merchant_pay_amount        = $amount / $rate;
+        $merchant_pay_amount        = $amount;
         $default_currency_amount    = $merchant_pay_amount / $merchant_currency->rate; // USD
 
         $exchange_wallet_amount     = $default_currency_amount * $wallet_currency->rate; // GBP
