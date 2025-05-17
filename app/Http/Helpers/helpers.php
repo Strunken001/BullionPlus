@@ -100,6 +100,22 @@ function get_country_phone_code($country)
     return $phone_code;
 }
 
+function get_country_phone_code_by_iso2($iso2)
+{
+    $countries = json_decode(file_get_contents(resource_path('world/countries.json')), true);
+    $phone_code = "";
+    foreach ($countries as $item) {
+        if ($item['iso2'] == $iso2) {
+            $phone_code = $item['phone_code'];
+        }
+    }
+    if ($phone_code == "") {
+        throw new Exception("Sorry, country (" . $iso2 . ") is not available in our list");
+    }
+    $phone_code = str_replace("+", "", $phone_code);
+    return $phone_code;
+}
+
 function get_all_timezones()
 {
     $countries = json_decode(file_get_contents(resource_path('world/countries.json')), true);
@@ -347,19 +363,19 @@ function get_image($image_name, $path_type = null, $image_type = null, $size = n
 {
 
     if ($image_type == 'profile') {
-        $image =  asset(files_path('profile-default')->path);
-        // $image =  asset('public/' . files_path('profile-default')->path);
+        // $image =  asset(files_path('profile-default')->path);
+        $image =  asset('public/' . files_path('profile-default')->path);
     } else {
-        $image =  asset(files_path('default')->path);
-        // $image =  asset('public/' . files_path('default')->path);
+        // $image =  asset(files_path('default')->path);
+        $image =  asset('public/' . files_path('default')->path);
     }
     if ($image_name != null) {
         if ($path_type != null) {
             $image_path = files_path($path_type)->path;
             $image_link = $image_path . "/" . $image_name;
             if (file_exists(public_path($image_link))) {
-                $image = asset($image_link);
-                // $image = asset('public/' . $image_link);
+                // $image = asset($image_link);
+                $image = asset('public/' . $image_link);
             }
         }
     }

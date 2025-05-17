@@ -4,7 +4,7 @@
 @endpush
 
 @section('content')
-    <section class="account-section bg_img" data-background="{{ asset('frontend/images/element/account.png') }}">
+    <section class="account-section bg_img" data-background="{{ asset('public/frontend/images/element/account.png') }}">
         <div class="right float-end">
             <div class="account-header text-center">
                 <a class="site-logo" href="{{ setroute('frontend.index') }}">

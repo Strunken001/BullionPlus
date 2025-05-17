@@ -84,7 +84,11 @@
                     if (response.status) {
                         let options = '<option value="">{{ __("Select Utility Bill") }}</option>';
                         $.each(response.data.content, function (index, provider) {
-                            options += `<option value="${provider.id}">${provider.name}</option>`;
+                            options += `<option value="${provider.id}" 
+                                data-min="${provider.minLocalTransactionAmount}" 
+                                data-max="${provider.maxLocalTransactionAmount}">
+                                ${provider.name}
+                            </option>`;
                         });
                         providerSelect.html(options);
                     } else {
@@ -95,6 +99,18 @@
                     providerSelect.html('<option value="">{{ __("Failed to load providers") }}</option>');
                 }
             });
+        });
+
+        $('.card-form').on('submit', function (e) {
+            const selectedOption = $('#provider-select option:selected');
+            const min = parseFloat(selectedOption.data('min'));
+            const max = parseFloat(selectedOption.data('max'));
+            const amount = parseFloat($('input[name="amount"]').val());
+
+            if (isNaN(amount) || amount < min || amount > max) {
+                e.preventDefault();
+                alert(`Amount must be between ${min} and ${max} NGN`);
+            }
         });
 
         // Trigger initial load
