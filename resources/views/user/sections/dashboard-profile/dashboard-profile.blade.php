@@ -53,7 +53,7 @@
                 <div class="col-xl-5 col-lg-4 col-md-12 col-sm-12 mb-30">
                     <div class="user-balance-details">
                         <div class="row mb-20-none">
-                            <div class="col-lg-12 mb-20">
+                            <div class="col-lg-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{ $mobile_topup_count }}</span>
@@ -64,7 +64,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-12 mb-20">
+                            <div class="col-lg-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{$giftcard_count }}</span>
@@ -75,7 +75,29 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-12 mb-20">
+                            <div class="col-lg-6 mb-20">
+                                <div class="available-balance">
+                                    <div class="left">
+                                        <span>{{$utility_payment_count }}</span>
+                                        <p>{{ __('Total Utility Payment') }}</p>
+                                    </div>
+                                    <div class="right">
+                                        <i class="las fas fa-tint"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-20">
+                                <div class="available-balance">
+                                    <div class="left">
+                                        <span>{{$data_bundle_count }}</span>
+                                        <p>{{ __('Total Data Bundle') }}</p>
+                                    </div>
+                                    <div class="right">
+                                        <i class="las fas fa-mobile-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{ __($add_money_count) }}</span>
