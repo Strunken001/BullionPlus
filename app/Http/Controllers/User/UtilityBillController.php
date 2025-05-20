@@ -39,13 +39,12 @@ class UtilityBillController extends Controller
     {
         try {
             $country_code = $request->iso2;
-            $type = $request->type;
-            $service_type = $request->service_type;
 
             $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers(
                 $country_code,
-                $type,
-                $service_type
+                null,
+                null,
+                null,
             );
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
