@@ -5,10 +5,10 @@
                 <span>
                     <img src="{{ get_fav($basic_settings) }}" data-white_img="{{ get_fav($basic_settings, 'white') }}"
                         data-dark_img="{{ get_fav($basic_settings, 'dark') }}" alt="logo">
-                    {{ __('My Offer') }}
+                    {{ __('Select a service below') }}
                 </span>
             </div>
-            <div class="offer-page-area">
+            {{-- <div class="offer-page-area">
                 <div class="offer-page-area-header">
                     <div class="row mb-20-none d-flex justify-content-between">
                         <div class="col-lg-6 col-md-6 col-sm-6 mb-20 country-option">
@@ -36,7 +36,35 @@
                         </li>
                     </ul>
                 </div>
-            </div>
+            </div> --}}
+
+            <section class="service-section">
+                <div class="container">
+                    <div class="service-item-group">
+                        <div class="row mb-20-none">
+                            @forelse ($services->value->items ?? [] as $value)
+                            <div class="col-lg-4 col-md-6 mb-20">
+                                <div class="service-item-area">
+                                    <a href="{{ setRoute(@$value->link) }}">
+                                    <div class="service-icon">
+                                        <div class="plan-item">
+                                            <img src="{{ get_image($value->image, "site-section") }}" alt="icon">
+                                        </div>
+                                        <div class="service-details">
+                                            <h3 class="title">{{ __(@$value->language->$defualt->title ?? @$value->language->$default_lng->title) }}</h3>
+                                            <p>{{ __(@$value->language->$defualt->description ?? @$value->language->$default_lng->description) }}</p>
+                                        </div>
+                                    </div>
+                                    </a>
+                                </div>
+                            </div>
+                            @empty
+
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 </section>

@@ -51,13 +51,14 @@ class GiftCardController extends Controller
             'footer'
         ));
     }
+
     public function giftCards()
     {
         $page_title = __("Gift Cards");
         $products = (new GiftCardHelper())->getProducts([
             'size' => 500,
             'page' => 0
-        ], true);
+        ]);
         $products = $products['content'];
         $perPage = 18;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
@@ -74,6 +75,7 @@ class GiftCardController extends Controller
             'section_data'
         ));
     }
+
     public function details($productId)
     {
         $page_title = __("Gift Card Details");
@@ -95,6 +97,7 @@ class GiftCardController extends Controller
             'footer'
         ));
     }
+
     public function giftCardOrder(Request $request)
     {
         try {
@@ -241,6 +244,7 @@ class GiftCardController extends Controller
         }
         return $id;
     }
+
     public function insertBuyCardCharge($id, $charges, $user, $giftCard)
     {
         DB::beginTransaction();
@@ -281,12 +285,14 @@ class GiftCardController extends Controller
             throw new Exception(__("Something went wrong! Please try again"));
         }
     }
+
     public function updateSenderWalletBalance($authWallet, $afterCharge)
     {
         $authWallet->update([
             'balance'   => $afterCharge,
         ]);
     }
+
     public function giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country)
     {
         $exchange_rate = $sender_country->rate / $receiver_country->rate;
@@ -307,6 +313,7 @@ class GiftCardController extends Controller
 
         return $data;
     }
+
     public function giftSearch()
     {
         $page_title = __("Gift Cards");
@@ -331,6 +338,7 @@ class GiftCardController extends Controller
             'section_data'
         ));
     }
+
     public function webhookInfo(Request $request)
     {
         $response_data = $request->all();
@@ -361,6 +369,7 @@ class GiftCardController extends Controller
 
         logger("Gift Card Order Success!", ['uuid' => $custom_identifier, 'status' => $response_data['data']['status']]);
     }
+
     //admin notification
     public function adminNotification($trx_id, $charges, $user, $data, $status)
     {
@@ -453,5 +462,19 @@ class GiftCardController extends Controller
 
         $success = ['success' => [__('Data collected successfully!')]];
         return Response::success($success, $wallet->balance, 200);
+    }
+
+    public function getGiftcardProducts(Request $request)
+    {
+        $products = (new GiftCardHelper())->getProducts([
+            'size' => $request->size ?? 20,
+            'page' => $request->page ?? 1,
+            'countryCode' => $request->iso2
+        ]);
+
+        return response()->json([
+            'message' => "Giftcards returned successfully",
+            'data' => $products
+        ], 200);
     }
 }

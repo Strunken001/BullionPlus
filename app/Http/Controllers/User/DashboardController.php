@@ -53,6 +53,9 @@ class DashboardController extends Controller
 
         $bundles = [];
 
+        $section_slug = Str::slug(SiteSectionConst::SERVICE_PAGE_SECTION);
+        $services       = SiteSections::getData($section_slug)->first();
+
         return view('user.page.dashboard', compact(
             "page_title",
             "footer",
@@ -63,7 +66,8 @@ class DashboardController extends Controller
             "add_money_count",
             "operator_id",
             "utility_payment_count",
-            "data_bundle_count"
+            "data_bundle_count",
+            "services"
         ));
     }
 

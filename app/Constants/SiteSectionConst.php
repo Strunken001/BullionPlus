@@ -2,7 +2,8 @@
 
 namespace App\Constants;
 
-class SiteSectionConst{
+class SiteSectionConst
+{
     const AUTH_SECTION              = "Auth Section";
     const BANNER_SECTION            = "Banner Section";
     const BRAND_SECTION             = "Brand Section";
@@ -17,6 +18,7 @@ class SiteSectionConst{
     const BLOG_SECTION              = "Blog Section";
     const GIFT_CARD_SECTION         = "Gift Card Section";
     const AIR_TIME_SECTION         = "Air Time Section";
+    const PRICING_SECTION          = "Pricing Section";
 
     const FEATURE_SECTION           = "Feature Section";
     const CLIENT_FEEDBACK_SECTION   = "Client Feedback Section";

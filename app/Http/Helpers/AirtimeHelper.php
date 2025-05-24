@@ -9,7 +9,8 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-class AirtimeHelper{
+class AirtimeHelper
+{
 
     /**
      * Active API
@@ -61,15 +62,15 @@ class AirtimeHelper{
     {
         $api = $this->api;
 
-        if(!$api) throw new Exception("Airtime Provider Not Found!");
+        if (!$api) throw new Exception("Airtime Provider Not Found!");
 
         $config['client_id']    = $api->credentials?->client_id;
         $config['secret_key']   = $api->credentials?->secret_key;
         $config['env']          = $api->env;
 
-        if($config['env'] == GlobalConst::ENV_PRODUCTION) {
+        if ($config['env'] == GlobalConst::ENV_PRODUCTION) {
             $config['request_url']  = $api->credentials?->production_base_url;
-        }else {
+        } else {
             $config['request_url']  = $api->credentials?->sandbox_base_url;
         }
 
@@ -82,7 +83,7 @@ class AirtimeHelper{
      */
     public function accessToken()
     {
-        if(!$this->config) $this->setConfig();
+        if (!$this->config) $this->setConfig();
 
         $api = $this->api;
 
@@ -94,12 +95,12 @@ class AirtimeHelper{
 
         $grant_type = "client_credentials";
 
-        $response = Http::post($request_endpoint,[
+        $response = Http::post($request_endpoint, [
             "client_id" => $client_id,
             "client_secret" => $secret_key,
             "grant_type" => $grant_type,
             "audience" => $request_url,
-        ])->throw(function(Response $response, RequestException $exception) {
+        ])->throw(function (Response $response, RequestException $exception) {
             $response = $response->json();
 
             $message = $response['message'];
@@ -108,7 +109,6 @@ class AirtimeHelper{
             $error_message = $message . " [$message_type]";
 
             throw new Exception($error_message);
-
         })->json();
 
 
@@ -122,74 +122,74 @@ class AirtimeHelper{
     /**
      * Resolve cache key
      */
-    public function resolveCacheKey(string $key):string
+    public function resolveCacheKey(string $key): string
     {
         $api = $this->api;
 
         $provider = $api->provider;
         $env = $api->env;
 
-        $cache_key = str_replace(['{provider}','{env}'],[$provider, $env], $key);
+        $cache_key = str_replace(['{provider}', '{env}'], [$provider, $env], $key);
 
         return $cache_key;
     }
     /**
      * get all billers information
      */
-    public function getCountries($iso=null):array
+    public function getCountries($iso = null): array
     {
-        if(!$this->access_token) $this->accessToken();
+        if (!$this->access_token) $this->accessToken();
 
         $access_token = $this->access_token;
 
         $base_url = $this->config['request_url'];
 
-        $request_endpoint = $base_url .'/countries'.($iso? '/'.$iso:'');
-        try{
+        $request_endpoint = $base_url . '/countries' . ($iso ? '/' . $iso : '');
+        try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer " . $access_token,
                 "Accept: application/com.reloadly.topups-v1+json",
-            ])->get($request_endpoint)->throw(function(Response $response, RequestException $exception) {
+            ])->get($request_endpoint)->throw(function (Response $response, RequestException $exception) {
                 // throw new Exception($exception->getMessage());
             })->json();
-        }catch(RequestException $e){
+        } catch (RequestException $e) {
             $error_response = json_decode($e->response->body(), true);
             $data = [
                 'status' => false,
-                'message' => $error_response['message']??'',
-                'errorCode' => $error_response['errorCode']??'',
+                'message' => $error_response['message'] ?? '',
+                'errorCode' => $error_response['errorCode'] ?? '',
             ];
             return $data;
         }
-        if(!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
+        if (!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
         return $response;
     }
     /**
      * get all billers information
      */
-    public function autoDetectOperator($phone,$iso)
+    public function autoDetectOperator($phone, $iso)
     {
-        if(!$this->access_token) $this->accessToken();
+        if (!$this->access_token) $this->accessToken();
         $access_token = $this->access_token;
         $base_url = $this->config['request_url'];
-        $request_endpoint = $base_url . "/operators/auto-detect/phone/$phone/country-code/".$iso."?&suggestedAmountsMap=true";
-        try{
+        $request_endpoint = $base_url . "/operators/auto-detect/phone/$phone/country-code/" . $iso . "?&suggestedAmountsMap=true";
+        try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer " . $access_token,
                 "Accept: application/com.reloadly.utilities-v1+json",
-            ])->get($request_endpoint)->throw(function(Response $response, RequestException $exception) {
+            ])->get($request_endpoint)->throw(function (Response $response, RequestException $exception) {
                 // throw new Exception($exception->getMessage());
             })->json();
-        }catch(RequestException $e){
+        } catch (RequestException $e) {
             $error_response = json_decode($e->response->body(), true);
             $data = [
                 'status' => false,
-                'message' => $error_response['message']??'',
-                'errorCode' => $error_response['errorCode']??'',
+                'message' => $error_response['message'] ?? '',
+                'errorCode' => $error_response['errorCode'] ?? '',
             ];
             return $data;
         }
-        if(!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
+        if (!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
         return $response;
     }
     /**
@@ -197,57 +197,91 @@ class AirtimeHelper{
      */
     public function makeTopUp(array $data)
     {
-        if(!$this->access_token) $this->accessToken();
+        if (!$this->access_token) $this->accessToken();
 
         $base_url = $this->config['request_url'];
         $endpoint = $base_url . "/topups";
 
-        try{
+        try {
             $response = Http::withHeaders([
                 "Accept: application/com.reloadly.topups-v1+json",
                 "Authorization" => "Bearer " . $this->access_token,
                 "Content-Type: application/json"
-            ])->post($endpoint, $data)->throw(function(Response $response, RequestException $exception) {
+            ])->post($endpoint, $data)->throw(function (Response $response, RequestException $exception) {
                 // throw new Exception($exception->getMessage());
             })->json();
-        }catch(RequestException $e){
+        } catch (RequestException $e) {
             $error_response = json_decode($e->response->body(), true);
             $data = [
                 'status' => false,
-                'message' => $error_response['message']??'',
-                'errorCode' => $error_response['errorCode']??'',
+                'message' => $error_response['message'] ?? '',
+                'errorCode' => $error_response['errorCode'] ?? '',
             ];
             return $data;
         }
 
-        if(!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
+        if (!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
 
         return $response;
     }
-   /**
+    /**
      * get all billers information
      */
     public function getTransaction($id)
     {
-        if(!$this->access_token) $this->accessToken();
+        if (!$this->access_token) $this->accessToken();
         $access_token = $this->access_token;
         $base_url = $this->config['request_url'];
-        $request_endpoint = $base_url . "/transactions"."/".$id;
-        try{
+        $request_endpoint = $base_url . "/transactions" . "/" . $id;
+        try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer " . $access_token,
                 "Accept: application/com.reloadly.utilities-v1+json",
-            ])->get($request_endpoint)->throw(function(Response $response, RequestException $exception) {
+            ])->get($request_endpoint)->throw(function (Response $response, RequestException $exception) {
                 throw new Exception($exception->getMessage());
             })->json();
-        }catch(Exception $e){
-            $data =[
-                'status' =>false,
+        } catch (Exception $e) {
+            $data = [
+                'status' => false,
                 'message' => $e->getMessage()
             ];
             return $data;
         }
-        if(!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
+        if (!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
+        return $response;
+    }
+
+    public function getOperators(array $filters = [])
+    {
+        $base_url = $this->config['request_url'];
+        $endpoint = rtrim($base_url, "/") . "/operators";
+        $access_token = $this->access_token;
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.topups-v1+json",
+        ])->get($endpoint, $filters)->throw(function (Response $response, RequestException $exception) {
+            $message = $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response;
+    }
+
+    public function getOperatorsByCountry(string $country_iso2, $filters = [])
+    {
+        $base_url = $base_url = $this->config['request_url'];
+        $endpoint = rtrim($base_url, "/") . "/operators/countries/$country_iso2";
+        $access_token = $this->access_token;
+
+        $response = Http::timeout(180)->withHeaders([
+            'Authorization' => "Bearer " . $access_token,
+            'accept'        => "application/com.reloadly.topups-v1+json",
+        ])->get($endpoint, $filters)->throw(function (Response $response, RequestException $exception) {
+            $message = $response->json()['message'] ?? $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
         return $response;
     }
 

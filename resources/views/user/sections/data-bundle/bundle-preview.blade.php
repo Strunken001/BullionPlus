@@ -59,10 +59,16 @@
                             <input type="number" name="phone" id="number-input" class="form--control"
                                 value="{{ get_country_phone_code_by_iso2($info['mobile_code']) }}{{ $info['mobile_number'] }}">
                             <input name="amount" class="d-none" value="{{ $info['amount'] }}">
-                            <input name="operator_id" class="d-none" value="{{ $charges['operator']['operatorId'] }}">
+                            @if ($info['mobile_code'] === "NG")
+                                <input name="service_id" class="d-none" value="{{ $info['provider'] }}">
+                                <input name="variation_code" class="d-none" value="{{ $info['variation_code'] }}">
+                            @else 
+                                <input name="operator_id" class="d-none" value="{{ $charges['operator']['operatorId'] }}">
+                            @endif
                             {{-- <input name="geo_location" class="d-none" value="{{ $info['geo_location'] }}"> --}}
                             <input name="iso2" class="d-none" value="{{ $info['mobile_code'] }}">
                             <input name="charges" class="d-none" value="{{ json_encode($charges) }}">
+                            <input name="info" class="d-none" value="{{ json_encode($info) }}" >
                             <div class="mobile-icon">
                                 <i class="las la-mobile"></i>
                             </div>

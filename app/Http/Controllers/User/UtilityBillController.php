@@ -10,6 +10,7 @@ use App\Http\Helpers\NotificationHelper;
 use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\Response;
+use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\UtilityPaymentMail;
@@ -38,14 +39,11 @@ class UtilityBillController extends Controller
     public function getUtiityBiller(Request $request)
     {
         try {
-            $country_code = $request->iso2;
-
-            $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers(
-                $country_code,
-                null,
-                null,
-                null,
-            );
+            $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers([
+                'countryISOCode' => $request->iso2,
+                'page' => $request->page ?? 1,
+                'size' => $request->size ?? 10,
+            ]);
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
@@ -62,28 +60,56 @@ class UtilityBillController extends Controller
     public function payBill(Request $request)
     {
         try {
-            $request['tx_ref'] = generate_unique_string('transactions', 'trx_id', 16);
-            $request['useLocalAmount'] = true;
-
-            $payment = (new UtilityPaymentHelper())->getInstance()->payBill($request->all());
-            $txr_ref = $payment['referenceId'];
-
-            sleep(20);
-
-            $utility_bill_transaction = (new UtilityPaymentHelper())->getInstance()->getUtilityBillTransaction($txr_ref);
-
             $charges = json_decode($request->charges);
 
-            $account_number = $utility_bill_transaction['transaction']['billDetails']['subscriberDetails']['accountNumber'];
+            $utility_bill_transaction = null;
+            $account_number = null;
 
-            $this->insertTransaction($txr_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
+            if ($charges->currency_code === "NGN") {
+                $service_id = strtolower(explode(" ", $charges->name)[0]) . "-electric";
+                $variation_code = strtolower($charges->service_type);
+                $amount = $request->amount;
+                $account_number = $request->account_number;
+                $phone = auth()->user()->full_mobile;
+
+                $payment = (new VTPass())->utilityPayment([
+                    'service_id' => $service_id,
+                    'variation_code' => $variation_code,
+                    'amount' => $amount,
+                    'account_number' => $account_number,
+                    'phone' => $phone
+                ]);
+
+                $tx_ref = $payment['requestId'];
+
+                $utility_bill_transaction = (new VTPass())->verifyUtilityPaymentTransaction($tx_ref);
+            } else {
+                $request['tx_ref'] = generate_unique_string('transactions', 'trx_id', 16);
+                $request['useLocalAmount'] = true;
+
+                $payment = (new UtilityPaymentHelper())->getInstance()->payBill($request->all());
+                $tx_ref = $payment['referenceId'];
+
+                sleep(20);
+
+                $utility_bill_transaction = (new UtilityPaymentHelper())->getInstance()->getUtilityBillTransaction($tx_ref);
+
+                $account_number = $utility_bill_transaction['transaction']['billDetails']['subscriberDetails']['accountNumber'];
+            }
+
+            if (isset($utility_bill_transaction) && isset($utility_bill_transaction['transaction']['status']) && $utility_bill_transaction['transaction']['status'] !== "SUCCESSFUL") {
+                return redirect()->route("user.utility.bill.index")->with(['error' => [__('Unable to complete transaction at the moment. Please try again later')]]);
+            }
+
+            $this->insertTransaction($tx_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
         } catch (Exception $e) {
             Log::error("Utility Bill Payment Error: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             // return Response::error([$message], [], 500);
-            return redirect()->route("user.dashboard")->with(['error' => [__($message)]]);
+            return redirect()->route("user.utility.bill.index")->with(['error' => [__($message)]]);
         }
+
 
         return redirect()->route("user.dashboard")->with(['success' => [__('Payment successful!')]]);
     }
@@ -117,12 +143,6 @@ class UtilityBillController extends Controller
         $authWallet = $sender_wallet;
         $afterCharge =  ($authWallet->balance - $charges->total_payable);
         $details = [
-            'name'                  => $utility_bill_transaction['transaction']['billDetails']['billerName'] ?? '',
-            'biller_id'             => $utility_bill_transaction['transaction']['billDetails']['billerId'] ?? '',
-            'type'                  => $utility_bill_transaction['transaction']['billDetails']['type'] ?? '',
-            'service_type'          => $utility_bill_transaction['transaction']['billDetails']['serviceType'] ?? '',
-            'subscription_details'  => $utility_bill_transaction['transaction']['billDetails']['subscriptionDetails'] ?? '',
-            'billDetails'           => $utility_bill_transaction['transaction']['billDetails'],
             'charges'               => $charges,
             'api_response'          => $utility_bill_transaction ?? [],
         ];
@@ -198,7 +218,7 @@ class UtilityBillController extends Controller
             DB::table('transaction_charges')->insert([
                 'transaction_id'    =>  $id,
                 'percent_charge'    =>  $charges->percent_charge_calc,
-                'fixed_charge'      =>  $charges->fixed_charge,
+                'fixed_charge'       =>  $charges->fixed_charge,
                 'total_charge'      =>  $charges->total_charge_calc,
                 'created_at'        =>  now(),
             ]);

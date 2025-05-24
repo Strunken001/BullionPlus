@@ -16,7 +16,7 @@
                     <h3 class="title">{{ __($page_title) }}</h3>
                 </div>
                 <div class="add-btn text-end mb-10">
-                    <a href="{{ setRoute('user.gift.card.list') }}" class="btn--base"><i class="fas la-plus"></i> {{ __('Add Gift Card') }}</a>
+                    <a href="{{ setRoute('user.gift.card.list') }}" class="btn--base"><i class="fas la-plus"></i> {{ __('Buy Gift Card') }}</a>
                 </div>
             </div>
 
