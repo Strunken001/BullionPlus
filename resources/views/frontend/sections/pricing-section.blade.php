@@ -1,17 +1,16 @@
 <div class="container">
 <!-- Navigation Bar -->
 <nav class="navbar mb-4">
-    <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation">
-        ☰
-    </button>
-  <div class="nav-container">
+  <div class="nav-wrapper">
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation">☰</button>
+    <div class="nav-container">
       <a class="nav-link" href="#" data-name="airtime">Airtime</a>
       <a class="nav-link" href="#" data-name="data_bundle">Data Bundle</a>
       <a class="nav-link" href="#" data-name="utility_bill">Utility Bill</a>
       <a class="nav-link" href="#" data-name="giftcard">Giftcards</a>
+    </div>
   </div>
 </nav>
-
 
 <div class="filters">
     <select class="select2-auto-tokenize" name="iso">
@@ -194,10 +193,11 @@
 
     @media (max-width: 768px) {
         .nav-container {
-            flex-direction: column;
             display: none;
+            flex-direction: column;
             gap: 0;
             margin-top: 10px;
+            align-items: flex-start;
         }
 
         .nav-container.show {
@@ -280,58 +280,66 @@ $(document).ready(function() {
   let currentPage = 1;
   const rowsPerPage = 20;
 
+  $('#hamburger-btn').on('click', function () {
+    $('.nav-container').toggleClass('show');
+  });
+
   $('.nav-link').removeClass('active');
   $('.nav-link').first().addClass('active');
 
   function fetchData(page = 1) {
     currentPage = page;
+
     const activeTab = $('.nav-link.active').data('name');
     const selectedCountry = $('.select2-auto-tokenize').val();
+    const tbody = $('#pricing-table tbody');
+
+    tbody.html('<tr><td colspan="5">Loading...</td></tr>');
 
     let urlKey = activeTab;
     if (selectedCountry === 'all-countries') {
-      urlKey = 'all-' + activeTab;
+        urlKey = 'all-' + activeTab;
     }
 
     const url = tabUrlMap[urlKey] || tabUrlMap[activeTab];
 
     if (urlKey === `all-${activeTab}`) {
         $.ajax({
-            url: url,
-            type: 'GET',
-            data: {
-                page: currentPage,
-                size: rowsPerPage,
-            },
-            success: function(data) {
-                updateTable(data.data.content);
-
-                updatePagination(data.data.totalPages || 1);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading data:', error);
-            }
+        url: url,
+        type: 'GET',
+        data: {
+            page: currentPage,
+            size: rowsPerPage,
+        },
+        success: function(data) {
+            updateTable(data.data.content);
+            updatePagination(data.data.totalPages || 1);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading data:', error);
+            tbody.html('<tr><td colspan="5">Failed to load data</td></tr>');
+        }
         });
     } else {
         $.ajax({
-            url: url,
-            type: 'GET',
-            data: {
-                page: currentPage,
-                size: rowsPerPage,
-                iso2: selectedCountry,
-            },
-            success: function(data) {
-                updateTable(data.data?.content || data.data);
-
-                updatePagination(data.data.totalPages || 1);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading data:', error);
-            }
+        url: url,
+        type: 'GET',
+        data: {
+            page: currentPage,
+            size: rowsPerPage,
+            iso2: selectedCountry,
+        },
+        success: function(data) {
+            updateTable(data.data?.content || data.data);
+            updatePagination(data.data.totalPages || 1);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading data:', error);
+            tbody.html('<tr><td colspan="5">Failed to load data</td></tr>');
+        }
         });
     }
-  }
+    }
 
   function updateTable(data) {
     const tbody = $('#pricing-table tbody');
@@ -398,22 +406,26 @@ $(document).ready(function() {
     }
 
 
-  $('.nav-link').on('click', function(e) {
-    e.preventDefault();
+    $('.nav-link').on('click', function(e) {
+        e.preventDefault();
+        $('.nav-link').removeClass('active');
+        $(this).addClass('active');
+        $('.nav-container').removeClass('show'); // 👈 hide the menu
+        fetchData(1);
+    });
 
-    $('.nav-link').removeClass('active');
-    $(this).addClass('active');
+    $('.select2-auto-tokenize').on('change', function() {
+        fetchData(1); 
+    });
 
     fetchData(1);
-  });
-
-  $('.select2-auto-tokenize').on('change', function() {
-    fetchData(1); 
-  });
-
-  fetchData(1);
 });
 
+$(document).on('click', function(e) {
+  if (!$(e.target).closest('.nav-wrapper').length && $('.nav-container').hasClass('show')) {
+    $('.nav-container').removeClass('show');
+  }
+});
 
 </script>
 
