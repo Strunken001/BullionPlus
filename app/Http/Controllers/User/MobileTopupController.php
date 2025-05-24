@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Helpers\AirtimeHelper;
 use App\Http\Helpers\NotificationHelper;
 use App\Http\Helpers\PushNotificationHelper;
+use App\Http\Helpers\VTPass;
 use App\Models\Admin\TransactionSetting;
 use App\Models\TopupCategory;
 use App\Models\Transaction;
@@ -26,6 +27,7 @@ use App\Models\Admin\QuickRecharges;
 use App\Models\Admin\SiteSections;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\User\MobileTopup\TopupAutomaticMail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MobileTopupController extends Controller
@@ -131,25 +133,45 @@ class MobileTopupController extends Controller
             return back()->with(['error' => [__("Sorry, insufficient balance")]]);
         }
         //topup api
-        $topUpData = [
-            'operatorId'        => $operator['operatorId'],
-            'amount'            => $validated['amount'],
-            'useLocalAmount'    => $operator['supportsLocalAmounts'],
-            'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
-            'recipientEmail'    => null,
-            'recipientPhone'  => [
-                'countryCode' => $validated['country_code'],
-                'number'  => $phone,
-            ],
-            'senderPhone'   => [
-                'countryCode' => $sender_country_iso,
-                'number'      => $sender_phone,
-            ]
+        $topUpData = [];
 
-        ];
-        $topUpData = (new AirtimeHelper())->makeTopUp($topUpData);
+        if ($request->country_code === "NG") {
+            $operator = json_decode($request->operator, true);
 
-        if (isset($topUpData['status']) && $topUpData['status'] === false) {
+            $network_provider = $operator['name'] ?? null;
+
+            $vtpass_service_id = explode(" ", $network_provider)[0];
+
+            $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
+            $topUpData = [
+                "service_id" => $service_id,
+                "amount" => $validated['amount'],
+                "phone" => $validated['mobile_number'],
+                "customIdentifier" => Str::uuid() . "|" . "AIRTIME",
+            ];
+
+            $topUpData = (new VTPass())->mobileTopUp($topUpData);
+        } else {
+            $topUpData = [
+                'operatorId'        => $operator['operatorId'],
+                'amount'            => $validated['amount'],
+                'useLocalAmount'    => $operator['supportsLocalAmounts'],
+                'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
+                'recipientEmail'    => null,
+                'recipientPhone'  => [
+                    'countryCode' => $validated['country_code'],
+                    'number'  => $phone,
+                ],
+                'senderPhone'   => [
+                    'countryCode' => $sender_country_iso,
+                    'number'      => $sender_phone,
+                ]
+            ];
+
+            $topUpData = (new AirtimeHelper())->makeTopUp($topUpData);
+        }
+
+        if (isset($topUpData['status']) && ($topUpData['status'] === false || $topUpData['status'] !== "SUCCESSFUL")) {
             return back()->with(['error' => [$topUpData['message']]]);
         }
 
@@ -207,14 +229,14 @@ class MobileTopupController extends Controller
         try {
             $id = DB::table("transactions")->insertGetId([
                 'user_id'                       => $sender_wallet->user->id,
-                'wallet_id'                => $authWallet->id,
+                'wallet_id'                     => $authWallet->id,
                 'payment_gateway_currency_id'   => null,
                 'type'                          => PaymentGatewayConst::MOBILETOPUP,
                 'trx_id'                        => $trx_id,
                 'request_amount'                => $charges['sender_amount'],
                 'exchange_rate'                 => 1 / $charges['destination_currency_rate'],
                 'percent_charge'                => $charges['percent_charge'],
-                'fixed_charge'                  => $charges['fixed_charge'],
+                'fixed_charge'                   => $charges['fixed_charge'],
                 'total_charge'                  => $charges['total_charge'],
                 'request_currency'              => $charges['destination_currency'],
                 'total_payable'                 => $charges['payable'],
@@ -348,5 +370,28 @@ class MobileTopupController extends Controller
                 ->send();
         } catch (Exception $e) {
         }
+    }
+
+    public function getAllOperators(Request $request)
+    {
+        $operators = (new AirtimeHelper())->getOperators([
+            'page' => $request->page,
+            'size' => $request->size,
+        ]);
+
+        return response()->json([
+            "message" => "Operator Fetch Successfully!",
+            'data' => $operators
+        ]);
+    }
+
+    public function getOperatorsByCountry(Request $request)
+    {
+        $operator = (new AirtimeHelper())->getOperatorsByCountry($request->iso2);
+
+        return response()->json([
+            "message" => "Operator Fetch Successfully!",
+            'data' => $operator
+        ]);
     }
 }

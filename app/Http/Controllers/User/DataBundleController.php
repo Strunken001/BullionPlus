@@ -12,6 +12,7 @@ use App\Http\Helpers\MobileTopUpHelper;
 use App\Http\Helpers\NotificationHelper;
 use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\Response;
+use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\User\MobileTopup\TopupAutomaticMail;
@@ -39,51 +40,17 @@ class DataBundleController extends Controller
     {
         $country_code = $request->iso2;
 
-        // make ca cache key for getting future data without api request
-        // $cache_key = DataBundleConst::SLUG . "_" . "MOBILE_TOPUP_OPERATORS" . "_" . "$country_code" . "_" . DataBundleConst::TOPUP_BUNDLE;
-
-        // $cache_data = cache()->driver("file")->get($cache_key);
-
-        // if ($cache_data) {
-        //     return Response::success([__("Operators Fetch Successfully!")], [
-        //         'operators'     => $cache_data,
-        //         'cache_key'     => $cache_key,
-        //     ]); // if data already cached it will return from here
-        // }
-
-        // try {
-        //     ini_set('max_execution_time', 180);
-        // } catch (Exception $e) {
-        // }
-
         try {
-            $get_operators = (new MobileTopUpHelper())->getInstance()->getOperatorsByCountry($country_code);
+            $get_operators = (new MobileTopUpHelper())->getInstance()->getOperatorsByCountry($country_code, ['dataOnly' => true]);
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return Response::error([$message], [], 500);
         }
 
-        $operators = collect($get_operators);
-
-        // $operators = array_values($operators->where('bundle', true)->toArray());
-        $operators = array_values($operators->where('data', true)->toArray());
-
-        // 
-        // cache data for 20 min
-        // cache()->driver("file")->put($cache_key, $operators, 14200);
-
-        // return Response::success([__("Operators Fetch Successfully!")], [
-        //     'operators'     => $operators,
-        //     // 'cache_key'     => $cache_key,
-        // ]);
-
         return response()->json([
             "message" => "Operators Fetch Successfully!",
-            "data" => [
-                "operators" => $operators,
-                // "cache_key" => $cache_key
-            ]
+            "data" => $get_operators
         ]);
     }
 
@@ -96,7 +63,11 @@ class DataBundleController extends Controller
     {
         $info = $request->all();
         try {
-            $charges = (new MobileTopUpHelper())->getInstance()->getCharges($info);
+            if ($request->mobile_code === "NG") {
+                $charges = (new VTPass())->getCharges($info);
+            } else {
+                $charges = (new MobileTopUpHelper())->getInstance()->getCharges($info);
+            }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
@@ -111,14 +82,34 @@ class DataBundleController extends Controller
     public function buyBundle(Request $request)
     {
         try {
-            $operator = (new MobileTopUpHelper())->getInstance()->getOperator($request->operator_id);
-            $trx_ref  = generate_unique_string('transactions', 'trx_id', 16);
-            $recharge_country_iso2 = $request->iso2;
-            $request->merge(['operator' => $operator, 'trx_ref' => $trx_ref, 'recharge_country_iso2' => $recharge_country_iso2]);
-            $charges = json_decode($request->charges);
-            $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
+            $info = json_decode($request->info);
+            if ($request->iso2 === "NG") {
+                $topup = (new VTPass())->dataBundleTopUp([
+                    'service_id' => $request->service_id,
+                    'variation_code' => $request->variation_code,
+                    'phone' => $info->mobile_number,
+                ]);
 
-            $id = $this->insertTransaction($trx_ref, auth()->user()->wallets, $charges, $operator, $topup['response']['recipientPhone'], $topup['response']);
+                $trx_ref = $topup['requestId'];
+                $operator = [
+                    'operatorId' => $request->service_id,
+                    'name' => $topup['transactions']['product_name'],
+                ];
+            } else {
+                $operator = (new MobileTopUpHelper())->getInstance()->getOperator($request->operator_id);
+                $trx_ref  = generate_unique_string('transactions', 'trx_id', 16);
+                $recharge_country_iso2 = $request->iso2;
+                $request->merge(['operator' => $operator, 'trx_ref' => $trx_ref, 'recharge_country_iso2' => $recharge_country_iso2]);
+                $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
+            }
+
+            $charges = json_decode($request->charges);
+
+            if (isset($topup['status']) && ($topup['status'] === false || $topup['status'] !== "SUCCESSFUL")) {
+                return redirect()->route("user.data.bundle.index")->with(['error' => [$topup['message']]]);
+            }
+
+            $this->insertTransaction($trx_ref, auth()->user()->wallets, $charges, $operator, $topup['response']['recipientPhone'], $topup['response']);
         } catch (Exception $e) {
             Log::error('Data Bundle Error: ' . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
@@ -159,7 +150,7 @@ class DataBundleController extends Controller
                 'request_amount'                => $charges->request_amount,
                 'exchange_rate'                 => $charges->exchange_rate,
                 'percent_charge'                => $charges->percent_charge,
-                'fixed_charge'                  => $charges->fixed_charge,
+                'fixed_charge'                   => $charges->fixed_charge,
                 'total_charge'                  => $charges->total_charge_calc,
                 'request_currency'              => $charges->bundle_currency,
                 'total_payable'                 => $charges->total_payable,
@@ -218,7 +209,7 @@ class DataBundleController extends Controller
             DB::table('transaction_charges')->insert([
                 'transaction_id'    =>  $id,
                 'percent_charge'    =>  $charges->percent_charge_calc,
-                'fixed_charge'      =>  $charges->fixed_charge,
+                'fixed_charge'       =>  $charges->fixed_charge,
                 'total_charge'      =>  $charges->total_charge_calc,
                 'created_at'        =>  now(),
             ]);
@@ -334,6 +325,70 @@ class DataBundleController extends Controller
             "data" => [
                 "packages" => $get_bundle_packages,
             ]
+        ]);
+    }
+
+    public function getVTPassBundleOperators()
+    {
+        return response()->json([
+            "message" => "Bundle operators returned",
+            "data" => [
+                [
+                    "name" => "MTN Data Nigeria",
+                    "service_id" => "mtn-data"
+                ],
+                [
+                    "name" => "Glo Data Nigeria",
+                    "service_id" => "glo-data"
+                ],
+                [
+                    "name" => "Glo SME Data Nigeria",
+                    "service_id" => "glo-sme-data"
+                ],
+                [
+                    "name" => "9Mobile Data Nigeria",
+                    "service_id" => "etisalat-data"
+                ],
+                [
+                    "name" => "Airtel Nigeria",
+                    "service_id" => "airtel-data"
+                ],
+            ]
+        ]);
+    }
+
+    public function getVTPassVariationCodes(Request $request)
+    {
+        $variation_codes = (new VTPass())->getDataBundleVariationCodes([
+            "service_id" => $request->service_id
+        ]);
+
+        return response()->json([
+            "message" => "Variation codes fetched successfully!",
+            "data" => [
+                "variation_codes" => $variation_codes,
+            ]
+        ]);
+    }
+
+    public function getAllOperators(Request $request)
+    {
+        try {
+            $get_operators = (new MobileTopUpHelper())->getInstance()->getOperators([
+                'size' => $request->size,
+                'page' => $request->page,
+                'dataOnly' => true
+            ]);
+            Log::info(['get_operators' => $get_operators]);
+        } catch (Exception $e) {
+            $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
+
+            return Response::error([$message], [], 500);
+        }
+
+        return response()->json([
+            "message" => "Operators Fetch Successfully!",
+            "data" => $get_operators
         ]);
     }
 }

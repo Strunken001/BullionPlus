@@ -117,10 +117,13 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
         Route::get('search', 'giftSearch')->name('search')->middleware('kyc.verification.guard');
         Route::post('webhook', 'webhookInfo')->name('webhook')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
         Route::post("balance", "balance")->name("wallet.balance");
+        Route::get('all-products', 'getGiftcardProducts')->name('get.all.products')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
     });
 
     //Mobile TopUp
     Route::controller(MobileTopupController::class)->prefix('mobile-topup')->name('mobile.topup.')->group(function () {
+        Route::get('all-operators', 'getAllOperators')->name('get.all.operators')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
+        Route::get('get-operator', 'getOperatorsByCountry')->name('get.operator')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
         //automatic method
         Route::prefix('automatic')->name('automatic.')->group(function () {
             Route::get('/', 'automaticTopUp')->name('index');
@@ -131,17 +134,20 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
 
     //Bundle TopUp
     Route::controller(DataBundleController::class)->prefix('data-bundle')->name('data.bundle.')->group(function () {
-        Route::get('get/operators/', 'getReloadlyOperators')->name('get.operators');
+        Route::get('get/operators/', 'getReloadlyOperators')->name('get.operators')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
         Route::get('get/bundle/index', 'index')->name('index');
         Route::post('get/bundle/preview', 'preview')->name('preview');
         Route::post('get/bundle/buy', 'buyBundle')->name('buy');
         Route::post('bundle/webhook', 'receiveWebhook')->name('webhook')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
         Route::get('get/bundle/packages', 'getOperatorBundlePackage')->name('get.packages');
+        Route::get('get/bundle/operators/vtpass', 'getVTPassBundleOperators')->name('get.operators.vtpass');
+        Route::get('get/bundle/packages/vtpass', 'getVTPassVariationCodes')->name('get.packages.vtpass');
+        Route::get('get/operators/all', 'getAllOperators')->name('get.all.operators')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
     });
 
     Route::controller(UtilityBillController::class)->prefix('utility-bill')->name('utility.bill.')->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('get/billers', 'getUtiityBiller')->name('get.billers');
+        Route::get('get/billers', 'getUtiityBiller')->name('get.billers')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
         Route::post('preview', 'preview')->name('preview');
         Route::post('pay', 'payBill')->name('pay');
         // Route::get('history', 'history')->name('history');

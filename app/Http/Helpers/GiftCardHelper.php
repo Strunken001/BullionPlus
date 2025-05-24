@@ -176,11 +176,8 @@ class GiftCardHelper
     /**
      * get products
      */
-    public function getProducts(array $params = [], $cache = false): array
+    public function getProducts(array $params = []): array
     {
-        if ($cache) {
-            if (cache()->driver('file')->get(self::ALL_PRODUCTS_CACHE_KEY)) return cache()->driver('file')->get(self::ALL_PRODUCTS_CACHE_KEY);
-        }
 
         $base_url = $this->config['request_url'];
         $request_endpoint = $base_url . "/products";
@@ -195,10 +192,6 @@ class GiftCardHelper
         })->json();
 
         if (!is_array($response)) throw new Exception(__("Something went wrong! Please try again."));
-
-        if ($cache) {
-            cache()->driver('file')->put(self::ALL_PRODUCTS_CACHE_KEY, $response, 3600);
-        }
 
         return $response;
     }

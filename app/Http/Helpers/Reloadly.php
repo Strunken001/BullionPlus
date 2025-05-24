@@ -45,7 +45,7 @@ class Reloadly
     /**
      * store user
      */
-    public \App\Models\User|null $user = null;
+    public \App\Models\User | null $user = null;
 
     /**
      * access token cache key
@@ -767,7 +767,7 @@ class Reloadly
         return $response;
     }
 
-    public function getUtilityBillers(string $country_iso2, ?string $type, ?string $service_type, ?string $biller_id)
+    public function getUtilityBillers($filter = [])
     {
         $credentials    = $this->credentials;
 
@@ -778,12 +778,10 @@ class Reloadly
         $response = Http::withHeaders([
             'Authorization' => "Bearer " . $access_token,
             'accept'        => "application/com.reloadly.utilities-v1+json",
-        ])->get($endpoint, [
-            'countryISOCode' => $country_iso2,
-            'type'          => $type,
-            'serviceType'   => $service_type,
-            'id'            => $biller_id,
-        ])->throw(function (Response $response, RequestException $exception) {
+        ])->get(
+            $endpoint,
+            $filter
+        )->throw(function (Response $response, RequestException $exception) {
             $message = $response->json()['message'] ?? $exception->getMessage();
             throw new Exception($message);
         })->json();

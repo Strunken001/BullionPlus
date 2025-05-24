@@ -16,6 +16,7 @@
                             <input type="hidden" name="exchange_rate">
                             <input type="hidden" name="name">
                             <input type="hidden" name="operator">
+                            <input type="hidden" name="variation_code">
                             <div class="row mt-40">
                                 <div class="col-xl-6 col-lg-6 form-group">
                                     <label>{{ __('Country Code') }}<span>*</span></label>
@@ -81,92 +82,108 @@
             let iso2 = $(this).val();
             providerSelect.html('<option value="">{{ __("Loading...") }}</option>');
 
-            $.ajax({
-                url: '{{ route("user.data.bundle.get.operators") }}',
-                method: 'GET',
-                data: { iso2: iso2 },
-                success: function (response) {
-                    providerSelect.empty();
-                    providerSelect.append('<option value="">{{ __("Select Provider") }}</option>');
-                    
-                    if (response.data && Array.isArray(response.data.operators) && response.data.operators.length > 0) {
-                        response.data.operators.forEach(function (op) {
-                            providerSelect.append(`<option value="${op.operatorId}" data-name="${op.name}" data-operator='${JSON.stringify(op)}'>${op.name}</option>`);
-                        });
-                    } else {
-                        providerSelect.append('<option value="">{{ __("No Providers Found") }}</option>');
+            if (iso2 === "NG") {
+                $.ajax({
+                    url: '{{ route("user.data.bundle.get.operators.vtpass")}}',
+                    method: "GET",
+                    success: function (response) {
+                        providerSelect.empty();
+                        providerSelect.append('<option value="">{{ __("Select Provider") }}</option>');
+
+                        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                            response.data.forEach(function (op) {
+                                providerSelect.append(`<option value="${op.service_id}" data-name="${op.name}">${op.name}</option>`);
+                            });
+                        } else {
+                            providerSelect.append('<option value="">{{ __("No Providers Found") }}</option>');
+                        }
+                    },
+                    error: function () {
+                        providerSelect.html('<option value="">{{ __("Failed to load providers") }}</option>');
                     }
-                },
-                error: function () {
-                    providerSelect.html('<option value="">{{ __("Failed to load providers") }}</option>');
-                }
-            });
+                })
+            } else {
+                $.ajax({
+                    url: '{{ route("user.data.bundle.get.operators") }}',
+                    method: 'GET',
+                    data: { iso2: iso2 },
+                    success: function (response) {
+                        providerSelect.empty();
+                        providerSelect.append('<option value="">{{ __("Select Provider") }}</option>');
+                        
+                        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                            response.data.forEach(function (op) {
+                                providerSelect.append(`<option value="${op.operatorId}" data-name="${op.name}" data-operator='${JSON.stringify(op)}'>${op.name}</option>`);
+                            });
+                        } else {
+                            providerSelect.append('<option value="">{{ __("No Providers Found") }}</option>');
+                        }
+                    },
+                    error: function () {
+                        providerSelect.html('<option value="">{{ __("Failed to load providers") }}</option>');
+                    }
+                });
+            }
         });
 
         countrySelect.trigger('change');
-
-        // $('#provider-select').on('change', function () {
-        //     let selected = $(this).find('option:selected');
-        //     let operatorData = selected.data('operator');
-
-        //     console.log(selected.val());
-
-        //     $.ajax({
-        //         url: '{{ route("user.data.bundle.get.packages") }}',
-        //         method: 'GET',
-        //         data: {
-        //             operator_id: selected.val(),
-        //         },
-        //         success: function (response) {
-        //             bundleSelect.empty();
-        //             bundleSelect.append('<option value="">{{ __("Select Bundle") }}</option>');
-
-        //             if (response.data && Array.isArray(response.data.bundles) && response.data.bundles.length > 0) {
-        //                 response.data.bundles.forEach(function (bundle) {
-        //                     bundleSelect.append(`<option value="${bundle.amount}">${bundle.description}</option>`);
-        //                 });
-        //             } else {
-        //                 bundleSelect.append('<option value="">{{ __("No Bundles Available") }}</option>');
-        //             }
-        //         },
-        //         error: function () {
-        //             bundleSelect.html('<option value="">{{ __("Failed to load bundles") }}</option>');
-        //         }
-        //     })
-
-        //     $('input[name="operator"]').val(selected.val());
-        //     // $('input[name="name"]').val(selected.data('name'));
-
-        //     $('#bundle-select').on('change', function () {
-        //         let selectedOption = $(this).find('option:selected');
-        //         let bundleDescription = selectedOption.text();
-
-        //         $('input[name="name"]').val(bundleDescription);
-        //     });
-        // });
 
         $('#provider-select').on('change', function () {
             const selected = $(this).find('option:selected');
             const operatorData = selected.data('operator');
 
-            bundleSelect.empty();
-            bundleSelect.append('<option value="">{{ __("Select Bundle") }}</option>');
+            bundleSelect.html('<option value="">{{ __("Loading...") }}</option>');
 
-            if (operatorData && operatorData.fixedAmountsDescriptions) {
-                Object.entries(operatorData.fixedAmountsDescriptions).forEach(([amount, description]) => {
-                    bundleSelect.append(`<option value="${amount}">${description}</option>`);
-                });
+            if (countrySelect.val() === "NG") {
+                $.ajax({
+                    url: '{{ route("user.data.bundle.get.packages.vtpass")}}',
+                    method: "GET",
+                    data: { service_id: selected.val() },
+                    success: function (response) {
+                        bundleSelect.empty();
+                        bundleSelect.append('<option value="">{{ __("Select Bundle") }}</option>');
+
+                        if (response.data && Array.isArray(response.data.variation_codes) && response.data.variation_codes.length > 0) {
+                            response.data.variation_codes.forEach(function (bundle) {
+                                bundleSelect.append(`<option value="${bundle.variation_amount}" data-variation-code="${bundle.variation_code}">${bundle.name}</option>`)
+                            })
+                        } else {
+                            bundleSelect.append('<option value="">{{ __("No Bundles Available") }}</option>');
+                        }
+
+                        $('input["name=variation_code"]').val(bundle.variation_code)
+                    },
+                    error: function () {
+                        bundleSelect.append('<option value="">{{ __("No Bundles Available") }}</option>');
+                    }
+                })
             } else {
-                bundleSelect.append('<option value="">{{ __("No Bundles Available") }}</option>');
+                bundleSelect.empty();
+                bundleSelect.append('<option value="">{{ __("Select Bundle") }}</option>');
+    
+                if (operatorData && operatorData.fixedAmountsDescriptions) {
+                    Object.entries(operatorData.fixedAmountsDescriptions).forEach(([amount, description]) => {
+                        bundleSelect.append(`<option value="${amount}">${description}</option>`);
+                    });
+                } else {
+                    bundleSelect.append('<option value="">{{ __("No Bundles Available") }}</option>');
+                }
+    
+                $('input[name="operator"]').val(operatorData.operatorId);
             }
 
-            $('input[name="operator"]').val(operatorData.operatorId);
         });
 
         $('#bundle-select').on('change', function () {
             const selectedOption = $(this).find('option:selected');
             $('input[name="name"]').val(selectedOption.text());
+            $('input[name="variation_code"]').val(selectedOption.data('variation-code') || '');
         });
+
+        $('#provider-select').on('change', function () {
+            const selectedOption = $(this).find('option:selected');
+            $('input[name="operator"]').val(selectedOption.data('name'));
+        })
     });
 </script>
 @endpush

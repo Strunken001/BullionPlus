@@ -16,9 +16,16 @@ class SetupPageSeeder extends Seeder
      */
     public function run()
     {
-        $pages =  ["Home" => "/","About" => "/about","Services" => "/services","Blog" => "/blog","Contact" => "/contact"];
+        $pages =  [
+            "Home" => "/",
+            "About" => "/about",
+            "Services" => "/services",
+            "Blog" => "/blog",
+            "Pricing" => "/pricing",
+            "Contact" => "/contact"
+        ];
         $data = [];
-        foreach($pages as $item => $url) {
+        foreach ($pages as $item => $url) {
             $data[] = [
                 'slug'          => Str::slug($item),
                 'title'         => $item,
