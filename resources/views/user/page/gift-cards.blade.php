@@ -1,4 +1,4 @@
-@extends('frontend.layouts.master')
+@extends('user.layouts.master')
 @php
     $defualt = get_default_language_code() ?? 'en';
     $default_lng = 'en';
@@ -13,9 +13,4 @@
 
     @include('user.sections.gift-card.index');
 
-
 @endsection
-
-
-@push('script')
-@endpush

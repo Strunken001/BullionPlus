@@ -2,7 +2,10 @@
 <!-- Navigation Bar -->
 <nav class="navbar mb-4">
   <div class="nav-wrapper">
-    <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation">☰</button>
+    <div class="d-flex align-items-center">
+      <span class="text-lg font-semibold d-lg-none">Select a Product</span>
+      <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation">☰</button>
+    </div>
     <div class="nav-container">
       <a class="nav-link" href="#" data-name="airtime">Airtime</a>
       <a class="nav-link" href="#" data-name="data_bundle">Data Bundle</a>

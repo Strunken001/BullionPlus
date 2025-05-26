@@ -1,4 +1,4 @@
-@extends('frontend.layouts.master')
+@extends('user.layouts.master')
 @php
     $defualt = get_default_language_code() ?? 'en';
     $default_lng = 'en';
@@ -15,7 +15,3 @@
 
 
 @endsection
-
-
-@push('script')
-@endpush
