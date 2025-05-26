@@ -53,7 +53,7 @@
                 <div class="col-xl-5 col-lg-4 col-md-12 col-sm-12 mb-30">
                     <div class="user-balance-details">
                         <div class="row mb-20-none">
-                            <div class="col-lg-6 mb-20">
+                            <div class="col-lg-6 col-md-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{ $mobile_topup_count }}</span>
@@ -64,7 +64,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-6 mb-20">
+                            <div class="col-lg-6 col-md-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{$giftcard_count }}</span>
@@ -75,7 +75,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-6 mb-20">
+                            <div class="col-lg-6 col-md-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{$utility_payment_count }}</span>
@@ -86,7 +86,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-6 mb-20">
+                            <div class="col-lg-6 col-md-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{$data_bundle_count }}</span>
@@ -97,7 +97,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-6 mb-20">
+                            <div class="col-lg-6 col-md-6 mb-20">
                                 <div class="available-balance">
                                     <div class="left">
                                         <span>{{ __($add_money_count) }}</span>
