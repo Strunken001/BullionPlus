@@ -3,7 +3,7 @@
 <nav class="navbar mb-4">
   <div class="nav-wrapper">
     <div class="d-flex align-items-center">
-      <span class="text-lg font-semibold d-lg-none">Select a Product</span>
+      {{-- <span class="text-lg font-semibold d-lg-none">Select a Product</span> --}}
       <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation">☰</button>
     </div>
     <div class="nav-container">
