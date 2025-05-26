@@ -20,7 +20,7 @@ jobs:
           php-version: "8.2.13"
 
       - name: Install Composer Dependencies
-        run: composer update --ignore-platform-reqs
+        run: composer install --ignore-platform-reqs
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
