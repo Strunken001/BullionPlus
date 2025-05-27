@@ -23,7 +23,7 @@ class BasicSettings extends Model
         'site_fav'                  => 'string',
         'preloader_image'           => 'string',
         'mail_activity'             => 'object',
-        'push_notification_activity'=> 'object',
+        'push_notification_activity' => 'object',
         'broadcast_activity'        => 'object',
         'sms_activity'              => 'object',
         'web_version'               => 'string',
@@ -41,10 +41,9 @@ class BasicSettings extends Model
         'sms_config'                => 'object',
         'push_notification_config'  => 'object',
         'broadcast_config'          => 'object',
+        'api_pricing_discount'      => 'integer',
     ];
 
 
-    public function mailConfig() {
-
-    }
+    public function mailConfig() {}
 }

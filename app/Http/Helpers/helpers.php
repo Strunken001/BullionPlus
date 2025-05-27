@@ -363,19 +363,19 @@ function get_image($image_name, $path_type = null, $image_type = null, $size = n
 {
 
     if ($image_type == 'profile') {
-        $image =  asset(files_path('profile-default')->path);
-        // $image =  asset('public/' . files_path('profile-default')->path);
+        // $image =  asset(files_path('profile-default')->path);
+        $image =  asset('public/' . files_path('profile-default')->path);
     } else {
-        $image =  asset(files_path('default')->path);
-        // $image =  asset('public/' . files_path('default')->path);
+        // $image =  asset(files_path('default')->path);
+        $image =  asset('public/' . files_path('default')->path);
     }
     if ($image_name != null) {
         if ($path_type != null) {
             $image_path = files_path($path_type)->path;
             $image_link = $image_path . "/" . $image_name;
             if (file_exists(public_path($image_link))) {
-                $image = asset($image_link);
-                // $image = asset('public/' . $image_link);
+                // $image = asset($image_link);
+                $image = asset('public/' . $image_link);
             }
         }
     }
@@ -478,8 +478,8 @@ function files_path($slug)
 function files_asset_path($slug)
 {
     $files_path = files_path($slug)->path;
-    return asset($files_path);
-    // return asset('public/' . $files_path);
+    // return asset($files_path);
+    return asset('public/' . $files_path);
 }
 
 function get_amount($amount, $currency = null, $precision = null)

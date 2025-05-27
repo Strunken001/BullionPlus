@@ -238,6 +238,9 @@
   const rows = Array.from(tbody.querySelectorAll('tr'));
   const pagination = document.getElementById('pagination');
 
+  const apiDiscountPercentage = {{ $api_discount_percentage ?? 30 }} / 100
+  const customerDiscountPercentage = 1 - apiDiscountPercentage;
+
   function displayPage(page) {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
@@ -360,7 +363,7 @@ $(document).ready(function() {
           <td>${item?.country?.name || item?.countryName}</td>
           <td>${item?.name || item?.productName}</td>
           <td>USD</td>
-          <td>${(0.7 * (item?.internationalDiscount || item?.internationalDiscountPercentage || item?.discountPercentage || 0)).toFixed(2)}%</td>
+          <td>${(customerDiscountPercentage * (item?.internationalDiscount || item?.internationalDiscountPercentage || item?.discountPercentage || 0)).toFixed(2)}%</td>
         </tr>`;
       tbody.append(row);
     });
