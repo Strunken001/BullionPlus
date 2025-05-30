@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Helpers\Response;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
+use Illuminate\Support\Facades\Log;
 
 class Authenticate extends Middleware
 {
@@ -16,14 +17,14 @@ class Authenticate extends Middleware
     protected function redirectTo($request)
     {
         if (! $request->expectsJson()) {
-            if($request->routeIs('admin.*')) {
+            if ($request->routeIs('admin.*')) {
                 return route('admin.login');
-            }else if($request->routeIs("user.*")) {
+            } else if ($request->routeIs("user.*")) {
                 return route('user.login');
             }
             return route('frontend.index');
         }
 
-        return abort(Response::error(['Access denied! Unauthenticated'],[],401));
+        return abort(Response::error(['Access denied! Unauthenticated'], [], 401));
     }
 }

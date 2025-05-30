@@ -87,5 +87,6 @@ class Kernel extends HttpKernel
         // Api middleware
         'api.user.auth.guard'           => \App\Http\Middleware\Api\V1\User\AuthGuard::class,
         'api.kyc'                       => \App\Http\Middleware\Api\V1\User\KycApi::class,
+        'api.client'                    => \App\Http\Middleware\Api\V1\User\ApiClientMiddleware::class,
     ];
 }
