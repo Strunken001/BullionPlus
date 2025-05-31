@@ -45,4 +45,4 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /root/www/wwwroot/bullion-plus.com/
+          server-dir: /bullion-plus.com/
