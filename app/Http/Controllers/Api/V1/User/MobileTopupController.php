@@ -181,14 +181,10 @@ class MobileTopupController extends Controller
 
             $topUpData = (new VTPass())->mobileTopUp($topUpData);
         } else {
-
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $provider_discount_amount = ($operator['commission'] / 100) * $request->amount;
-            $discount_price_amount = $provider_discount_amount *  (1 - $api_discount_percentage);
             //topup api
             $topUpData = [
                 'operatorId'        => $operator['operatorId'],
-                'amount'            => $validated['amount'] + $discount_price_amount,
+                'amount'            => $validated['amount'],
                 'useLocalAmount'    => $operator['supportsLocalAmounts'],
                 'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
                 'recipientEmail'    => null,
