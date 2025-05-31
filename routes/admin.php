@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\SetupKycController;
 use App\Http\Controllers\Admin\UserCareController;
 use App\Http\Controllers\Admin\AdminCareController;
-use App\Http\Controllers\Admin\ApiSettingsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExtensionsController;
 use App\Http\Controllers\Admin\ServerInfoController;
@@ -431,11 +430,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('wallet/status/update', 'walletStatusUpdate')->name('wallet.status.update');
         Route::get('wallet/transactions/{crypto_asset_id}/{wallet_id}', 'walletTransactions')->name('wallet.transactions');
         Route::post('wallet/transactions/search/{crypto_asset_id}/{wallet_id}', 'walletTransactionSearch')->name('wallet.transaction.search');
-    });
-
-    Route::controller(ApiSettingsController::class)->prefix('api-settings')->name('api.settings.')->group(function () {
-        Route::get('index', 'index')->name('index');
-        Route::post('generate-keys', 'generateKeys')->name('generate.keys');
     });
 });
 

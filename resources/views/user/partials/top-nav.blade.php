@@ -101,6 +101,12 @@
                                                         href="{{ setRoute('user.support.ticket.index') }}">{{ __('Support') }}</a>
                                                 </div>
                                             </li>
+                                             <li>
+                                                <div class="title-area">
+                                                    <a
+                                                        href="{{ setRoute('user.api.settings.index') }}">{{ __('API Settings') }}</a>
+                                                </div>
+                                            </li>
                                             <li>
                                                 <div class="title-area">
                                                     <a class="logout-btn"
@@ -221,6 +227,12 @@
                                                 <div class="title-area">
                                                     <a
                                                         href="{{ setRoute('user.support.ticket.index') }}">{{ __('Support') }}</a>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="title-area">
+                                                    <a
+                                                        href="{{ setRoute('user.api.settings.index') }}">{{ __('API Settings') }}</a>
                                                 </div>
                                             </li>
                                             <li>
