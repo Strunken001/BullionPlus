@@ -79,6 +79,16 @@
                             'value'         => old('web_version',$basic_settings->web_version),
                         ])
                     </div>
+                    <div class="col-xl-3 col-lg-3 form-group">
+                        @include('admin.components.form.input',[
+                            'label'         => __("API Discount Percentage"),
+                            'type'          => "number",
+                            'class'         => "form--control",
+                            'placeholder'   => __("Write Here").'...',
+                            'name'          => "api_discount_percentage",
+                            'value'         => old('api_discount_percentage',$basic_settings->api_discount_percentage),
+                        ])
+                    </div>
                 </div>
                 <div class="col-xl-12 col-lg-12">
                     @include('admin.components.button.form-btn',[

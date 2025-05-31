@@ -29,7 +29,7 @@ class RouteServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         $this->routes(function () {
-            Route::middleware(['system.maintenance.api','api'])
+            Route::middleware(['system.maintenance.api', 'api'])
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
@@ -48,21 +48,21 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/global.php'));
 
-            Route::middleware(['web', 'auth', 'sms.verification.guard', 'verification.guard', 'user.google.two.factor','system.maintenance'])  // user auth guard
+            Route::middleware(['web', 'auth', 'sms.verification.guard', 'verification.guard', 'user.google.two.factor', 'system.maintenance'])  // user auth guard
                 ->group(base_path('routes/user.php'));
 
-            Route::middleware('web','system.maintenance') // declare frontend routes
+            Route::middleware('web', 'system.maintenance') // declare frontend routes
                 ->group(base_path('routes/frontend.php'));
 
-            Route::middleware(['api', 'auth:api', 'system.maintenance.api']) // User API Routes (v1)
+            Route::middleware(['api', 'api.client', 'system.maintenance.api']) // User API Routes (v1)
                 ->prefix('api/v1')
                 ->group(base_path('routes/api/v1/user.php'));
 
-            Route::middleware(['system.maintenance.api','api']) // Auth API Routes - User/Merchant/Agent (v1)
+            Route::middleware(['system.maintenance.api', 'api']) // Auth API Routes - User/Merchant/Agent (v1)
                 ->prefix('api/v1')
                 ->group(base_path('routes/api/v1/auth.php'));
 
-            Route::middleware(['system.maintenance.api','api']) // User API Routes (v1)
+            Route::middleware(['system.maintenance.api', 'api']) // User API Routes (v1)
                 ->prefix('api/v1')
                 ->group(base_path('routes/api/v1/global.php'));
 
@@ -78,7 +78,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting()
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(60)->by($request->user()->id ?? $request->ip());
         });
     }
 

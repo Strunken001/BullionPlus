@@ -36,12 +36,13 @@ class WebSettingsController extends Controller
     public function basicSettingsUpdate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'base_color'        => 'required|string',
-            'site_name'         => 'required|string',
-            'site_title'        => 'required|string',
-            'otp_exp_seconds'   => 'required|string',
-            'timezone'          => 'required|string',
-            'web_version'       => 'required|string',
+            'base_color'                => 'required|string',
+            'site_name'                 => 'required|string',
+            'site_title'                => 'required|string',
+            'otp_exp_seconds'           => 'required|string',
+            'timezone'                  => 'required|string',
+            'web_version'               => 'required|string',
+            'api_discount_percentage'   => 'nullable'
         ]);
 
         $validated = $validator->validate();

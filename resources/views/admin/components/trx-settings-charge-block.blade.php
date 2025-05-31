@@ -25,7 +25,7 @@
                                 <div class="col-xxl-12 col-xl-6 col-lg-6 form-group">
                                     <label>{{ __("Percent Charge") }}*</label>
                                     <div class="input-group">
-                                        <input type="number" class="form--control" value="{{ old($data->slug.'_percent_charge',$data->percent_charge) }}" name="{{$data->slug}}_percent_charge">
+                                        <input type="text" class="form--control" value="{{ old($data->slug.'_percent_charge',$data->percent_charge) }}" name="{{$data->slug}}_percent_charge">
                                         <span class="input-group-text">%</span>
                                     </div>
                                 </div>

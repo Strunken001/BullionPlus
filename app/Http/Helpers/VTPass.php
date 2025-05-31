@@ -70,6 +70,8 @@ class VTPass
             throw new Exception($message);
         })->json();
 
+        Log::info(['response' => $response]);
+
         $response['content']['transactions']['message'] = $response['response_description'];
         $response['content']['transactions']['status'] = $response['content']['transactions']['status'] === "delivered" ? "SUCCESSFUL" : strtoupper($response['content']['transactions']['status']);
         $response['content']['transactions']['customIdentifier'] = $params['customIdentifier'];
@@ -101,17 +103,6 @@ class VTPass
 
         $base_url = $credentials->req_url;
         $endpoint = rtrim($base_url, "/") . "/api/pay";
-
-        Log::info([
-            'endpoint' => $endpoint,
-            'data' => [
-                'request_id' => now()->getTimestamp(),
-                'serviceID' => $params['service_id'],
-                'variation_code' => $params['variation_code'],
-                'phone' => $params['phone'],
-                'billersCode' => $params['phone'],
-            ]
-        ]);
 
         $response = Http::withHeaders([
             'api-key' => $this->credentials->api_key,
@@ -156,6 +147,7 @@ class VTPass
             'phone' => $params['phone'],
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            Log::info(['message' => $message]);
             throw new Exception($message);
         })->json();
 
@@ -270,5 +262,27 @@ class VTPass
         ];
 
         return $this->charge_result;
+    }
+
+    public function verifyMeterNumber(array $params)
+    {
+        $credentials = $this->credentials;
+
+        $base_url = $credentials->req_url;
+        $endpoint = rtrim($base_url, "/") . "/api/merchant-verify";
+
+        $response = Http::withHeaders([
+            'api-key' => $this->credentials->api_key,
+            'secret-key' => $this->credentials->secret_key
+        ])->post($endpoint, [
+            'serviceID' => $params['service_id'],
+            'billersCode' => $params['account_number'],
+            'type' => $params['variation_code'], // prepaid or postpaid
+        ])->throw(function (Response $response, RequestException $exception) {
+            $message = $exception->getMessage();
+            throw new Exception($message);
+        })->json();
+
+        return $response;
     }
 }
