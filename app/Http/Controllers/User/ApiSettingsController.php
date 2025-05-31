@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\User;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\ApiClient;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ApiSettingsController extends Controller
@@ -15,7 +14,7 @@ class ApiSettingsController extends Controller
         $page_title = __("API Settings");
         $data = ApiClient::where('user_id', auth()->id())->first();
 
-        return view('admin.sections.api-settings.index', compact(
+        return view('user.page.api-settings', compact(
             'page_title',
             'data'
         ));
@@ -57,6 +56,6 @@ class ApiSettingsController extends Controller
             $api_client->save();
         }
 
-        return redirect()->route('admin.api.settings.index')->with(['success' => [__('API keys generated successfully')]]);
+        return redirect()->route('user.api.settings.index')->with(['success' => [__('API keys generated successfully')]]);
     }
 }

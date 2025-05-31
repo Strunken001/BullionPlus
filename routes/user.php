@@ -8,6 +8,7 @@ use App\Providers\Admin\BasicSettingsProvider;
 use Pusher\PushNotifications\PushNotifications;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\AddMoneyController;
+use App\Http\Controllers\User\ApiSettingsController;
 use App\Http\Controllers\User\SecurityController;
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\User\DataBundleController;
@@ -152,6 +153,11 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
         Route::post('pay', 'payBill')->name('pay');
         // Route::get('history', 'history')->name('history');
         // Route::get('details/{trx_id}', 'details')->name('details');
+    });
+
+    Route::controller(ApiSettingsController::class)->prefix('api-settings')->name('api.settings.')->group(function () {
+        Route::get('index', 'index')->name('index');
+        Route::post('generate-keys', 'generateKeys')->name('generate.keys');
     });
 });
 
