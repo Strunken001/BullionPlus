@@ -14,6 +14,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\User\MobileTopup\TopupAutomaticMail;
 use App\Providers\Admin\BasicSettingsProvider;
@@ -41,7 +42,12 @@ class DataBundleController extends Controller
         $country_code = $request->iso2;
 
         try {
-            $get_operators = (new MobileTopUpHelper())->getInstance()->getOperatorsByCountry($country_code, ['dataOnly' => true]);
+            $get_operators = null;
+            if ($country_code === "NG") {
+                $get_operators = VTPassAPIDiscount::where("type", "data_bundle")->get();
+            } else {
+                $get_operators = (new MobileTopUpHelper())->getInstance()->getOperatorsByCountry($country_code, ['dataOnly' => true]);
+            }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
@@ -379,7 +385,6 @@ class DataBundleController extends Controller
                 'page' => $request->page,
                 'dataOnly' => true
             ]);
-            Log::info(['get_operators' => $get_operators]);
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 

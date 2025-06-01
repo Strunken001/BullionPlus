@@ -70,8 +70,6 @@ class VTPass
             throw new Exception($message);
         })->json();
 
-        Log::info(['response' => $response]);
-
         $response['content']['transactions']['message'] = $response['response_description'];
         $response['content']['transactions']['status'] = $response['content']['transactions']['status'] === "delivered" ? "SUCCESSFUL" : strtoupper($response['content']['transactions']['status']);
         $response['content']['transactions']['customIdentifier'] = $params['customIdentifier'];
@@ -113,6 +111,7 @@ class VTPass
             'variation_code' => $params['variation_code'],
             'phone' => $params['phone'],
             'billersCode' => $params['phone'],
+            'amount' => $params['amount'],
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
             throw new Exception($message);
@@ -150,6 +149,8 @@ class VTPass
             Log::info(['message' => $message]);
             throw new Exception($message);
         })->json();
+
+        Log::info(['response' => $response]);
 
         return $response;
     }

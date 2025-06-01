@@ -83,6 +83,7 @@ class DataBundleController extends Controller
                 }
             }
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return response()->json([
@@ -153,6 +154,7 @@ class DataBundleController extends Controller
                 }
             }
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return response()->json([
@@ -228,6 +230,7 @@ class DataBundleController extends Controller
                     'service_id' => $request->operator_id,
                     'variation_code' => $request->variation_code,
                     'phone' => $request->mobile_number,
+                    'amount' => end(explode("-", $request->variation_code))
                 ]);
 
                 $trx_ref = $topup['requestId'];
@@ -257,6 +260,7 @@ class DataBundleController extends Controller
 
             $this->insertTransaction($trx_ref, auth()->user()->wallets, $charges, $operator, $topup['response']['recipientPhone'], $topup['response']);
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return response()->json([

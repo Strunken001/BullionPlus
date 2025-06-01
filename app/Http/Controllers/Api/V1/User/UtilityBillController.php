@@ -10,6 +10,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\UtilityPaymentMail;
 use App\Providers\Admin\BasicSettingsProvider;
@@ -43,6 +44,7 @@ class UtilityBillController extends Controller
                 'size' => $request->size ?? 20,
             ]);
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return response()->json([
@@ -113,7 +115,8 @@ class UtilityBillController extends Controller
                 ]);
 
                 $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-                $provider_discount_amount = ($verify_meter_number['content']['commission_details']['rate'] / 100) * $amount;
+                $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+                $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $amount;
                 $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
                 $payment = (new VTPass())->utilityPayment([
@@ -159,7 +162,7 @@ class UtilityBillController extends Controller
 
             $this->insertTransaction($tx_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
         } catch (Exception $e) {
-            Log::error("Utility Bill Payment Error: " . $e->getMessage());
+            Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return response()->json([
