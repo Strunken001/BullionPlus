@@ -99,9 +99,9 @@ class UtilityBillController extends Controller
 
             $utility_bill = (new UtilityPaymentHelper())->getInstance()->getUtilityBill($request->biller_id);
 
-            if ($utility_bill["currency_code"] === "NGN") {
+            if ($utility_bill["localTransactionCurrencyCode"] === "NGN") {
                 $service_id = strtolower(explode(" ", $utility_bill["name"])[0]) . "-electric";
-                $variation_code = strtolower($utility_bill["service_type"]);
+                $variation_code = strtolower($utility_bill["serviceType"]);
                 $amount = $request->amount;
                 $account_number = $request->account_number;
                 $phone = auth()->user()->full_mobile;

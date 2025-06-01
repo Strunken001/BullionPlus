@@ -666,7 +666,8 @@ class Reloadly
                 'countryCode'   => $request->recharge_country_iso2,
                 'number'        => $request->phone,
             ],
-            'useLocalAmount'    => $useLocalAmount
+            // 'useLocalAmount'    => $useLocalAmount
+            'useLocalAmount'    => false
         ]);
 
         $api_status  = $api_topup['status'];

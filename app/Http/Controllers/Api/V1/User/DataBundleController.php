@@ -230,7 +230,7 @@ class DataBundleController extends Controller
                     'service_id' => $request->operator_id,
                     'variation_code' => $request->variation_code,
                     'phone' => $request->mobile_number,
-                    'amount' => end(explode("-", $request->variation_code))
+                    'amount' => $request->amount,
                 ]);
 
                 $trx_ref = $topup['requestId'];
@@ -244,15 +244,15 @@ class DataBundleController extends Controller
                 $operator = (new MobileTopUpHelper())->getInstance()->getOperator($request->operator_id);
                 $charges = (new MobileTopUpHelper())->getInstance()->getCharges($request->all());
                 $charges = json_decode(json_encode($charges));
-                $request->merge(['operator' => $operator]);
+                $request->merge(['operator' => $operator, 'phone' => $request->mobile_number]);
                 $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
             }
 
-            if (!isset($topup['response']) || !isset($topup['response']['status']) || $topup['response']['status'] !== "SUCCESSFUL") {
+            if (isset($topup['status']) && ($topup['status'] === false || $topup['status'] !== "SUCCESSFUL")) {
                 $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $topup['response']['message'] ?? __("Something went wrong");
 
                 return response()->json([
-                    'status' => 'success',
+                    'status' => 'error',
                     "message" => $message,
                     "data" => null
                 ], 400);
