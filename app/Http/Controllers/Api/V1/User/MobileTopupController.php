@@ -114,6 +114,7 @@ class MobileTopupController extends Controller
                 $foundItem = $item;
             }
         }
+
         $sender_country_iso = $foundItem->iso2;
         $phone = remove_special_char($validated['mobile_code']) . $validated['mobile_number'];
         $operator = (new AirtimeHelper())->autoDetectOperator($phone, $validated['country_code']);
@@ -124,6 +125,7 @@ class MobileTopupController extends Controller
                 "data" => null
             ], 500);
         }
+
         $sender_wallet = UserWallet::where('user_id', $user->id)->first();
         if (!$sender_wallet) {
             return response()->json([
@@ -132,6 +134,66 @@ class MobileTopupController extends Controller
                 'data' => null
             ], 404);
         }
+
+        $topUpData = [];
+
+        if ($request->country_code === "NG") {
+            $network_provider = $operator['name'] ?? null;
+
+            $vtpass_service_id = explode(" ", $network_provider)[0];
+
+            $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
+
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+            $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
+            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+            $validated['amount'] = $validated['amount'] - $discount_price_amount;
+
+            $topUpData = [
+                "service_id" => $service_id,
+                "amount" => $validated['amount'],
+                "phone" => $validated['mobile_number'],
+                "customIdentifier" => Str::uuid() . "|" . "AIRTIME",
+            ];
+
+            $topUpData = (new VTPass())->mobileTopUp($topUpData);
+        } else {
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $provider_discount_amount = ($operator['localDiscount'] / 100) * $request->amount;
+            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+            $validated['amount'] = $validated['amount'] - $discount_price_amount;
+            //topup api
+            $topUpData = [
+                'operatorId'        => $operator['operatorId'],
+                'amount'            => $validated['amount'],
+                'useLocalAmount'    => $operator['supportsLocalAmounts'],
+                'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
+                'recipientEmail'    => null,
+                'recipientPhone'  => [
+                    'countryCode' => $validated['country_code'],
+                    'number'  => $phone,
+                ],
+                'senderPhone'   => [
+                    'countryCode' => $sender_country_iso,
+                    'number'      => $sender_phone,
+                ]
+
+            ];
+
+            $topUpData = (new AirtimeHelper())->makeTopUp($topUpData);
+        }
+
+        if (isset($topUpData['status']) && ($topUpData['status'] === false || $topUpData['status'] !== "SUCCESSFUL")) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $topUpData['message'] ?? 'Something went wrong! Please try again.',
+                'data' => null
+            ], 500);
+        }
+
         $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
         $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge);
 
@@ -163,62 +225,6 @@ class MobileTopupController extends Controller
                 'message' => "Sorry, insufficient balance",
                 'data' => null
             ], 400);
-        }
-
-        $topUpData = [];
-
-        if ($request->country_code === "NG") {
-            $network_provider = $operator['name'] ?? null;
-
-            $vtpass_service_id = explode(" ", $network_provider)[0];
-
-            $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
-
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
-            $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
-            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
-
-            $topUpData = [
-                "service_id" => $service_id,
-                "amount" => $validated['amount'] + $discount_price_amount,
-                "phone" => $validated['mobile_number'],
-                "customIdentifier" => Str::uuid() . "|" . "AIRTIME",
-            ];
-
-            $topUpData = (new VTPass())->mobileTopUp($topUpData);
-        } else {
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $provider_discount_amount = ($operator['localDiscount'] / 100) * $request->amount;
-            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
-
-            //topup api
-            $topUpData = [
-                'operatorId'        => $operator['operatorId'],
-                'amount'            => $validated['amount'] + $discount_price_amount,
-                'useLocalAmount'    => $operator['supportsLocalAmounts'],
-                'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
-                'recipientEmail'    => null,
-                'recipientPhone'  => [
-                    'countryCode' => $validated['country_code'],
-                    'number'  => $phone,
-                ],
-                'senderPhone'   => [
-                    'countryCode' => $sender_country_iso,
-                    'number'      => $sender_phone,
-                ]
-
-            ];
-
-            $topUpData = (new AirtimeHelper())->makeTopUp($topUpData);
-        }
-
-        if (isset($topUpData['status']) && ($topUpData['status'] === false || $topUpData['status'] !== "SUCCESSFUL")) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $topUpData['message'] ?? 'Something went wrong! Please try again.',
-                'data' => null
-            ], 500);
         }
 
         try {
@@ -265,6 +271,7 @@ class MobileTopupController extends Controller
             ], 500);
         }
     }
+
     public function insertTransaction($trx_id, $sender_wallet, $charges, $operator, $mobile_number, $topUpData)
     {
         if (isset($topUpData) && isset($topUpData['status']) && $topUpData['status'] === "SUCCESSFUL") {

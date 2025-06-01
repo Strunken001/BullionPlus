@@ -94,16 +94,14 @@ class UtilityBillController extends Controller
         }
 
         try {
-            $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($request->all());
-
-            $charges = json_decode(json_encode($charges));
-
             $utility_bill_transaction = null;
             $account_number = null;
 
-            if ($charges->currency_code === "NGN") {
-                $service_id = strtolower(explode(" ", $charges->name)[0]) . "-electric";
-                $variation_code = strtolower($charges->service_type);
+            $utility_bill = (new UtilityPaymentHelper())->getInstance()->getUtilityBill($request->biller_id);
+
+            if ($utility_bill["localTransactionCurrencyCode"] === "NGN") {
+                $service_id = strtolower(explode(" ", $utility_bill["name"])[0]) . "-electric";
+                $variation_code = strtolower($utility_bill["serviceType"]);
                 $amount = $request->amount;
                 $account_number = $request->account_number;
                 $phone = auth()->user()->full_mobile;
@@ -119,10 +117,12 @@ class UtilityBillController extends Controller
                 $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $amount;
                 $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
+                $request['amount'] = $amount - $discount_price_amount;
+
                 $payment = (new VTPass())->utilityPayment([
                     'service_id' => $service_id,
                     'variation_code' => $variation_code,
-                    'amount' => $amount + $discount_price_amount,
+                    'amount' => $request->amount,
                     'account_number' => $account_number,
                     'phone' => $phone
                 ]);
@@ -140,7 +140,7 @@ class UtilityBillController extends Controller
                 $provider_discount_amount = ($utility_bill['localDiscountPercentage'] / 100) * $request->amount;
                 $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
-                $request['amount'] = $request->amount + $discount_price_amount;
+                $request['amount'] = $request->amount - $discount_price_amount;
 
                 $payment = (new UtilityPaymentHelper())->getInstance()->payBill($request->all());
                 $tx_ref = $payment['referenceId'];
@@ -159,6 +159,9 @@ class UtilityBillController extends Controller
                     "data" => null
                 ], 400);
             }
+
+            $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($request->all());
+            $charges = json_decode(json_encode($charges));
 
             $this->insertTransaction($tx_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
         } catch (Exception $e) {
