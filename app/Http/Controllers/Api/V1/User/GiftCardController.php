@@ -236,7 +236,19 @@ class GiftCardController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => "Gift card details retrieved successfully",
-            'data' => $product
+            'data' => [
+                "productId" => $product['productId'],
+                "productName" => $product['productName'],
+                "global" => $product['global'],
+                "status" => $product['status'],
+                "supportsPreOrder" => $product['supportsPreOrder'],
+                "logoUrls" => $product['logoUrls'],
+                "brand" => $product['brand'],
+                "category" => $product['category'],
+                "country" => $product['country'],
+                "redeemInstruction" => $product['redeemInstruction'],
+                "additionalRequirements" => $product['additionalRequirements'],
+            ]
         ]);
     }
 
