@@ -124,6 +124,7 @@ class GiftCardController extends Controller
         try {
             $productsData = (new GiftCardHelper())->getProductInfoByIso($country_iso);
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
             return response()->json([
@@ -271,12 +272,10 @@ class GiftCardController extends Controller
                 ], 500);
             }
 
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $product_discount_amount = ($product['discountPercentage'] / 100) * $form_data['amount'];
-            $discounted_price_amount = (1 - $api_discount_percentage) * $product_discount_amount;
-            $unit_price =  $form_data['amount'] + $discounted_price_amount;
+            $unit_price =  $form_data['amount'];
             $qty =  $form_data['quantity'];
             $user = auth()->user();
+
             $sender_country = Currency::where('code', "USD")->first();
             if (!$sender_country) {
                 return response()->json([
@@ -285,6 +284,7 @@ class GiftCardController extends Controller
                     "data" => null
                 ], 400);
             }
+
             $userWallet = UserWallet::where(['user_id' => $user->id, 'currency_id' => $sender_country->id, 'status' => 1])->first();
             if (!$userWallet) {
                 return response()->json([
@@ -293,6 +293,7 @@ class GiftCardController extends Controller
                     "data" => null
                 ], 404);
             }
+
             $receiver_country = ExchangeRate::where('currency_code', $product['recipientCurrencyCode'])->first();
             if (!$receiver_country) {
                 return response()->json([
@@ -301,6 +302,7 @@ class GiftCardController extends Controller
                     "data" => null
                 ], 400);
             }
+
             $cardCharge = TransactionSetting::where('slug', 'gift_card')->where('status', 1)->first();
             $charges = $this->giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country);
             if ($charges['payable'] > $userWallet->balance) {
@@ -328,6 +330,7 @@ class GiftCardController extends Controller
             try {
                 $order = (new GiftCardHelper())->createOrder($orderData);
             } catch (Exception $e) {
+                Log::error("An error occured: " . $e->getMessage());
                 return response()->json([
                     "status" => 'error',
                     "message" => app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage(),
@@ -397,6 +400,7 @@ class GiftCardController extends Controller
             //admin notification
             $this->adminNotification($card->trx_id, $charges, $user, $giftCard, $status);
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             return response()->json([
                 "status" => 'error',
                 "message" => app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage(),

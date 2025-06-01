@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\ExchangeRate;
 use App\Models\Admin\QuickRecharges;
 use App\Models\Admin\SiteSections;
+use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\User\MobileTopup\TopupAutomaticMail;
 use Illuminate\Support\Facades\Log;
@@ -387,7 +388,12 @@ class MobileTopupController extends Controller
 
     public function getOperatorsByCountry(Request $request)
     {
-        $operator = (new AirtimeHelper())->getOperatorsByCountry($request->iso2);
+        $operator = null;
+        if ($request->iso2 === "NG") {
+            $operator = VTPassAPIDiscount::where("type", "airtime")->get();
+        } else {
+            $operator = (new AirtimeHelper())->getOperatorsByCountry($request->iso2);
+        }
 
         return response()->json([
             "message" => "Operator Fetch Successfully!",

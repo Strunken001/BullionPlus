@@ -31,6 +31,7 @@ use Database\Seeders\Admin\ReloadlyTopUpSeeder;
 use Database\Seeders\Admin\SmsTemplateSeeder;
 use Database\Seeders\Admin\SystemMaintenanceSeeder;
 use Database\Seeders\Admin\TransactionSettingSeeder;
+use Database\Seeders\Admin\VtpassApiDiscountSeeder;
 use Database\Seeders\Admin\VTPassTopUpSeeder;
 use Database\Seeders\User\UserKYCSeeder;
 use Database\Seeders\User\UserWalletsSeeder;
@@ -104,6 +105,7 @@ class DatabaseSeeder extends Seeder
             BlogSeeder::class,
             SmsTemplateSeeder::class,
             VTPassTopUpSeeder::class,
+            VtpassApiDiscountSeeder::class,
         ]);
     }
 }

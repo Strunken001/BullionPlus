@@ -12,6 +12,7 @@ use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\UtilityPaymentMail;
 use App\Providers\Admin\BasicSettingsProvider;
@@ -39,11 +40,17 @@ class UtilityBillController extends Controller
     public function getUtiityBiller(Request $request)
     {
         try {
-            $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers([
-                'countryISOCode' => $request->iso2,
-                'page' => $request->page ?? 1,
-                'size' => $request->size ?? 10,
-            ]);
+            $billers = null;
+
+            if ($request->iso2 === "NG") {
+                $billers = VTPassAPIDiscount::where("type", "utility_bill")->get();
+            } else {
+                $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers([
+                    'countryISOCode' => $request->iso2,
+                    'page' => $request->page ?? 1,
+                    'size' => $request->size ?? 10,
+                ]);
+            }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 

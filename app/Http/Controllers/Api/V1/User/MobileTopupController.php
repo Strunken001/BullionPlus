@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\VTPass;
+use App\Models\VTPassAPIDiscount;
 use Illuminate\Support\Facades\Log;
 
 class MobileTopupController extends Controller
@@ -172,19 +173,29 @@ class MobileTopupController extends Controller
             $vtpass_service_id = explode(" ", $network_provider)[0];
 
             $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
+
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+            $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
+            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
             $topUpData = [
                 "service_id" => $service_id,
-                "amount" => $validated['amount'],
+                "amount" => $validated['amount'] + $discount_price_amount,
                 "phone" => $validated['mobile_number'],
                 "customIdentifier" => Str::uuid() . "|" . "AIRTIME",
             ];
 
             $topUpData = (new VTPass())->mobileTopUp($topUpData);
         } else {
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $provider_discount_amount = ($operator['localDiscount'] / 100) * $request->amount;
+            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
             //topup api
             $topUpData = [
                 'operatorId'        => $operator['operatorId'],
-                'amount'            => $validated['amount'],
+                'amount'            => $validated['amount'] + $discount_price_amount,
                 'useLocalAmount'    => $operator['supportsLocalAmounts'],
                 'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
                 'recipientEmail'    => null,
@@ -246,6 +257,7 @@ class MobileTopupController extends Controller
                 ]
             ], 200);
         } catch (Exception $e) {
+            Log::error("An error occured: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => "Something went wrong! Please try again.",
@@ -305,6 +317,7 @@ class MobileTopupController extends Controller
         }
         return $id;
     }
+
     public function insertAutomaticCharges($id, $charges, $sender_wallet)
     {
         DB::beginTransaction();
@@ -348,6 +361,7 @@ class MobileTopupController extends Controller
             return Helpers::error($error);
         }
     }
+
     public function topupChargeAutomatic($sender_amount, $operator, $sender_wallet, $charges)
     {
 
@@ -368,6 +382,7 @@ class MobileTopupController extends Controller
         $data['payable']                            = $data['conversion_amount'] + $data['total_charge'];
         return $data;
     }
+
     //End Automatic
     public function updateSenderWalletBalance($authWallet, $afterCharge)
     {
@@ -417,6 +432,7 @@ class MobileTopupController extends Controller
         } catch (Exception $e) {
         }
     }
+
     public function adminNotificationAutomatic($trx_id, $charges, $operator, $user, $phone, $topUpData)
     {
         $exchange_rate = get_amount(1, $charges['destination_currency']) . " = " . get_amount($charges['exchange_rate'], $charges['sender_currency'], 4);
