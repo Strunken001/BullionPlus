@@ -360,10 +360,10 @@ $(document).ready(function() {
       const row = `
         <tr>
           <td>${item?.id || item?.productId}</td>
-          <td>${item?.country?.name || item?.countryName}</td>
-          <td>${item?.name || item?.productName}</td>
+          <td>${item?.country?.name || item?.countryName || "Nigeria"}</td>
+          <td>${item?.name || item?.productName || item?.service}</td>
           <td>USD</td>
-          <td>${(customerDiscountPercentage * (item?.internationalDiscount || item?.internationalDiscountPercentage || item?.discountPercentage || 0)).toFixed(2)}%</td>
+          <td>${(customerDiscountPercentage * ((item?.localDiscount || item?.localDiscountPercentage || item?.discountPercentage || item?.api_discount_percentage || 0) / 100)).toFixed(2)}%</td>
         </tr>`;
       tbody.append(row);
     });
