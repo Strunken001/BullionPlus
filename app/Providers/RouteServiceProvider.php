@@ -29,8 +29,8 @@ class RouteServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         $this->routes(function () {
-            Route::middleware(['system.maintenance.api', 'api'])
-                ->prefix('api')
+            Route::middleware(['system.maintenance.api', 'api', 'api.client']) //API routes for external clients
+                ->prefix('api/v1')
                 ->group(base_path('routes/api.php'));
 
             Route::middleware('web')
@@ -54,7 +54,7 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web', 'system.maintenance') // declare frontend routes
                 ->group(base_path('routes/frontend.php'));
 
-            Route::middleware(['api', 'api.client', 'system.maintenance.api']) // User API Routes (v1)
+            Route::middleware(['api', 'auth:api', 'system.maintenance.api']) // User API Routes (v1)
                 ->prefix('api/v1')
                 ->group(base_path('routes/api/v1/user.php'));
 
