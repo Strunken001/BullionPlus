@@ -240,12 +240,7 @@
                     'title' => 'System Maintenance',
                     'icon' => 'menu-icon las la-tools',
                 ])
-
-                @include('admin.components.side-nav.link', [
-                    'route' => 'admin.api.settings.index',
-                    'title' => 'API Settings',
-                    'icon' => 'menu-icon las la-link',
-                ])
+                
                 {{-- Verification Center --}}
                 @include('admin.components.side-nav.link-group', [
                     'group_title' => __('Verification Center'),

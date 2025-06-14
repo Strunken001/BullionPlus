@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// // Transaction
+// Transaction
 Route::controller(TransactionController::class)->prefix("transaction")->group(function () {
     Route::get("log", "log");
 });
