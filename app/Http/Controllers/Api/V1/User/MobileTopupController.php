@@ -161,7 +161,7 @@ class MobileTopupController extends Controller
             $topUpData = (new VTPass())->mobileTopUp($topUpData);
         } else {
             $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $provider_discount_amount = ($operator['localDiscount'] / 100) * $request->amount;
+            $provider_discount_amount = ($operator['internationalDiscount'] / 100) * $request->amount;
             $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
             $validated['amount'] = $validated['amount'] - $discount_price_amount;

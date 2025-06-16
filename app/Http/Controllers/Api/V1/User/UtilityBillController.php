@@ -137,7 +137,7 @@ class UtilityBillController extends Controller
                 $utility_bill = (new UtilityPaymentHelper())->getInstance()->getUtilityBill($request->biller_id);
 
                 $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-                $provider_discount_amount = ($utility_bill['localDiscountPercentage'] / 100) * $request->amount;
+                $provider_discount_amount = ($utility_bill['internationalDiscountPercentage'] / 100) * $request->amount;
                 $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
                 $request['amount'] = $request->amount - $discount_price_amount;
