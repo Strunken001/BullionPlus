@@ -12,6 +12,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\UserWallet;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\User\MobileTopup\TopupAutomaticMail;
 use App\Providers\Admin\BasicSettingsProvider;
@@ -224,6 +225,24 @@ class DataBundleController extends Controller
             'trx_ref' => $trx_ref,
             'recharge_country_iso2' => $recharge_country_iso2
         ]);
+
+        $sender_wallet = UserWallet::where('user_id', auth()->id())->first();
+        if (!$sender_wallet) {
+            return back()->with(['error' => [__('User Wallet not found')]]);
+        }
+
+        if ($request->iso2 === "NG") {
+            $charges = (new VTPass())->getCharges($request->all());
+        } else {
+            $charges = (new MobileTopUpHelper())->getInstance()->getCharges($request->all());
+        }
+
+        $charges = json_decode(json_encode($charges));
+
+        if ($charges->total_payable > $sender_wallet->balance) {
+            return back()->with(['error' => [__("Sorry, insufficient balance")]]);
+        }
+
         try {
             if ($request->iso2 === "NG") {
                 $topup = (new VTPass())->dataBundleTopUp([
@@ -238,12 +257,9 @@ class DataBundleController extends Controller
                     'operatorId' => $request->operator_id,
                     'name' => $topup['transactions']['product_name'],
                 ];
-                $charges = (new VTPass())->getCharges($request->all());
-                $charges = json_decode(json_encode($charges));
             } else {
                 $operator = (new MobileTopUpHelper())->getInstance()->getOperator($request->operator_id);
-                $charges = (new MobileTopUpHelper())->getInstance()->getCharges($request->all());
-                $charges = json_decode(json_encode($charges));
+
                 $request->merge(['operator' => $operator, 'phone' => $request->mobile_number]);
                 $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
             }

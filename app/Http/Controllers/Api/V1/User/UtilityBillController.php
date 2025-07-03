@@ -10,6 +10,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\UserWallet;
 use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\UtilityPaymentMail;
@@ -54,22 +55,22 @@ class UtilityBillController extends Controller
             ], 500);
         }
 
-        $bills = [];
+        // $bills = [];
 
-        foreach ($billers['content'] as $b) {
-            $bills[] = [
-                'biller_id' => $b['id'],
-                'name' => $b['name'],
-                'countryCode' => $b['countryCode'],
-                'countryName' => $b['countryName'],
-                'type' => $b['type'],
-                'serviceType' => $b['serviceType'],
-                'minLocalTransactionAmount' => $b['minLocalTransactionAmount'],
-                'maxLocalTransactionAmount' => $b['maxLocalTransactionAmount'],
-            ];
-        }
+        // foreach ($billers['content'] as $b) {
+        //     $bills[] = [
+        //         'biller_id' => $b['id'],
+        //         'name' => $b['name'],
+        //         'countryCode' => $b['countryCode'],
+        //         'countryName' => $b['countryName'],
+        //         'type' => $b['type'],
+        //         'serviceType' => $b['serviceType'],
+        //         'minLocalTransactionAmount' => $b['minLocalTransactionAmount'],
+        //         'maxLocalTransactionAmount' => $b['maxLocalTransactionAmount'],
+        //     ];
+        // }
 
-        $billers['content'] = $bills;
+        // $billers['content'] = $bills;
 
         return response()->json([
             'status' => "success",
@@ -90,6 +91,22 @@ class UtilityBillController extends Controller
                 'status' => 'error',
                 "message" => $validator->errors()->first(),
                 "data" => null
+            ], 400);
+        }
+
+        $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($request->all());
+        $charges = json_decode(json_encode($charges));
+
+        $sender_wallet = UserWallet::where('user_id', auth()->id())->first();
+        if (!$sender_wallet) {
+            return back()->with(['error' => [__('User Wallet not found')]]);
+        }
+
+        if ($charges->total_payable > $sender_wallet->balance) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Sorry, insufficient balance",
+                'data' => null
             ], 400);
         }
 
@@ -159,9 +176,6 @@ class UtilityBillController extends Controller
                     "data" => null
                 ], 400);
             }
-
-            $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($request->all());
-            $charges = json_decode(json_encode($charges));
 
             $this->insertTransaction($tx_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
         } catch (Exception $e) {

@@ -14,6 +14,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\UserWallet;
 use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\User\MobileTopup\TopupAutomaticMail;
@@ -88,7 +89,18 @@ class DataBundleController extends Controller
     public function buyBundle(Request $request)
     {
         try {
+            $sender_wallet = UserWallet::where('user_id', auth()->id())->first();
+            if (!$sender_wallet) {
+                return back()->with(['error' => [__('User Wallet not found')]]);
+            }
+
             $info = json_decode($request->info);
+            $charges = json_decode($request->charges);
+
+            if ($charges['total_payable'] > $sender_wallet->balance) {
+                return back()->with(['error' => [__("Sorry, insufficient balance")]]);
+            }
+
             if ($request->iso2 === "NG") {
                 $topup = (new VTPass())->dataBundleTopUp([
                     'service_id' => $request->service_id,
@@ -109,7 +121,6 @@ class DataBundleController extends Controller
                 $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
             }
 
-            $charges = json_decode($request->charges);
 
             if (isset($topup['status']) && ($topup['status'] === false || $topup['status'] !== "SUCCESSFUL")) {
                 return redirect()->route("user.data.bundle.index")->with(['error' => [$topup['message']]]);

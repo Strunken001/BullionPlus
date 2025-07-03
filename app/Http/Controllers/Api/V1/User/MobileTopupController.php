@@ -76,12 +76,13 @@ class MobileTopupController extends Controller
         return response()->json([
             'status' => "success",
             'message' => 'Successfully Get Operator',
-            'data' => [
-                'operator_id' => $operator['operatorId'],
-                'name' => $operator['name'],
-                'country' => $operator['country'],
-                'logoUrls' => $operator['logoUrls'],
-            ],
+            // 'data' => [
+            //     'operator_id' => $operator['operatorId'],
+            //     'name' => $operator['name'],
+            //     'country' => $operator['country'],
+            //     'logoUrls' => $operator['logoUrls'],
+            // ],
+            'data' => $operator,
         ], 200);
     }
 
@@ -133,6 +134,17 @@ class MobileTopupController extends Controller
                 'message' => 'User Wallet not found',
                 'data' => null
             ], 404);
+        }
+
+        $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
+        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge);
+
+        if ($charges['payable'] > $sender_wallet->balance) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Sorry, insufficient balance",
+                'data' => null
+            ], 400);
         }
 
         $topUpData = [];
@@ -194,9 +206,6 @@ class MobileTopupController extends Controller
             ], 500);
         }
 
-        $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
-        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge);
-
         if ($operator['denominationType'] === "RANGE") {
             $min_amount = 0;
             $max_amount = 0;
@@ -217,14 +226,6 @@ class MobileTopupController extends Controller
                     'data' => null
                 ], 400);
             }
-        }
-
-        if ($charges['payable'] > $sender_wallet->balance) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "Sorry, insufficient balance",
-                'data' => null
-            ], 400);
         }
 
         try {

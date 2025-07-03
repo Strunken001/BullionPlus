@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\User\DataBundleController;
 use App\Http\Controllers\Api\V1\User\MobileTopupController;
 use App\Http\Controllers\Api\V1\User\TransactionController;
 use App\Http\Controllers\Api\V1\User\UtilityBillController;
+use App\Http\Controllers\Api\V1\User\KycController;
 
 Route::prefix("user")->name("api.user.")->group(function () {
     Route::controller(ProfileController::class)->prefix('profile')->group(function () {
@@ -20,6 +21,10 @@ Route::prefix("user")->name("api.user.")->group(function () {
 
     // Logout Route
     Route::post('logout', [ProfileController::class, 'logout']);
+
+    Route::controller(KycController::class)->prefix('kyc')->name('kyc.')->group(function () {
+        Route::post('submit', 'store')->name('submit');
+    });
 
     // // Add Money Routes
     Route::controller(AddMoneyController::class)->prefix("add-money")->name('add.money.')->group(function () {

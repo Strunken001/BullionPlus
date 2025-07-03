@@ -12,6 +12,7 @@ use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
 use App\Models\UserNotification;
+use App\Models\UserWallet;
 use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\UtilityPaymentMail;
@@ -68,6 +69,19 @@ class UtilityBillController extends Controller
     {
         try {
             $charges = json_decode($request->charges);
+
+            $sender_wallet = UserWallet::where('user_id', auth()->id())->first();
+            if (!$sender_wallet) {
+                return back()->with(['error' => [__('User Wallet not found')]]);
+            }
+
+            if ($charges->total_payable > $sender_wallet->balance) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Sorry, insufficient balance",
+                    'data' => null
+                ], 400);
+            }
 
             $utility_bill_transaction = null;
             $account_number = null;

@@ -114,5 +114,48 @@
                 $kycForm.addClass('d-none');
             });
         });
+
+        $(function () {
+            $('.capture-btn').on('click', function () {
+                const name = $(this).data('name');
+                const video = document.getElementById('webcam_' + name);
+                const canvas = document.getElementById('canvas_' + name);
+                const fileInput = document.getElementById('file_input_' + name);
+
+                // Start video
+                navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
+                    video.classList.remove('d-none');
+                    canvas.classList.add('d-none');
+                    video.srcObject = stream;
+
+                    // Add a one-time click listener to capture
+                    video.addEventListener('click', function captureOnce() {
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        // Convert canvas to blob and assign to input
+                        canvas.toBlob(function (blob) {
+                            const file = new File([blob], name + ".png", { type: "image/png" });
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            fileInput.files = dataTransfer.files;
+                        }, 'image/png');
+
+                        // Show captured result
+                        canvas.classList.remove('d-none');
+                        video.classList.add('d-none');
+
+                        // Stop stream
+                        stream.getTracks().forEach(track => track.stop());
+
+                        // Remove the event listener
+                        video.removeEventListener('click', captureOnce);
+                    }, { once: true });
+                }).catch(function (err) {
+                    alert("Could not access the camera. Please allow permission.");
+                    console.error(err);
+                });
+            });
+        });
     </script>
 @endpush

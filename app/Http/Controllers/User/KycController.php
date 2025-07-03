@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use App\Constants\SiteSectionConst;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
+use Illuminate\Support\Facades\Log;
 
 class KycController extends Controller
 {
@@ -28,11 +29,11 @@ class KycController extends Controller
         $page_title = "KYC Verification";
         $user = auth()->user();
         $user_kyc = SetupKyc::userKyc()->first();
-        if(!$user_kyc) return redirect()->route('user.dashboard');
+        if (!$user_kyc) return redirect()->route('user.dashboard');
 
         $kyc_data = $user_kyc->fields;
         $kyc_fields = [];
-        if($kyc_data) {
+        if ($kyc_data) {
             $kyc_fields = array_reverse($kyc_data);
         }
 
@@ -40,18 +41,18 @@ class KycController extends Controller
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
 
-        return view('user.sections.kyc.index',compact('page_title','user','kyc_fields','kyc_data','footer'));
+        return view('user.sections.kyc.index', compact('page_title', 'user', 'kyc_fields', 'kyc_data', 'footer'));
     }
 
-    public function store(Request $request) {
-
+    public function store(Request $request)
+    {
         $user = auth()->user();
-        if($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
+        if ($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
 
         $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
         $validation_rules = $this->generateValidationRules($user_kyc_fields);
-        $validated = Validator::make($request->all(),$validation_rules)->validate();
-        $get_values = $this->placeValueWithFields($user_kyc_fields,$validated);
+        $validated = Validator::make($request->all(), $validation_rules)->validate();
+        $get_values = $this->placeValueWithFields($user_kyc_fields, $validated);
 
         $create = [
             'user_id'       => auth()->user()->id,
@@ -60,13 +61,13 @@ class KycController extends Controller
         ];
 
         DB::beginTransaction();
-        try{
-            DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id],$create);
+        try {
+            DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
             $user->update([
                 'kyc_verified'  => GlobalConst::PENDING,
             ]);
             DB::commit();
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             $user->update([
                 'kyc_verified'  => GlobalConst::DEFAULT,

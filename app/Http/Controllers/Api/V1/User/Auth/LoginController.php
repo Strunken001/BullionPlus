@@ -222,8 +222,9 @@ class LoginController extends Controller
             DB::commit();
             try {
                 $message = __("Your verification code is: " . $data['code']);
-                sendAuthSms($user,$message);
-            } catch (Exception $e) {}
+                sendAuthSms($user, $message);
+            } catch (Exception $e) {
+            }
         } catch (Exception $e) {
             DB::rollBack();
             return Response::error([__('Something went wrong! Please try again')], [], 500);
@@ -290,7 +291,7 @@ class LoginController extends Controller
         $resend_code = User::where("id", $request->user)->first();
         if (!$resend_code) return Response::error([__('User is invalid')]);;
         if (Carbon::now() <= Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
-            return Response::error([__('You can resend verification code after ').Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)). __(' seconds')],['user' => $user, 'wait_time' => (string) Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE))],400);
+            return Response::error([__('You can resend verification code after ') . Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) . __(' seconds')], ['user' => $user, 'wait_time' => (string) Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE))], 400);
         }
         DB::beginTransaction();
         try {
@@ -302,11 +303,11 @@ class LoginController extends Controller
                 'ver_code'          =>  $update_data['code'],
                 'ver_code_send_at'  =>  $update_data['created_at'],
             ]);
-            try{
+            try {
                 $message = __("Your verification code is: " . $update_data['code']);
-                sendAuthSms($resend_code,$message);
+                sendAuthSms($resend_code, $message);
+            } catch (Exception $e) {
             }
-            catch(Exception $e){}
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

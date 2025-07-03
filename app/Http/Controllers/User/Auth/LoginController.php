@@ -286,14 +286,14 @@ class LoginController extends Controller
             if (Carbon::now() <= $re_time->ver_code_send_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
                 $resend_time = Carbon::now()->diffInSeconds($re_time->ver_code_send_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE));
             }
-            sendAuthSms($user_info->first(),$message);
+            sendAuthSms($user_info->first(), $message);
             DB::commit();
         } catch (Exception $e) {
             // dd($e);
             DB::rollback();
             return back()->with(['error' => [__('Something went wrong. please try again')]]);
         }
-        return redirect()->route('user.login.OTP', ['token' => $token, 'user' => $user, 'stay' => $stay, 'time'=> $resend_time])->with(['success' => [__('Verification code resend success!')]]);
+        return redirect()->route('user.login.OTP', ['token' => $token, 'user' => $user, 'stay' => $stay, 'time' => $resend_time])->with(['success' => [__('Verification code resend success!')]]);
     }
 
 
