@@ -57,20 +57,11 @@ class UtilityBillController extends Controller
 
         // $bills = [];
 
-        // foreach ($billers['content'] as $b) {
-        //     $bills[] = [
-        //         'biller_id' => $b['id'],
-        //         'name' => $b['name'],
-        //         'countryCode' => $b['countryCode'],
-        //         'countryName' => $b['countryName'],
-        //         'type' => $b['type'],
-        //         'serviceType' => $b['serviceType'],
-        //         'minLocalTransactionAmount' => $b['minLocalTransactionAmount'],
-        //         'maxLocalTransactionAmount' => $b['maxLocalTransactionAmount'],
-        //     ];
-        // }
-
-        // $billers['content'] = $bills;
+        foreach ($billers['content'] as &$b) {
+            $b['biller_id'] = $b['id'];
+            unset($b['id']);
+        }
+        unset($b);
 
         return response()->json([
             'status' => "success",
@@ -82,7 +73,7 @@ class UtilityBillController extends Controller
     public function payBill(Request $request)
     {
         $validator = Validator::make(request()->all(), [
-            "biller_id"             => "required|string",
+            "biller_id"             => "required",
             'amount'                => "required|numeric|gt:0",
             "account_number"        => "required|string",
         ]);

@@ -8,53 +8,51 @@ use App\Http\Controllers\Api\V1\User\Auth\AuthorizationController;
 use App\Http\Controllers\Api\V1\User\Auth\ForgotPasswordController;
 
 // User Auth Routes
-Route::middleware(['api.user.auth.guard'])->group(function(){
-    Route::controller(RegisterController::class)->group(function() {
-        Route::post("register","register");
+Route::middleware(['api.user.auth.guard'])->group(function () {
+    Route::controller(RegisterController::class)->group(function () {
+        Route::post("register", "register");
     });
 
-    Route::controller(LoginController::class)->group(function(){
-        Route::post("login","login");
-        Route::post("login/verification","loginVerify");
-        Route::get("login/verification/code/resend","resendLoginCode");
+    Route::controller(LoginController::class)->group(function () {
+        Route::post("login", "login");
+        Route::post("login/verification", "loginVerify");
+        Route::get("login/verification/code/resend", "resendLoginCode");
     });
 
     // Forget password routes
-    Route::controller(ForgotPasswordController::class)->prefix("password/forgot")->group(function(){
-        Route::post('find/user','findUserSendCode');
-        Route::post('verify/code','verifyCode');
-        Route::get('resend/code','resendCode');
-        Route::post('reset','resetPassword');
+    Route::controller(ForgotPasswordController::class)->prefix("password/forgot")->group(function () {
+        Route::post('find/user', 'findUserSendCode');
+        Route::post('verify/code', 'verifyCode');
+        Route::get('resend/code', 'resendCode');
+        Route::post('reset', 'resetPassword');
     });
-
 });
 
-Route::controller(AuthorizationController::class)->prefix("authorize")->middleware(['auth:api'])->group(function(){
+Route::controller(AuthorizationController::class)->prefix("authorize")->middleware(['auth:api'])->group(function () {
     // Mail
-    Route::prefix("mail")->group(function(){
-        Route::get("send/code","sendCodeToMail");
-        Route::get("resend/code","resendCodeToMail");
-        Route::post("verify/code","verifyMailCode");
+    Route::prefix("mail")->group(function () {
+        Route::get("send/code", "sendCodeToMail");
+        Route::get("resend/code", "resendCodeToMail");
+        Route::post("verify/code", "verifyMailCode");
     });
 
     // Mobile Verification
-    Route::prefix("mobile")->group(function(){
-        Route::get("send/code","sendCodeToPhone");
-        Route::get("resend/code","resendCodeToPhone");
-        Route::post("verify/code","verifyPhoneCode");
+    Route::prefix("mobile")->group(function () {
+        Route::get("send/code", "sendCodeToPhone");
+        Route::get("resend/code", "resendCodeToPhone");
+        Route::post("verify/code", "verifyPhoneCode");
     });
 
     // Kyc
-    Route::prefix("kyc")->group(function(){
-        Route::get('input-fields','getKycInputFields');
-        Route::post('submit','KycSubmit');
+    Route::prefix("kyc")->group(function () {
+        Route::get('input-fields', 'getKycInputFields');
+        Route::post('submit', 'KycSubmit');
     });
 
     // google 2FA
-    Route::prefix("google/2fa")->group(function(){
-        Route::get("status","get2FaStatus");
-        Route::post('status-update','google2FAStatusUpdate');
-        Route::post('verify','verifyGoogle2Fa');
+    Route::prefix("google/2fa")->group(function () {
+        Route::get("status", "get2FaStatus");
+        Route::post('status-update', 'google2FAStatusUpdate');
+        Route::post('verify', 'verifyGoogle2Fa');
     });
-
 });

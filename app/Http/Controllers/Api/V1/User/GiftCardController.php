@@ -227,29 +227,17 @@ class GiftCardController extends Controller
             ];
         })->first();
 
-        // $data = [
-        //     'product'           => $product,
-        //     'productCurrency'   => $productCurrency,
-        //     'userWallet'        => $userWallet,
-        //     'cardCharge'        => $cardCharge,
-        // ];
+        $data = [
+            'product'           => $product,
+            'productCurrency'   => $productCurrency,
+            'userWallet'        => $userWallet,
+            'cardCharge'        => $cardCharge,
+        ];
 
         return response()->json([
             'status' => 'success',
             'message' => "Gift card details retrieved successfully",
-            'data' => [
-                "productId" => $product['productId'],
-                "productName" => $product['productName'],
-                "global" => $product['global'],
-                "status" => $product['status'],
-                "supportsPreOrder" => $product['supportsPreOrder'],
-                "logoUrls" => $product['logoUrls'],
-                "brand" => $product['brand'],
-                "category" => $product['category'],
-                "country" => $product['country'],
-                "redeemInstruction" => $product['redeemInstruction'],
-                "additionalRequirements" => $product['additionalRequirements'],
-            ]
+            'data' => $data
         ]);
     }
 

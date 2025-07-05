@@ -1745,6 +1745,7 @@ function sendAuthSms($user, $message, $shortCodes = [])
     $sendSms = new SendSms;
     $sendSms->$gateway($user->full_mobile, $general->site_name, $message, $general->sms_config);
 }
+
 // login otp verification
 function loginVerificationTemplate($user, $stay)
 {

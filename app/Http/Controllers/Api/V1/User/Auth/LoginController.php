@@ -252,7 +252,7 @@ class LoginController extends Controller
             'otp.exists'        => 'OTP is invalid',
             'type.required'     => 'Login type is required',
             'user.required'     => 'User id is required',
-            'user.exists'       => 'User dose not exist'
+            'user.exists'       => 'User does not exist'
         ];
         $validator = Validator::make($request->only(array_keys($rules)), $rules, $messages);
 
