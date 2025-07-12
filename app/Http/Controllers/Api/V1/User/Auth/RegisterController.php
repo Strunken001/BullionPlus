@@ -50,7 +50,7 @@ class RegisterController extends Controller
         $validated['sms_verified']      = ($basic_settings->sms_verification == true) ? false : true;
         $validated['kyc_verified']      = ($basic_settings->kyc_verification == true) ? false : true;
         $validated['password']          = Hash::make($validated['password']);
-        $validated['address']['country']= $validated['country'];
+        $validated['address']['country'] = $validated['country'];
         $validated['mobile']            = remove_speacial_char($validated['mobile']);
         $validated['mobile_code']       = remove_speacial_char($validated['phone_code']);
         $complete_phone                 = $validated['mobile_code'] . $validated['mobile'];
@@ -58,7 +58,7 @@ class RegisterController extends Controller
         $validated['username']          = make_username($validated['firstname'], $validated['lastname']);
         // $validated['referral_id']       = generate_unique_string('users','referral_id',8,'number');
 
-        if (User::where("username", $validated['username'])->exists()) return Response::error([__('User already exists!')], [], 400);
+        if (User::where("username", $validated['username'])->exists()) return Response::error([__('User already exists!')], [], 404);
 
         try {
             event(new Registered($user = $this->create($validated)));
@@ -94,7 +94,7 @@ class RegisterController extends Controller
         $basic_settings = $this->basic_settings;
         $password_rule = "required|string|min:6";
         if ($basic_settings->secure_password) {
-            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()];
         }
 
         return Validator::make($data, [
@@ -179,6 +179,6 @@ class RegisterController extends Controller
             //     'status'    => count($sms_response) > 0 ? true : false,
             //     'token'     => $sms_response['token'] ?? "",
             // ],
-        ], 200);
+        ], 201);
     }
 }

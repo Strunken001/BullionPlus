@@ -85,7 +85,7 @@ class LoginController extends Controller
         }
 
         $user = User::where($this->username(), $validated[$type])->first();
-        if (!$user) return Response::error([__("User doesn't exists!")]);
+        if (!$user) return Response::error([__("User doesn't exists!")], [], 404);
 
 
         if ($type === 'otp_number') {
@@ -177,25 +177,18 @@ class LoginController extends Controller
         }
         $this->createLoginLog($user);
 
+        unset($user->two_factor_secret);
+        unset($user->ver_code);
+        unset($user->ver_code_send_at);
+
+        $response_data = $user;
+
+        $response_data['country'] = $user->address->country ?? "";
+
         return Response::success([__('User successfully logged in')], [
             'token'         => $token,
             'type'          => $type,
-            'user_info'     => $user->only([
-                'id',
-                'firstname',
-                'lastname',
-                'fullname',
-                'username',
-                'email',
-                'mobile_code',
-                'mobile',
-                'full_mobile',
-                'sms_verified',
-                'kyc_verified',
-                'two_factor_verified',
-                'two_factor_status',
-                'two_factor_secret',
-            ]),
+            'user_info'     => $response_data,
             'authorization' => [
                 'status'    => count($sms_response) > 0 ? true : false,
                 'token'     => $sms_response['token'] ?? "",

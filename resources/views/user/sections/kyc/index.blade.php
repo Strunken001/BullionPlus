@@ -58,13 +58,13 @@
                                                     ])
                                                 </div>
                                                 <div class="resubmit-btn-area text-center pt-30">
-                                                        <button type="submit" class="btn--base text-center">
-                                                            {{ __('Submit') }}
-                                                        </button>
-                                                        <button type="button" id="re-cencel"
-                                                            class="btn--base text-center">
-                                                            {{ __('Cancel') }}
-                                                        </button>
+                                                    <button type="submit" class="btn--base text-center">
+                                                        {{ __('Submit') }}
+                                                    </button>
+                                                    <button type="button" id="re-cencel"
+                                                        class="btn--base text-center">
+                                                        {{ __('Cancel') }}
+                                                    </button>
                                                 </div>
                                             </form>
                                         </div>
@@ -115,47 +115,58 @@
             });
         });
 
-        $(function () {
-            $('.capture-btn').on('click', function () {
-                const name = $(this).data('name');
-                const video = document.getElementById('webcam_' + name);
-                const canvas = document.getElementById('canvas_' + name);
-                const fileInput = document.getElementById('file_input_' + name);
+       $(function () {
+        $('.webcam-btn').on('click', function () {
+            const name = $(this).data('name');
+            const video = document.getElementById('webcam_' + name);
+            const canvas = document.getElementById('canvas_' + name);
+            const fileInput = document.getElementById('file_input_' + name);
 
-                // Start video
-                navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
-                    video.classList.remove('d-none');
-                    canvas.classList.add('d-none');
-                    video.srcObject = stream;
+            const webcamBtn = $(this);
+            const captureBtn = $('.capture-btn[data-name="' + name + '"]');
+            const retakeBtn = $('.retake-btn[data-name="' + name + '"]');
 
-                    // Add a one-time click listener to capture
-                    video.addEventListener('click', function captureOnce() {
-                        const context = canvas.getContext('2d');
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            webcamBtn.addClass('d-none');
+            captureBtn.removeClass('d-none');
+            retakeBtn.addClass('d-none');
+            canvas.classList.add('d-none');
+            video.classList.remove('d-none');
 
-                        // Convert canvas to blob and assign to input
-                        canvas.toBlob(function (blob) {
-                            const file = new File([blob], name + ".png", { type: "image/png" });
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(file);
-                            fileInput.files = dataTransfer.files;
-                        }, 'image/png');
+            navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
+                video.srcObject = stream;
+                video.play();
 
-                        // Show captured result
-                        canvas.classList.remove('d-none');
-                        video.classList.add('d-none');
+                video.dataset.streamId = stream.id;
 
-                        // Stop stream
-                        stream.getTracks().forEach(track => track.stop());
+                captureBtn.off('click').on('click', function () {
+                    const context = canvas.getContext('2d');
 
-                        // Remove the event listener
-                        video.removeEventListener('click', captureOnce);
-                    }, { once: true });
-                }).catch(function (err) {
-                    alert("Could not access the camera. Please allow permission.");
-                    console.error(err);
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob(function (blob) {
+                        const file = new File([blob], name + ".png", { type: "image/png" });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                    }, 'image/png');
+
+                    video.classList.add('d-none');
+                    canvas.classList.remove('d-none');
+                    captureBtn.addClass('d-none');
+                    retakeBtn.removeClass('d-none');
+
+                    stream.getTracks().forEach(track => track.stop());
                 });
+
+                retakeBtn.off('click').on('click', function () {
+                    retakeBtn.addClass('d-none');
+                    webcamBtn.click();
+                });
+            }).catch(function (err) {
+                alert("Could not access the camera. Please allow permission.");
+                console.error(err);
             });
         });
+    });
     </script>
 @endpush

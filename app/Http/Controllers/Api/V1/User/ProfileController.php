@@ -15,20 +15,15 @@ use App\Providers\Admin\BasicSettingsProvider;
 
 class ProfileController extends Controller
 {
-    public function profileInfo() {
+    public function profileInfo()
+    {
         $user = auth()->guard("api")->user();
 
-        $response_data = $user->only([
-            'id',
-            'firstname',
-            'lastname',
-            'username',
-            'email',
-            'mobile_code',
-            'mobile',
-            'image',
-            // 'kyc_verified',
-        ]);
+        unset($user->two_factor_secret);
+        unset($user->ver_code);
+        unset($user->ver_code_send_at);
+
+        $response_data = $user;
 
         $response_data['country']        = $user->address->country ?? "";
         $response_data['kyc']            = [
@@ -46,16 +41,17 @@ class ProfileController extends Controller
             'kyc_verified'      => "0: Default, 1: Approved, 2: Pending, 3:Rejected",
         ];
 
-        return Response::success([__('Profile info fetch successfully!')],[
+        return Response::success([__('Profile info fetch successfully!')], [
             'instructions'  => $instructions,
-            'user_info'     => $response_data ,
+            'user_info'     => $response_data,
             'image_paths'   => $image_paths,
-            'countries'     => get_all_countries(['id','name','mobile_code']),
-        ],200);
+            'countries'     => get_all_countries(['id', 'name', 'mobile_code']),
+        ], 200);
     }
 
-    public function profileInfoUpdate(Request $request) {
-        $validator = Validator::make($request->all(),[
+    public function profileInfoUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'firstname'     => "required|string|max:60",
             'lastname'      => "required|string|max:60",
             'country'       => "required|string|max:50",
@@ -66,7 +62,7 @@ class ProfileController extends Controller
             'image'         => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
         ]);
 
-        if($validator->fails()) return Response::error($validator->errors()->all(),[]);
+        if ($validator->fails()) return Response::error($validator->errors()->all(), []);
 
         $validated = $validator->validate();
         $validated['mobile']        = get_only_numeric_data($validated['mobile']);
@@ -76,60 +72,62 @@ class ProfileController extends Controller
 
         $user = auth()->guard(get_auth_guard())->user();
 
-        if(User::whereNot('id',$user->id)->where("full_mobile",$validated['full_mobile'])->exists()) {
-            return Response::error([__('Phone number already exists')],[],400);
+        if (User::whereNot('id', $user->id)->where("full_mobile", $validated['full_mobile'])->exists()) {
+            return Response::error([__('Phone number already exists')], [], 400);
         }
 
         $validated['address']       = $user->address;
 
-        if($request->hasFile("image")) {
-            $image = upload_file($validated['image'],'junk-files',$user->image);
-            $upload_image = upload_files_from_path_dynamic([$image['dev_path']],'user-profile');
+        if ($request->hasFile("image")) {
+            $image = upload_file($validated['image'], 'junk-files', $user->image);
+            $upload_image = upload_files_from_path_dynamic([$image['dev_path']], 'user-profile');
             delete_file($image['dev_path']);
             $validated['image']     = $upload_image;
         }
-        try{
+        try {
             $user->update($validated);
-        }catch(Exception $e) {
-            return Response::error([__("Something went wrong! Please try again")],[],500);
+        } catch (Exception $e) {
+            return Response::error([__("Something went wrong! Please try again")], [], 500);
         }
 
-        return Response::success([__('Profile successfully updated!')],[],200);
+        return Response::success([__('Profile successfully updated!')], [], 200);
     }
 
-    public function profilePasswordUpdate(Request $request) {
+    public function profilePasswordUpdate(Request $request)
+    {
         $basic_settings = BasicSettingsProvider::get();
         $password_rule = "required|string|min:6|confirmed";
-        if($basic_settings->secure_password) {
-            $password_rule = ["required",Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(),"confirmed"];
+        if ($basic_settings->secure_password) {
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(), "confirmed"];
         }
 
-        $validator = Validator::make($request->all(),[
+        $validator = Validator::make($request->all(), [
             'current_password'      => "required|string",
             'password'              => $password_rule,
         ]);
 
-        if($validator->fails()) return Response::error($validator->errors()->all(),[]);
+        if ($validator->fails()) return Response::error($validator->errors()->all(), []);
         $validated = $validator->validate();
 
-        if(!Hash::check($validated['current_password'],auth()->guard("api")->user()->password)) {
-            return Response::error([__("Current password didn't match")],[],400);
+        if (!Hash::check($validated['current_password'], auth()->guard("api")->user()->password)) {
+            return Response::error([__("Current password didn't match")], [], 400);
         }
 
-        try{
+        try {
             auth()->guard("api")->user()->update([
                 'password'  => Hash::make($validated['password']),
             ]);
-        }catch(Exception $e) {
-            return Response::error([__('Something went wrong! Please try again')],[],500);
+        } catch (Exception $e) {
+            return Response::error([__('Something went wrong! Please try again')], [], 500);
         }
 
-        return Response::success([__('Password successfully updated!')],[],200);
+        return Response::success([__('Password successfully updated!')], [], 200);
     }
 
-    public function deleteProfile(Request $request){
+    public function deleteProfile(Request $request)
+    {
         $user = Auth::guard(get_auth_guard())->user();
-        if(!$user){
+        if (!$user) {
             $message = ['success' =>  [__("Oops! User does not exists")]];
             return Response::error($message, []);
         }
@@ -143,14 +141,15 @@ class ProfileController extends Controller
         return Response::success([__('Your account deleted successfully!')], $user);
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         $user = Auth::guard(get_auth_guard())->user();
         $token = $user->token();
-        try{
+        try {
             $token->revoke();
-        }catch(Exception $e) {
-            return Response::error([__('Something went wrong! Please try again')],[],500);
+        } catch (Exception $e) {
+            return Response::error([__('Something went wrong! Please try again')], [], 500);
         }
-        return Response::success([__('Logout success!')],[],200);
+        return Response::success([__('Logout success!')], [], 200);
     }
 }

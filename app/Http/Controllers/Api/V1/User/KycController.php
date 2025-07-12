@@ -13,6 +13,7 @@ use App\Traits\ControlDynamicInputFields;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Constants\SiteSectionConst;
+use App\Lib\YouVerify;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
 use Illuminate\Support\Facades\Log;
@@ -40,12 +41,52 @@ class KycController extends Controller
             'created_at'    => now(),
         ];
 
+        $kyc_payload = [
+            'id' => '',
+            'image' => '',
+            'document' => '',
+            'lastName' => '',
+            'country' => ''
+        ];
+
+        $document_map = [
+            'NIN' => 'nin',
+            'Drivers License' => 'license',
+            'Passport' => 'passport'
+        ];
+
+        foreach ($get_values as $key) {
+            if ($key['name'] === "id_number") {
+                $kyc_payload['id'] = $key['value'];
+            } else if ($key['name'] === 'selfie') {
+                $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
+            } else if ($key['name'] === "id_type") {
+                $kyc_payload['document'] = $document_map[trim($key['value'])];
+            } else {
+            }
+        }
+
+        $kyc_payload['country'] = $user->address->country;
+        $kyc_payload['lastName'] = $user->lastname;
+        $kyc_payload['firstName'] = $user->firstname;
+        $kyc_payload['mobile'] = $user->full_mobile;
+
         DB::beginTransaction();
         try {
             DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
-            $user->update([
-                'kyc_verified'  => GlobalConst::PENDING,
-            ]);
+
+            $response = (new YouVerify())->kycVerification($kyc_payload);
+
+            if ($response) {
+                $user->update([
+                    'kyc_verified'  => GlobalConst::APPROVED,
+                ]);
+            } else {
+                $user->update([
+                    'kyc_verified'  => GlobalConst::PENDING,
+                ]);
+            }
+
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
