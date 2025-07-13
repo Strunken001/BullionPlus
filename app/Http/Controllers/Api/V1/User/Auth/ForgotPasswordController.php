@@ -142,7 +142,7 @@ class ForgotPasswordController extends Controller
         $basic_settings = BasicSettingsProvider::get();
         $password_rule = "required|string|min:6|confirmed";
         if ($basic_settings->secure_password) {
-            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(), "confirmed"];
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols(), "confirmed"];
         }
 
         $validator = Validator::make($request->all(), [

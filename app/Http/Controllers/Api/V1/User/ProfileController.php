@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Providers\Admin\BasicSettingsProvider;
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
@@ -60,6 +61,9 @@ class ProfileController extends Controller
             'mobile'        => "required|string|max:20",
             'address'       => "nullable|string|max:250",
             'image'         => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
+            'state'       => "nullable|string",
+            'city'       => "nullable|string",
+            'zip'       => "nullable|string",
         ]);
 
         if ($validator->fails()) return Response::error($validator->errors()->all(), []);
@@ -76,7 +80,14 @@ class ProfileController extends Controller
             return Response::error([__('Phone number already exists')], [], 400);
         }
 
-        $validated['address']       = $user->address;
+        // $validated['address']       = $user->address;
+        $validated['address']       = [
+            'country'   => $validated['country'] ?? $user->address->country,
+            'state'     => $validated['state'] ?? $user->address->state,
+            'city'      => $validated['city'] ?? $user->address->city,
+            'zip'       => $validated['zip_code'] ?? $user->address->zip,
+            'address'   => $validated['address'] ?? $user->address->address,
+        ];
 
         if ($request->hasFile("image")) {
             $image = upload_file($validated['image'], 'junk-files', $user->image);
@@ -98,7 +109,7 @@ class ProfileController extends Controller
         $basic_settings = BasicSettingsProvider::get();
         $password_rule = "required|string|min:6|confirmed";
         if ($basic_settings->secure_password) {
-            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(), "confirmed"];
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols(), "confirmed"];
         }
 
         $validator = Validator::make($request->all(), [

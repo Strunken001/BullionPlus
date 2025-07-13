@@ -32,7 +32,7 @@ class RegisterController extends Controller
     |
     */
 
-    use RegistersUsers, RegisteredUsers ,LoggedInUsers;
+    use RegistersUsers, RegisteredUsers, LoggedInUsers;
 
     protected $basic_settings;
 
@@ -46,13 +46,14 @@ class RegisterController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function showRegistrationForm() {
+    public function showRegistrationForm()
+    {
         $client_ip = request()->ip() ?? false;
         $user_country = geoip()->getLocation($client_ip)['country'] ?? "";
-        $register_des = SiteSections::where('key','auth-section')->first();
+        $register_des = SiteSections::where('key', 'auth-section')->first();
 
         $page_title = setPageTitle("User Registration");
-        return view('user.auth.register',compact(
+        return view('user.auth.register', compact(
             'page_title',
             'user_country',
             'register_des'
@@ -71,18 +72,18 @@ class RegisterController extends Controller
 
         $basic_settings             = $this->basic_settings;
 
-        $validated = Arr::except($validated,['agree']);
+        $validated = Arr::except($validated, ['agree']);
         $validated['email_verified']        = ($basic_settings->email_verification == true) ? false : true;
         $validated['sms_verified']          = ($basic_settings->sms_verification == true) ? false : true;
         $validated['kyc_verified']          = ($basic_settings->kyc_verification == true) ? false : true;
         $validated['password']              = Hash::make($validated['password']);
-        $validated['username']              = make_username($validated['firstname'],$validated['lastname']);
+        $validated['username']              = make_username($validated['firstname'], $validated['lastname']);
         $validated['address']['country']    = $validated['country'];
         $validated['mobile']                = remove_speacial_char($validated['mobile']);
         $validated['mobile_code']           = remove_speacial_char($validated['phone_code']);
         $complete_phone                     = $validated['mobile_code'] . $validated['mobile'];
         $validated['full_mobile']           = $complete_phone;
-        $validated                          = Arr::except($validated,['agree','phone_code','phone']);
+        $validated                          = Arr::except($validated, ['agree', 'phone_code', 'phone']);
         // $validated['referral_id']       = generate_unique_string('users','referral_id',8,'number');0
 
         event(new Registered($user = $this->create($validated)));
@@ -98,21 +99,22 @@ class RegisterController extends Controller
      * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
-    public function validator(array $data) {
+    public function validator(array $data)
+    {
 
         $basic_settings = $this->basic_settings;
         $password_rule = "required|string|min:6";
-        if($basic_settings->secure_password) {
-            $password_rule = ["required",Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
+        if ($basic_settings->secure_password) {
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()];
         }
 
-        if($basic_settings->agree_policy){
+        if ($basic_settings->agree_policy) {
             $agree = 'required|in:on';
-        }else{
+        } else {
             $agree = 'nullable';
         }
 
-        return Validator::make($data,[
+        return Validator::make($data, [
             'firstname'     => 'required|string|max:60',
             'lastname'      => 'required|string|max:60',
             'email'         => 'required|string|email|max:150|unique:users,email',
@@ -146,10 +148,10 @@ class RegisterController extends Controller
      */
     protected function registered(Request $request, $user)
     {
-        try{
+        try {
             $this->createUserWallets($user);
             $this->createLoginLog($user);
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             $this->guard()->logout();
             $user->delete();
             return redirect()->back()->with(['error' => [__('Something went wrong! Please try again')]]);

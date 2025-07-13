@@ -28,8 +28,8 @@ class ForgotPasswordController extends Controller
     public function showForgotForm()
     {
         $page_title = setPageTitle("Forgot Password");
-        $forget_des = SiteSections::where('key','auth-section')->first();
-        return view('user.auth.forgot-password.forgot',compact('page_title','forget_des'));
+        $forget_des = SiteSections::where('key', 'auth-section')->first();
+        return view('user.auth.forgot-password.forgot', compact('page_title', 'forget_des'));
     }
 
     /**
@@ -46,40 +46,41 @@ class ForgotPasswordController extends Controller
         ]);
         $phone = $request->otp_country . $request->number;
         $column = "full_mobile";
-        if(check_email($request->credentials)) $column = "email";
-        $user = User::where($column,$phone)->first();
-        if(!$user) {
+        if (check_email($request->credentials)) $column = "email";
+        $user = User::where($column, $phone)->first();
+        if (!$user) {
             throw ValidationException::withMessages([
                 'credentials'       => "User doesn't exists.",
             ]);
         }
-        $token = generate_unique_string("user_password_resets","token",80);
+        $token = generate_unique_string("user_password_resets", "token", 80);
         $code = generate_random_code();
 
-        try{
-            UserPasswordReset::where("user_id",$user->id)->delete();
+        try {
+            UserPasswordReset::where("user_id", $user->id)->delete();
             $password_reset = UserPasswordReset::create([
                 'user_id'       => $user->id,
                 'token'         => $token,
                 'code'          => $code,
             ]);
             // sendSms($user,'PASS_RESET_CODE', $code);
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return back()->with(['error' => [__('Something went wrong! Please try again.')]]);
         }
-        return redirect()->route('user.password.forgot.code.verify.form',['token' => $token, 'mobile' => $user->full_mobile])->with(['success' => [__('Verification code sended to your mobile number.')]]);
+        return redirect()->route('user.password.forgot.code.verify.form', ['token' => $token, 'mobile' => $user->full_mobile])->with(['success' => [__('Verification code sended to your mobile number.')]]);
     }
 
 
-    public function showVerifyForm($token,$mobile) {
+    public function showVerifyForm($token, $mobile)
+    {
         $page_title = setPageTitle("Verify User");
-        $password_reset = UserPasswordReset::where("token",$token)->first();
-        if(!$password_reset) return redirect()->route('user.password.forgot')->with(['error' => [__('Password Reset Token Expired')]]);
+        $password_reset = UserPasswordReset::where("token", $token)->first();
+        if (!$password_reset) return redirect()->route('user.password.forgot')->with(['error' => [__('Password Reset Token Expired')]]);
         $resend_time = 0;
-        if(Carbon::now() <= $password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
+        if (Carbon::now() <= $password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
             $resend_time = Carbon::now()->diffInSeconds($password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE));
         }
-        return view('user.auth.forgot-password.verify',compact('page_title','token','resend_time','mobile'));
+        return view('user.auth.forgot-password.verify', compact('page_title', 'token', 'resend_time', 'mobile'));
     }
 
     /**
@@ -88,11 +89,11 @@ class ForgotPasswordController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function verifyCode(Request $request,$token)
+    public function verifyCode(Request $request, $token)
     {
         $otp = join($request->otp);
         $request->merge(['token' => $token, 'otp' => $otp]);
-        $validated = Validator::make($request->all(),[
+        $validated = Validator::make($request->all(), [
             'token'         => "required|string|exists:user_password_resets,token",
             'otp'          => "required|numeric|exists:user_password_resets,code",
         ])->validate();
@@ -100,24 +101,24 @@ class ForgotPasswordController extends Controller
         $basic_settings = BasicSettingsProvider::get();
         $otp_exp_seconds = $basic_settings->otp_exp_seconds ?? 0;
 
-        $password_reset = UserPasswordReset::where("token",$token)->first();
+        $password_reset = UserPasswordReset::where("token", $token)->first();
 
-        if(Carbon::now() >= $password_reset->created_at->addSeconds($otp_exp_seconds)) {
-            foreach(UserPasswordReset::get() as $item) {
-                if(Carbon::now() >= $item->created_at->addSeconds($otp_exp_seconds)) {
+        if (Carbon::now() >= $password_reset->created_at->addSeconds($otp_exp_seconds)) {
+            foreach (UserPasswordReset::get() as $item) {
+                if (Carbon::now() >= $item->created_at->addSeconds($otp_exp_seconds)) {
                     $item->delete();
                 }
             }
             return redirect()->route('user.password.forgot')->with(['error' => [__('Session expired. Please try again.')]]);
         }
 
-        if($password_reset->code != $validated['otp']) {
+        if ($password_reset->code != $validated['otp']) {
             throw ValidationException::withMessages([
                 'otp'      => "Verification Otp is Invalid",
             ]);
         }
 
-        return redirect()->route('user.password.forgot.reset.form',$token);
+        return redirect()->route('user.password.forgot.reset.form', $token);
     }
 
     /**
@@ -126,72 +127,72 @@ class ForgotPasswordController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function resendCode($token,$mobile)
+    public function resendCode($token, $mobile)
     {
-        $password_reset = UserPasswordReset::where('token',$token)->first();
-        if(!$password_reset) return back()->with(['error' => ['Request token is invalid']]);
-        if(Carbon::now() <= $password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
+        $password_reset = UserPasswordReset::where('token', $token)->first();
+        if (!$password_reset) return back()->with(['error' => ['Request token is invalid']]);
+        if (Carbon::now() <= $password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
             throw ValidationException::withMessages([
-                'code'      => 'You can resend verification code after '.Carbon::now()->diffInSeconds($password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)). ' seconds',
+                'code'      => 'You can resend verification code after ' . Carbon::now()->diffInSeconds($password_reset->created_at->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) . ' seconds',
             ]);
         }
 
         DB::beginTransaction();
-        try{
+        try {
             $update_data = [
                 'code'          => generate_random_code(),
                 'created_at'    => now(),
                 'token'         => $token,
             ];
-            DB::table('user_password_resets')->where('token',$token)->update($update_data);
-            $user = User::where('full_mobile',$mobile)->first();
-            sendSms($user,'PASS_RESET_CODE', $update_data['code']);
+            DB::table('user_password_resets')->where('token', $token)->update($update_data);
+            $user = User::where('full_mobile', $mobile)->first();
+            sendSms($user, 'PASS_RESET_CODE', $update_data['code']);
             DB::commit();
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             return back()->with(['error' => [__('Something went wrong. please try again')]]);
         }
-        return redirect()->route('user.password.forgot.code.verify.form',['token' => $token,'mobile' => $mobile])->with(['success' => [__('Verification code resend success!')]]);
-
+        return redirect()->route('user.password.forgot.code.verify.form', ['token' => $token, 'mobile' => $mobile])->with(['success' => [__('Verification code resend success!')]]);
     }
 
 
-    public function showResetForm($token) {
+    public function showResetForm($token)
+    {
         $page_title = setPageTitle("Reset Password");
-        return view('user.auth.forgot-password.reset',compact('page_title','token'));
+        return view('user.auth.forgot-password.reset', compact('page_title', 'token'));
     }
 
 
-    public function resetPassword(Request $request,$token) {
+    public function resetPassword(Request $request, $token)
+    {
         $basic_settings = BasicSettingsProvider::get();
         $password_rule = "required|string|min:6|confirmed";
-        if($basic_settings->secure_password) {
-            $password_rule = ["required",Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(),"confirmed"];
+        if ($basic_settings->secure_password) {
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols(), "confirmed"];
         }
 
         $request->merge(['token' => $token]);
-        $validated = Validator::make($request->all(),[
+        $validated = Validator::make($request->all(), [
             'token'         => "required|string|exists:user_password_resets,token",
             'password'      => $password_rule,
         ])->validate();
 
-        $password_reset = UserPasswordReset::where("token",$token)->first();
-        if(!$password_reset) {
+        $password_reset = UserPasswordReset::where("token", $token)->first();
+        if (!$password_reset) {
             throw ValidationException::withMessages([
                 'password'      => __("Invalid Request. Please try again."),
             ]);
         }
 
-        try{
+        try {
             $password_reset->user->update([
                 'password'      => Hash::make($validated['password']),
             ]);
             $password_reset->delete();
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return back()->with(['error' => [__('Something went wrong! Please try again.')]]);
         }
 
         return redirect()->route('user.login')->with(['success' => [__('Password reset success. Please login with new password.')]]);
     }
-
 }

@@ -9,10 +9,7 @@ use App\Http\Helpers\PaymentGateway;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use App\Constants\PaymentGatewayConst;
-use App\Http\Controllers\Api\V1\User\AddMoneyController;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 trait Paystack
 {
