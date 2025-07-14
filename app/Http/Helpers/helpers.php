@@ -42,6 +42,7 @@ use App\Models\Transaction;
 use App\Models\TransactionCharge;
 use App\Models\UserSupportChat;
 use App\Models\UserWallet;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -114,6 +115,20 @@ function get_country_phone_code_by_iso2($iso2)
     }
     $phone_code = str_replace("+", "", $phone_code);
     return $phone_code;
+}
+
+function get_country_code_by_iso2($iso2)
+{
+    $countries = json_decode(file_get_contents(resource_path('world/countries.json')), true);
+    $country_code = "";
+
+    foreach ($countries as $item) {
+        if ($item['iso2'] == $iso2) {
+            $country_code = $item['currency'];
+        }
+    }
+
+    return $country_code;
 }
 
 function get_all_timezones()

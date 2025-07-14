@@ -63,7 +63,13 @@ class GlobalController extends Controller
 
     public function receiverWallet(Request $request)
     {
-        $receiver_currency = ExchangeRate::where(['currency_code' => $request->code])->first();
+        $currency_code = $request->code;
+
+        if ($request->iso2) {
+            $currency_code = get_country_code_by_iso2($request->iso2);
+        }
+
+        $receiver_currency = ExchangeRate::where(['currency_code' => $currency_code])->first();
 
         if ($request->expectsJson()) {
             return response()->json([
