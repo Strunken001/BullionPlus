@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\User\MobileTopupController;
 use App\Http\Controllers\Api\V1\User\TransactionController;
 use App\Http\Controllers\Api\V1\User\UtilityBillController;
 use App\Http\Controllers\Api\V1\User\KycController;
+use App\Http\Controllers\Api\V1\User\PurchaseController;
 
 Route::prefix("user")->name("api.user.")->group(function () {
     Route::controller(ProfileController::class)->prefix('profile')->group(function () {
@@ -66,6 +67,10 @@ Route::prefix("user")->name("api.user.")->group(function () {
     // // Transaction
     Route::controller(TransactionController::class)->prefix("transaction")->group(function () {
         Route::get("log", "log");
+    });
+
+    Route::controller(PurchaseController::class)->prefix('purchase-history')->group(function () {
+        Route::get("", "getPaginatedHistory");
     });
 
     //gift card

@@ -96,9 +96,11 @@ class DashboardController extends Controller
             'two_factor_secret',
         ]);
 
-        $mobile_topup_count = Transaction::where('user_id',auth()->user()->id)->where('type',NotificationConst::MOBILE_TOPUP)->count();
-        $giftcard_count = Transaction::where('user_id',auth()->user()->id)->where('type',NotificationConst::GIFTCARD)->count();
-        $add_money_count = Transaction::where('user_id',auth()->user()->id)->where('type',NotificationConst::ADD_MONEY)->count();
+        $mobile_topup_count = Transaction::where('user_id', auth()->user()->id)->where('type', NotificationConst::MOBILE_TOPUP)->count();
+        $giftcard_count = Transaction::where('user_id', auth()->user()->id)->where('type', NotificationConst::GIFTCARD)->count();
+        $add_money_count = Transaction::where('user_id', auth()->user()->id)->where('type', NotificationConst::ADD_MONEY)->count();
+        $data_bundle_count = Transaction::where('user_id', auth()->user()->id)->where('type', NotificationConst::DATA_BUNDLE)->count();
+        $utility_bill_count = Transaction::where('user_id', auth()->user()->id)->where('type', NotificationConst::BILL_PAY)->count();
 
         $profile_image_paths = [
             'base_url'          => url("/"),
@@ -123,12 +125,14 @@ class DashboardController extends Controller
             'banner'                => $ban_data,
             'payment_gateway'       => $gateway,
             'recharge_bttn'         => $recharge_bttn,
-            'profile_image_paths'   => $profile_image_paths,
+            'profile_image_paths'    => $profile_image_paths,
             'gateway_image_paths'   => $gateway_image_paths,
             'banner_image_paths'    => $banner_image_paths,
             'mobile_topup_count'    => $mobile_topup_count,
             'giftcard_count'        => $giftcard_count,
             'add_money_count'       => $add_money_count,
+            'data_bundle_count'     => $data_bundle_count,
+            'utility_bill_count'    => $utility_bill_count,
         ]);
     }
 
