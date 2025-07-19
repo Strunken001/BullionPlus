@@ -45,6 +45,7 @@
                                         <select class="form--control select-2 select2-auto-tokenize country-select"
                                             data-placeholder="{{ __('Select Country') }}" name="country"
                                             data-old="{{ old('country', auth()->user()->address->country ?? '') }}">
+                                            <option selected disabled>Loading...</option>
                                         </select>
                                     </div>
                                     <div class="col-12 mb-10">
@@ -78,9 +79,9 @@
                                                 <input type="checkbox" id="level-1" name="agree">
                                                 <label for="level-1">{{ __('I have agreed with') }} <a
                                                         href="{{ route('global.usefull.page', 'refund-policy') }}"
-                                                        target="_blanck">{{ __('Terms Of Use') }}</a> & <a
+                                                        target="_blank">{{ __('Terms Of Use') }}</a> & <a
                                                         href="{{ route('global.usefull.page', 'privacy-policy') }}"
-                                                        target="_blanck">{{ __('Privacy Policy') }}</a></label>
+                                                        target="_blank">{{ __('Privacy Policy') }}</a></label>
                                             </div>
                                         </div>
                                     @endif

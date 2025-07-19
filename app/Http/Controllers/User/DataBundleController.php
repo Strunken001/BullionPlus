@@ -97,7 +97,7 @@ class DataBundleController extends Controller
             $info = json_decode($request->info);
             $charges = json_decode($request->charges);
 
-            if ($charges['total_payable'] > $sender_wallet->balance) {
+            if ($charges->total_payable > $sender_wallet->balance) {
                 return back()->with(['error' => [__("Sorry, insufficient balance")]]);
             }
 
@@ -106,6 +106,7 @@ class DataBundleController extends Controller
                     'service_id' => $request->service_id,
                     'variation_code' => $request->variation_code,
                     'phone' => $info->mobile_number,
+                    'amount' => $request->amount,
                 ]);
 
                 $trx_ref = $topup['requestId'];
@@ -117,10 +118,9 @@ class DataBundleController extends Controller
                 $operator = (new MobileTopUpHelper())->getInstance()->getOperator($request->operator_id);
                 $trx_ref  = generate_unique_string('transactions', 'trx_id', 16);
                 $recharge_country_iso2 = $request->iso2;
-                $request->merge(['operator' => $operator, 'trx_ref' => $trx_ref, 'recharge_country_iso2' => $recharge_country_iso2]);
+                $request->merge(['operator' => $operator, 'trx_ref' => $trx_ref, 'recharge_country_iso2' => $recharge_country_iso2, 'amount' => $charges->request_amount]);
                 $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
             }
-
 
             if (isset($topup['status']) && ($topup['status'] === false || $topup['status'] !== "SUCCESSFUL")) {
                 return redirect()->route("user.data.bundle.index")->with(['error' => [$topup['message']]]);

@@ -95,13 +95,13 @@
                                                 @endforeach
                                             </select>
                                             <input type="tel" class="form--control" name="password_number"
-                                            placeholder="Enter Number" value="123456789">
+                                            placeholder="Enter Number">
                                         </div>
                                     </div>
                                     <div class="account-passwoard show_hide_password mt-20">
                                         <label>{{ __('Password') }}:</label>
                                         <input type="password" class=" form--control" name="password"
-                                            placeholder="Enter Password..." value="appdevs">
+                                            placeholder="Enter Password...">
                                         <a href="#0" class="show-pass"><i class="fa fa-eye-slash"
                                                 aria-hidden="true"></i></a>
                                     </div>

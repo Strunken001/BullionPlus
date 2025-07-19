@@ -131,8 +131,10 @@ class GlobalController extends Controller
         if (empty($page)) {
             abort(404);
         }
+
         return view('frontend.usefull_pages', compact('page', 'footer'));
     }
+
     public function setCookie(Request $request)
     {
         $userAgent = $request->header('User-Agent');

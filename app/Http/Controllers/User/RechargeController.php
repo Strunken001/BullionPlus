@@ -57,11 +57,17 @@ class RechargeController extends Controller
             'amount'            => 'required|numeric|gt:0',
         ])->validate();
 
-        return redirect()->route('user.recharge.recharge.view', $request->amount);
+        return redirect()->route('user.recharge.recharge.view')->with('amount', $request->amount);
     }
 
-    public function rechargeView($amount)
+    public function rechargeView()
     {
+        $amount = session('amount');
+
+        if (!$amount) {
+            return redirect()->back()->with('error', 'Amount is required');
+        }
+
         $payment_gateways = PaymentGateway::addMoney()->active()->with('currencies')->has("currencies")->get();
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();

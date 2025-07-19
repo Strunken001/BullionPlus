@@ -68,7 +68,7 @@
                         );
                     @endforeach
                 @endif
-            @elseif ($errors->any())
+            @elseif (!empty($errors) && $errors->any())
                 @foreach ($errors->all() as $item)
                     $.notify(
                         {

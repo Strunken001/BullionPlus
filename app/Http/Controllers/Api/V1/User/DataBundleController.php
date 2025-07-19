@@ -260,7 +260,7 @@ class DataBundleController extends Controller
             } else {
                 $operator = (new MobileTopUpHelper())->getInstance()->getOperator($request->operator_id);
 
-                $request->merge(['operator' => $operator, 'phone' => $request->mobile_number]);
+                $request->merge(['operator' => $operator, 'phone' => $request->mobile_number, 'amount' => $charges->request_amount]);
                 $topup = (new MobileTopUpHelper())->getInstance()->topup($request);
             }
 

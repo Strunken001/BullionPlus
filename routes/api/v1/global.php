@@ -22,7 +22,7 @@ Route::controller(GlobalController::class)->prefix('global')->name('global.')->g
     Route::post('get-cities', 'getCities')->name('country.cities');
     Route::post('get-countries', 'getCountries')->name('countries');
     Route::post('get-timezones', 'getTimezones')->name('timezones');
-    Route::get('receiver/wallet/currency', 'receiverWallet')->name('receiver.wallet.currency');
+    Route::get('receiver/wallet/currency', 'receiverApiWallet')->name('receiver.wallet.api.currency');
     //webhook(Airtime(Reloadly))
     Route::post('mobile-topup/webhook', 'webhookInfo')->name('mobile.topup.webhook')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
 

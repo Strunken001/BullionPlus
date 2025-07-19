@@ -194,7 +194,7 @@
                             </div>
                             <div class="topup-btn mt-3">
                                 <button type="submit"
-                                    class="btn--base w-100 btn-loading mobileTopupBtn">{{ __('Recharge Now') }} <i
+                                    class="btn--base w-100 btn-loading mobileTopupBtn d-none">{{ __('Recharge Now') }} <i
                                         class="fas fa-mobile ms-1"></i></button>
                             </div>
                         </div>
@@ -211,14 +211,19 @@
     <script>
         var defualCurrency = "{{ get_default_currency_code() }}";
         var defualCurrencyRate = "{{ get_default_currency_rate() }}";
+        let debounceTimer;
+
         $('.mobileTopupBtn').attr('disabled', true);
         $("select[name=mobile_code]").change(function() {
             if (acceptVar().mobileNumber != '') {
                 checkOperator();
             }
         });
-        $("input[name=mobile_number]").focusout(function() {
-            checkOperator();
+        $("input[name=mobile_number]").on("keyup", function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                checkOperator();
+            }, 300);
         });
         $(document).on("click", ".radio_amount", function() {
             preview();
@@ -263,6 +268,7 @@
             var phone = acceptVar().mobileNumber;
             var iso = acceptVar().selectedMobileCode.val();
             var token = '{{ csrf_token() }}';
+            $('.mobileTopupBtn').addClass('d-none');
 
             var data = {
                 _token: token,
@@ -506,7 +512,7 @@
             $('input[name=phone_code]').val(phone_code);
             $('input[name=country_code]').val(acceptVar().selectedMobileCode.val());
             $('input[name=operator_id]').val(operator.operatorId);
-
+            $('.mobileTopupBtn').removeClass('d-none');
         }
         var amount = 0;
 

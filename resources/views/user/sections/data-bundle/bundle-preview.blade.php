@@ -74,7 +74,7 @@
                             </div>
                         </div>
                         <div class="planbuy-btn pt-20">
-                            <button type="submit" class="btn--base w-100">{{ __('Buy Now') }}</button>
+                            <button type="submit" class="btn--base w-100" id="buy-now-btn">{{ __('Buy Now') }}</button>
                         </div>
                     </form>
                 </div>
@@ -82,3 +82,19 @@
         </div>
     </div>
 </section>
+
+@push('scripts')
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector('form[action="{{ setRoute('user.data.bundle.buy') }}"]');
+            const buyNowBtn = document.getElementById('buy-now-btn');
+
+            if (form && buyNowBtn) {
+                form.addEventListener('submit', function () {
+                    buyNowBtn.disabled = true;
+                    buyNowBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> {{ __('Loading...') }}`;
+                });
+            }
+        });
+    </script>
+@endpush
