@@ -156,6 +156,6 @@ class RegisterController extends Controller
             $user->delete();
             return redirect()->back()->with(['error' => [__('Something went wrong! Please try again')]]);
         }
-        return redirect()->intended(route('user.dashboard'));
+        return redirect()->intended(route('user.dashboard'))->with(['success' => [__('Registration successful')]]);
     }
 }

@@ -71,15 +71,32 @@ class GlobalController extends Controller
 
         $receiver_currency = ExchangeRate::where(['currency_code' => $currency_code])->first();
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'wallet returned',
-                'data' => $receiver_currency
-            ], 200);
-        }
+        // if ($request->expectsJson()) {
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'message' => 'wallet returned',
+        //         'data' => $receiver_currency
+        //     ], 200);
+        // }
 
         return $receiver_currency;
+    }
+
+    public function receiverApiWallet(Request $request)
+    {
+        $currency_code = $request->code;
+
+        if ($request->iso2) {
+            $currency_code = get_country_code_by_iso2($request->iso2);
+        }
+
+        $receiver_currency = ExchangeRate::where(['currency_code' => $currency_code])->first();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'wallet returned',
+            'data' => $receiver_currency
+        ], 200);
     }
 
     //reloadly webhook response
