@@ -10,6 +10,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="row mb-30-none">
                 <div class="col-lg-7 col-md-12 mb-30">
                     <div class="airtime-topup-form">
@@ -55,6 +56,13 @@
 
                                 <div class="add_item">
 
+                                {{-- <div class="col-xxl-12 col-xl-12 col-lg-12 form-group">
+                                    <label>{{ __('Amount') }}<span>*</span></label>
+                                    <div class="input-group currency-type">
+                                        <input type="text" class="form--control number-input" required placeholder="{{ __('Enter Amount') }}" name="amount" value="{{ old('amount') }}">
+                                    </div>
+                                </div> --}}
+
                                 </div>
                                 <div class="col-lg-12 form-group">
                                     <div class="note-area">
@@ -63,6 +71,13 @@
                                     </div>
                                 </div>
                             </div>
+                        </form>
+
+                        <div id="operator-loader" style="display: none;" class="text-center my-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{ __('Loading...') }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-5 col-md-12 mb-30">
@@ -232,9 +247,14 @@
             var operator = JSON.parse($("input[name=operator]").val());
             var denominationType = operator.denominationType;
             if (denominationType === "RANGE") {
-                enterLimit();
+                if (($("input[name=amount]").val() !== "") ) {
+                    enterLimit();
+                }
             }
             preview();
+            if ($("input[name=amount]").val() !== "") {
+                $('.mobileTopupBtn').removeClass('d-none');
+            }
         });
         $(document).on("keyup", "input[name=amount]", function() {
             preview();
@@ -263,6 +283,7 @@
         }
 
         function checkOperator() {
+            $('#operator-loader').show();
             var url = '{{ route('user.mobile.topup.automatic.check.operator') }}';
             var mobile_code = acceptVar().selectedMobileCode.data('mobile-code');
             var phone = acceptVar().mobileNumber;
@@ -336,7 +357,6 @@
                                 @endforelse
                             </div>
                         </div>
-                        </div>
                     `);
                         $("select[name=currency]").niceSelect();
 
@@ -386,6 +406,7 @@
                     $('.mobileTopupBtn').attr('disabled', false);
                     setTimeout(function() {
                         $('.btn-ring-input').hide();
+                        $('#operator-loader').hide();
                     }, 1000);
                 } else if (response.status === false && response.from === "error") {
                     $('.add_item, .limit-show').empty();
@@ -396,6 +417,7 @@
                     $('.mobileTopupBtn').attr('disabled', true);
                     setTimeout(function() {
                         $('.btn-ring-input').hide();
+                        $('#operator-loader').hide();
                         throwMessage('error', [response.message]);
                     }, 1000);
                     return false;
@@ -512,7 +534,6 @@
             $('input[name=phone_code]').val(phone_code);
             $('input[name=country_code]').val(acceptVar().selectedMobileCode.val());
             $('input[name=operator_id]').val(operator.operatorId);
-            $('.mobileTopupBtn').removeClass('d-none');
         }
         var amount = 0;
 
@@ -555,6 +576,10 @@
         }
     </script>
     <script>
+        const mobileNumber = $("input[name=mobile_number]").val();
+        if (mobileNumber.trim() !== '') {
+            checkOperator();
+        }
         $(function() {
             var $rechargeInput = $('[name=amount]');
             $('[name=q-recharge]').on('click', function() {

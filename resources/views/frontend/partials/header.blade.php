@@ -1,6 +1,16 @@
 @php
     $current_url = URL::current();
-    $pages = App\Models\Admin\SetupPage::where(['status' => true])->orWhere('slug',"home")->get();
+    if (!Auth::check()) {
+        $pages = App\Models\Admin\SetupPage::where(['status' => true])
+            ->where('show_offline', true)
+            ->orWhere('slug', 'home')
+            ->get();
+    } else {
+        $pages = App\Models\Admin\SetupPage::where(['status' => true])
+            ->where('show_offline', false)
+            ->orWhere('slug', 'dashboard')
+            ->get();
+    }
 @endphp
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Start Header

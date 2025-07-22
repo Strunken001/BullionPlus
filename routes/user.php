@@ -129,7 +129,7 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
         Route::prefix('automatic')->name('automatic.')->group(function () {
             Route::get('/', 'automaticTopUp')->name('index');
             Route::post('check-operator', 'checkOperator')->name('check.operator');
-            Route::post('pay', 'payAutomatic')->name('pay')->middleware('kyc.verification.guard');
+            Route::post('pay', 'payAutomatic')->name('pay');
         });
     });
 

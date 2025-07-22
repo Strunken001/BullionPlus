@@ -106,16 +106,44 @@
 
 
 @push('script')
-    <script>
+   <script>
         getAllCountries("{{ setRoute('global.countries') }}");
-        $(document).ready(function() {
-            $("select[name=country]").change(function() {
-                var phoneCode = $("select[name=country] :selected").attr("data-mobile-code");
+
+        $('input[name=mobile]').on('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        $(document).ready(function () {
+            const countrySelectElement = $("select[name=country]");
+
+            // When user selects a country manually
+            countrySelectElement.change(function () {
+                var phoneCode = countrySelectElement.find(":selected").attr("data-mobile-code");
                 placePhoneCode(phoneCode);
             });
 
+            // After country list is populated (assumed async), re-select the old value
+            const oldCountry = countrySelectElement.data('old');
+            if (oldCountry) {
+                const checkInterval = setInterval(function () {
+                    if (countrySelectElement.find("option").length > 1) {
+                        countrySelectElement.val(oldCountry).trigger('change');
+                        clearInterval(checkInterval);
+                    }
+                }, 100); // Poll every 100ms until options are loaded
+            }
+
+            // Initialize country and state select if applicable
             countrySelect(".country-select", $(".country-select").siblings(".select2"));
             stateSelect(".state-select", $(".state-select").siblings(".select2"));
         });
+
+        function placePhoneCode(code) {
+            if (code) {
+                $(".input-group-text.phone-code").text("+" + code);
+                $("input[name=phone_code]").val(code);
+            }
+        }
     </script>
+
 @endpush

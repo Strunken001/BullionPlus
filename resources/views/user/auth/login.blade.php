@@ -41,13 +41,13 @@
                                                 @endforeach
                                             </select>
                                             <input type="tel" class="form--control" name="password_number"
-                                                placeholder="Enter Number">
+                                                placeholder="Enter Number" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="account-passwoard show_hide_password mt-20">
                                         <label>{{ __('Password') }}:</label>
                                         <input type="password" class="form--control" name="password"
-                                            placeholder="Enter Password...">
+                                            placeholder="Enter Password..." autocomplete="off">
                                         <a href="#0" class="show-pass"><i class="fa fa-eye-slash"
                                                 aria-hidden="true"></i></a>
                                     </div>
@@ -85,19 +85,14 @@
 
 @push('script')
     <script>
-        // Password visibility toggle
-        document.querySelectorAll('.show-pass').forEach(toggle => {
-            toggle.addEventListener('click', function (e) {
-                e.preventDefault();
-                const input = this.previousElementSibling;
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    this.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>';
-                } else {
-                    input.type = 'password';
-                    this.innerHTML = '<i class="fa fa-eye-slash" aria-hidden="true"></i>';
-                }
-            });
+        document.addEventListener('DOMContentLoaded', function () {
+            const phoneInput = document.querySelector('input[name="password_number"]');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
+            }
         });
     </script>
+
 @endpush

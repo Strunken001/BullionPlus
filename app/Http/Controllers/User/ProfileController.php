@@ -17,6 +17,7 @@ use App\Constants\SiteSectionConst;
 use App\Models\Admin\SiteSections;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
@@ -96,10 +97,11 @@ class ProfileController extends Controller
     public function passwordChange()
     {
         $page_title = "User Password Change";
+        $basic_settings = BasicSettingsProvider::get();
         $kyc_data = SetupKyc::userKyc()->first();
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
-        return view('user.page.password-change', compact("page_title", "kyc_data", "footer"));
+        return view('user.page.password-change', compact("page_title", "kyc_data", "footer", "basic_settings"));
     }
 
     public function passwordUpdate(Request $request)

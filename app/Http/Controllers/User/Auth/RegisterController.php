@@ -17,6 +17,7 @@ use App\Traits\User\RegisteredUsers;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
@@ -68,6 +69,13 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
+        $request['mobile'] = preg_replace('/[^0-9]/', '', $request['mobile'] ?? '');
+        if (Str::startsWith($request['mobile'], '0')) {
+            $request['mobile'] = ltrim($request['mobile'], '0');
+        }
+
+        $request['full_mobile'] = remove_speacial_char($request['phone_code']) . $request['mobile'];
+
         $validated = $this->validator($request->all())->validate();
 
         $basic_settings             = $this->basic_settings;
@@ -81,8 +89,8 @@ class RegisterController extends Controller
         $validated['address']['country']    = $validated['country'];
         $validated['mobile']                = remove_speacial_char($validated['mobile']);
         $validated['mobile_code']           = remove_speacial_char($validated['phone_code']);
-        $complete_phone                     = $validated['mobile_code'] . $validated['mobile'];
-        $validated['full_mobile']           = $complete_phone;
+        // $complete_phone                     = $validated['mobile_code'] . $validated['mobile'];
+        // $validated['full_mobile']           = $complete_phone;
         $validated                          = Arr::except($validated, ['agree', 'phone_code', 'phone']);
         // $validated['referral_id']       = generate_unique_string('users','referral_id',8,'number');0
 
@@ -118,11 +126,15 @@ class RegisterController extends Controller
             'firstname'     => 'required|string|max:60',
             'lastname'      => 'required|string|max:60',
             'email'         => 'required|string|email|max:150|unique:users,email',
-            'mobile'        => 'required|string|max:20|unique:users,mobile',
+            // 'mobile'        => 'required|string|max:20|unique:users,mobile',
+            'full_mobile'   => 'required|string|max:20|unique:users,full_mobile',
             'phone_code'    => "required|string|max:20",
             'country'       => 'required|string',
             'password'      => $password_rule,
             'agree'         => $agree,
+        ], [
+            'email.unique'       => 'Invalid email/phone number',
+            'full_mobile.unique' => 'Invalid email/phone number',
         ]);
     }
 
@@ -135,6 +147,16 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        $emailExists = User::where('email', $data['email'])->exists();
+        if ($emailExists) {
+            return back()->with(['error' => [_('Invalid data provided')]]);
+        }
+
+        $phoneExists = User::where('full_mobile', $data['full_mobile'])->exists();
+        if ($phoneExists) {
+            return back()->with(['error' => [_('Invalid data provided')]]);
+        }
+
         return User::create($data);
     }
 

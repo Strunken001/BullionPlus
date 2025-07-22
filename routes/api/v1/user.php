@@ -87,7 +87,7 @@ Route::prefix("user")->name("api.user.")->group(function () {
         //automatic methodm
         Route::prefix('automatic')->group(function () {
             Route::post('check-operator', 'checkOperator');
-            Route::post('pay', 'payAutomatic')->middleware('api.kyc');
+            Route::post('pay', 'payAutomatic');
         });
     });
 

@@ -6,9 +6,9 @@
                     <div class="account-wrapper">
                         <span class="account-cross-btn"></span>
                         <div class="account-logo text-center">
-                            <a href="index.html" class="site-logo">
-                                <img src="{{ asset('public/frontend/images/logo/web_logo.webp') }}" alt="logo">
-                            </a>
+                            <img class="site-logo" src="{{ get_logo($basic_settings)}}" 
+                                data-white_img="{{ get_logo($basic_settings, 'white') }}" 
+                                data-dark_img="{{ get_logo($basic_settings, 'dark') }}" alt="logo">
                         </div>
                         <form class="account-form ptb-30" action="{{ setRoute('user.profile.password.update') }}" method="POST">
                             @method('PUT')
