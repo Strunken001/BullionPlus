@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\User;
+namespace App\Http\Controllers\Api\V1\External;
 
 use App\Constants\NotificationConst;
 use App\Constants\PaymentGatewayConst;
@@ -120,7 +120,12 @@ class UtilityBillController extends Controller
                     'account_number' => $account_number,
                 ]);
 
-                $request['amount'] = $amount;
+                $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+                $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+                $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $amount;
+                $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+                $request['amount'] = $amount - $discount_price_amount;
 
                 $payment = (new VTPass())->utilityPayment([
                     'service_id' => $service_id,
@@ -139,7 +144,11 @@ class UtilityBillController extends Controller
 
                 $utility_bill = (new UtilityPaymentHelper())->getInstance()->getUtilityBill($request->biller_id);
 
-                $request['amount'] = $request->amount;
+                $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+                $provider_discount_amount = ($utility_bill['internationalDiscountPercentage'] / 100) * $request->amount;
+                $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+                $request['amount'] = $request->amount - $discount_price_amount;
 
                 $payment = (new UtilityPaymentHelper())->getInstance()->payBill($request->all());
                 $tx_ref = $payment['referenceId'];

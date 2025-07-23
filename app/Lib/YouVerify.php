@@ -126,7 +126,7 @@ class YouVerify
             'isSubjectConsent' => true,
             'validations' => [
                 'selfie' => [
-                    'image' => $data['image'],
+                    'image' => base64_encode($data['image']),
                 ]
             ],
             'premiumNin' => true
@@ -159,7 +159,7 @@ class YouVerify
             'isSubjectConsent' => true,
             'validations' => [
                 'selfie' => [
-                    'image' => $data['image'],
+                    'image' => base64_encode($data['image']),
                 ]
             ]
         ])
@@ -192,7 +192,7 @@ class YouVerify
             'lastName' => $data['lastName'],
             'validations' => [
                 'selfie' => [
-                    'image' => $data['image'],
+                    'image' => base64_encode($data['image']),
                 ]
             ]
         ])

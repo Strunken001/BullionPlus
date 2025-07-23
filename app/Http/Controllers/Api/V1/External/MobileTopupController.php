@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\User;
+namespace App\Http\Controllers\Api\V1\External;
 
 use App\Constants\GlobalConst;
 use App\Constants\NotificationConst;
@@ -156,7 +156,12 @@ class MobileTopupController extends Controller
 
             $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
 
-            $validated['amount'] = $validated['amount'];
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+            $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
+            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+            $validated['amount'] = $validated['amount'] - $discount_price_amount;
 
             $topUpData = [
                 "service_id" => $service_id,
@@ -167,7 +172,11 @@ class MobileTopupController extends Controller
 
             $topUpData = (new VTPass())->mobileTopUp($topUpData);
         } else {
-            $validated['amount'] = $validated['amount'];
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $provider_discount_amount = ($operator['internationalDiscount'] / 100) * $request->amount;
+            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+            $validated['amount'] = $validated['amount'] - $discount_price_amount;
             //topup api
             $topUpData = [
                 'operatorId'        => $operator['operatorId'],

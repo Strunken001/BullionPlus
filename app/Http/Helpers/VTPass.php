@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class VTPass
 {
@@ -151,6 +152,10 @@ class VTPass
         })->json();
 
         Log::info(['response' => $response]);
+
+        if ($response['code'] === '018') {
+            throw new BadRequestException("Unable to process your request right now. Please try again later.");
+        }
 
         return $response;
     }

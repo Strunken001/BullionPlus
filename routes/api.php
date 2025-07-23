@@ -1,11 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\V1\User\DataBundleController;
-use App\Http\Controllers\Api\V1\User\GiftCardController;
-use App\Http\Controllers\Api\V1\User\MobileTopupController;
-use App\Http\Controllers\Api\V1\User\TransactionController;
-use App\Http\Controllers\Api\V1\User\UtilityBillController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\External\DataBundleController;
+use App\Http\Controllers\Api\V1\External\GiftCardController;
+use App\Http\Controllers\Api\V1\External\MobileTopupController;
+use App\Http\Controllers\Api\V1\External\TransactionController;
+use App\Http\Controllers\Api\V1\External\UtilityBillController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -21,9 +20,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Transaction
-Route::controller(TransactionController::class)->prefix("transaction")->group(function () {
-    Route::get("log", "log");
-});
+// Route::controller(TransactionController::class)->prefix("transaction")->group(function () {
+//     Route::get("log", "log");
+// });
 
 //gift card
 Route::controller(GiftCardController::class)->prefix('gift-card')->group(function () {
@@ -39,7 +38,7 @@ Route::controller(MobileTopupController::class)->prefix('mobile-topup')->group(f
     //automatic methodm
     Route::prefix('automatic')->group(function () {
         Route::post('check-operator', 'checkOperator');
-        Route::post('pay', 'payAutomatic')->middleware('api.kyc');
+        Route::post('pay', 'payAutomatic');
     });
 });
 
