@@ -60,7 +60,7 @@ class ProfileController extends Controller
             'email'         => "required|email",
             'mobile'        => "required|string|max:20",
             'address'       => "nullable|string|max:250",
-            'image'         => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
+            'image'         => "nullable|image|mimes:jpg,png,svg,webp,heif|max:10240",
             'state'       => "nullable|string",
             'city'       => "nullable|string",
             'zip'       => "nullable|string",
