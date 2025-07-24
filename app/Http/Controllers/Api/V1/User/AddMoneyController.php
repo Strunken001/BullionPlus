@@ -60,6 +60,7 @@ class AddMoneyController extends Controller
             'redirect_links'        => $instance['redirect_links'],
             'action_type'           => $instance['type']  ?? false,
             'address_info'          => $instance['address_info'] ?? [],
+            'callback_url'          => $instance['callback_url'] ?? null,
         ], 200);
     }
 

@@ -55,7 +55,7 @@ trait Paystack
 
         $temp_data = $this->paystackJunkInsert($temp_record_token); // create temporary information
 
-        $redirect_url = env('APP_URL') . "/user/dashboard";
+        $callback_url = env('APP_URL') . "/user/dashboard";
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $request_credentials->token,
@@ -65,7 +65,7 @@ trait Paystack
             "amount"        => get_amount($output['amount']->total_amount, null, 2) * 100, // as per paystack policy,
             "currency"      => $output['currency']->currency_code,
             // "callback_url"  => $this->setGatewayRoute($redirection['return_url'], PaymentGatewayConst::PAYSTACK, $url_parameter),
-            "callback_url"  => $redirect_url,
+            "callback_url"  => $callback_url,
             "reference"     => $temp_record_token,
         ])->throw(function (Response $response, RequestException $exception) use ($temp_data) {
             $temp_data->delete();
@@ -88,6 +88,7 @@ trait Paystack
             $this->output['redirection_response']   = $response_array;
             $this->output['redirect_links']         = [];
             $this->output['redirect_url']           = $redirect_url;
+            $this->output['callback_url']           = $callback_url;
             return $this->get();
         }
 
