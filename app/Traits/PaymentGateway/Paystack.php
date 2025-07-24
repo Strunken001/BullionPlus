@@ -10,6 +10,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use App\Constants\PaymentGatewayConst;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Log;
 
 trait Paystack
 {
@@ -54,6 +55,8 @@ trait Paystack
 
         $temp_data = $this->paystackJunkInsert($temp_record_token); // create temporary information
 
+        $redirect_url = env('APP_URL') . "/user/dashboard";
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $request_credentials->token,
             'Content-Type'  => 'application/json',
@@ -61,7 +64,8 @@ trait Paystack
             "email"         => $user->email,
             "amount"        => get_amount($output['amount']->total_amount, null, 2) * 100, // as per paystack policy,
             "currency"      => $output['currency']->currency_code,
-            "callback_url"  => $this->setGatewayRoute($redirection['return_url'], PaymentGatewayConst::PAYSTACK, $url_parameter),
+            // "callback_url"  => $this->setGatewayRoute($redirection['return_url'], PaymentGatewayConst::PAYSTACK, $url_parameter),
+            "callback_url"  => $redirect_url,
             "reference"     => $temp_record_token,
         ])->throw(function (Response $response, RequestException $exception) use ($temp_data) {
             $temp_data->delete();
