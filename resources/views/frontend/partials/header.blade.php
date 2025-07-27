@@ -68,30 +68,6 @@
                                             </li>
                                             <li>
                                                 <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.gift.card.index') }}">{{ __('Buy Giftcard') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.mobile.topup.automatic.index') }}">{{ __('Mobile Topup') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.utility.bill.index') }}">{{ __('Utility Bill') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.data.bundle.index') }}">{{ __('Data Bundle') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
                                                     <a href="{{ setRoute('user.security.google.2fa') }}">{{ __('2FA Verification') }}</a>
                                                 </div>
                                             </li>
@@ -192,30 +168,6 @@
                                                 <div class="title-area">
                                                     <a
                                                         href="{{ setRoute('user.profile.password') }}">{{ __('Change Password') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.gift.card.index') }}">{{ __('Buy Giftcard') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.mobile.topup.automatic.index') }}">{{ __('Mobile Topup') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.utility.bill.index') }}">{{ __('Utility Bill') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.data.bundle.index') }}">{{ __('Data Bundle') }}</a>
                                                 </div>
                                             </li>
                                             <li>

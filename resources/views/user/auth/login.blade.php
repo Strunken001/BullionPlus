@@ -60,7 +60,9 @@
                                         <label for="level-141">{{ __('Remember Me') }}</label>
                                     </div>
                                     <div class="login-btn">
-                                        <button type="submit" class="btn--base w-100">{{ __('Continue') }}</button>
+                                        <button type="submit" class="btn--base w-100" id="login-btn" data-loading-text="{{ __('Please wait...') }}">
+                                            {{ __('Continue') }}
+                                        </button>
                                     </div>
 
                                     @if ($basic_settings->user_registration)
@@ -92,7 +94,28 @@
                     this.value = this.value.replace(/[^0-9]/g, '');
                 });
             }
+
+            const loginForm = document.querySelector('.account-form');
+            const loginBtn = document.getElementById('login-btn');
+
+            if (loginForm && loginBtn) {
+                loginForm.addEventListener('submit', function () {
+                    loginBtn.disabled = true;
+                    const loadingText = loginBtn.getAttribute('data-loading-text') || 'Loading...';
+                    loginBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+                });
+            }
         });
     </script>
+@endpush
 
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
 @endpush

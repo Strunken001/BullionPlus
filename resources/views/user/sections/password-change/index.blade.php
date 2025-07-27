@@ -30,7 +30,9 @@
                                     <a href="javascript:void(0)" class="show-pass"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
                                 </div>
                                 <div class="col-lg-12 form-group text-center pt-3">
-                                    <button type="submit" class="btn--base w-100">{{ __('Confirm') }}</button>
+                                    <button type="submit" class="btn--base w-100" id="password-update-btn" data-loading-text="{{ __('Please wait...') }}">
+                                        {{ __('Confirm') }}
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -40,3 +42,32 @@
         </div>
     </div>
 </div>
+
+@push('script')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('.account-form');
+        const submitBtn = document.getElementById('password-update-btn');
+
+        if (form && submitBtn) {
+            form.addEventListener('submit', function () {
+                submitBtn.disabled = true;
+                const loadingText = submitBtn.getAttribute('data-loading-text') || 'Please wait...';
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+            });
+        }
+    });
+</script>
+@endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
+@endpush
+

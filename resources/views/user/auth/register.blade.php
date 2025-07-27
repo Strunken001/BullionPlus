@@ -87,7 +87,9 @@
                                     @endif
                                 </div>
                                 <div class="register-btn pt-4">
-                                    <button type="submit" class="btn--base w-100">{{ __('Register Now') }}</button>
+                                    <button type="submit" class="btn--base w-100" id="register-btn" data-loading-text="{{ __('Please wait...') }}">
+                                        {{ __('Register Now') }}
+                                    </button>
                                 </div>
                                 <div class="register-page">
                                     <div class="account-item">
@@ -144,6 +146,30 @@
                 $("input[name=phone_code]").val(code);
             }
         }
-    </script>
 
+        document.addEventListener('DOMContentLoaded', function () {
+            const registerForm = document.querySelector('.account-form');
+            const registerBtn = document.getElementById('register-btn');
+
+            if (registerForm && registerBtn) {
+                registerForm.addEventListener('submit', function () {
+                    registerBtn.disabled = true;
+                    const loadingText = registerBtn.getAttribute('data-loading-text') || 'Please wait...';
+                    registerBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+                });
+            }
+        });
+    </script>
 @endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
+@endpush
+

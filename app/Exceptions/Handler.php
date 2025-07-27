@@ -49,7 +49,7 @@ class Handler extends ExceptionHandler
         });
 
         $this->renderable(function (TokenMismatchException $e, $request) {
-            return redirect()->route('user.loginlogin')->withErrors([
+            return redirect()->route('user.login')->withErrors([
                 'message' => 'Your session expired. Please log in again.',
             ]);
         });

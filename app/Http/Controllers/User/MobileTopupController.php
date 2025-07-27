@@ -82,6 +82,7 @@ class MobileTopupController extends Controller
     }
     public function payAutomatic(Request $request)
     {
+        Log::info(['request' => $request]);
         $validated = Validator::make($request->all(), [
             'operator_id' => 'required',
             'phone_code' => 'required',
