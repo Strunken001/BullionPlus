@@ -29,7 +29,7 @@ class KycController extends Controller
         $user = auth()->user();
         if ($user->kyc_verified == GlobalConst::VERIFIED) return response()->json([
             "status" => "error",
-            "message" => "'You are already KYC Verified User'"
+            "message" => "You are already KYC Verified User"
         ], 400);
 
         $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
