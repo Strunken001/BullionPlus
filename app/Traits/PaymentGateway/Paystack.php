@@ -57,8 +57,8 @@ trait Paystack
 
         $paymentGatewayInstance = (new PaymentGatewayConst());
 
-        $return_url = $paymentGatewayInstance->registerRedirection()['web']['return_url'] ?? 'user.recharge.payment.success';
-        $cancel_url = $paymentGatewayInstance->registerRedirection()['web']['cancel_url'] ?? 'user.recharge.payment.cancel';
+        $return_url = request()->expectsJson() ? ($paymentGatewayInstance->registerRedirection()['api']['return_url'] ?? 'user.recharge.payment.success') : ($paymentGatewayInstance->registerRedirection()['web']['return_url'] ?? 'user.recharge.payment.success');
+        $cancel_url = request()->expectsJson() ? ($paymentGatewayInstance->registerRedirection()['api']['cancel_url'] ?? 'user.recharge.payment.cancel') : ($paymentGatewayInstance->registerRedirection()['web']['cancel_url'] ?? 'user.recharge.payment.cancel');
 
         // $callback_url = env('APP_URL') . "/user/dashboard";
         // $cancel_url = env('APP_URL') . '/user/recharge/recharge/view';

@@ -94,8 +94,6 @@ class YouVerify
 
     public function kycVerification(array $data)
     {
-        Log::info(['data' => $data]);
-
         try {
             $countryData = $this->getVerificationUrl($data['country']);
             $documentType = $data['document'];
@@ -119,6 +117,7 @@ class YouVerify
 
     public function verifyNIN(array $data)
     {
+        Log::info(['data' => $data]);
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'token' => env('YOUVERIFY_API_KEY'),
@@ -127,7 +126,7 @@ class YouVerify
             'isSubjectConsent' => true,
             'validations' => [
                 'selfie' => [
-                    'image' => base64_encode($data['image']),
+                    'image' => $data['image'],
                 ]
             ],
             'premiumNin' => true
@@ -160,7 +159,7 @@ class YouVerify
             'isSubjectConsent' => true,
             'validations' => [
                 'selfie' => [
-                    'image' => base64_encode($data['image']),
+                    'image' => $data['image'],
                 ]
             ]
         ])
@@ -193,7 +192,7 @@ class YouVerify
             'lastName' => $data['lastName'],
             'validations' => [
                 'selfie' => [
-                    'image' => base64_encode($data['image']),
+                    'image' => $data['image'],
                 ]
             ]
         ])

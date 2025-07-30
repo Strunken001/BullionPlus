@@ -49,53 +49,55 @@ class KycController extends Controller
 
     public function store(Request $request)
     {
-        set_time_limit(120);
-        $user = auth()->user();
-        if ($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
-
-        $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
-        $validation_rules = $this->generateValidationRules($user_kyc_fields);
-        $validated = Validator::make($request->all(), $validation_rules)->validate();
-        $get_values = $this->placeValueWithFields($user_kyc_fields, $validated);
-
-        $create = [
-            'user_id'       => auth()->user()->id,
-            'data'          => json_encode($get_values),
-            'created_at'    => now(),
-        ];
-
-        $kyc_payload = [
-            'id' => '',
-            'image' => '',
-            'document' => '',
-            'lastName' => '',
-            'country' => ''
-        ];
-
-        $document_map = [
-            'NIN' => 'nin',
-            'Drivers License' => 'license',
-            'Passport' => 'passport'
-        ];
-
-        foreach ($get_values as $key) {
-            if ($key['name'] === "id_number") {
-                $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
-            } else if ($key['name'] === 'selfie') {
-                $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
-            } else if ($key['name'] === "id_type") {
-                $kyc_payload['document'] = $document_map[trim($key['value'])];
-            } else {
-            }
-        }
-
-        $kyc_payload['country'] = $user->address->country;
-        $kyc_payload['lastName'] = $user->lastname;
-        $kyc_payload['firstName'] = $user->firstname;
-        $kyc_payload['mobile'] = $user->full_mobile;
-
-        DB::beginTransaction();
         try {
+
+
+            $user = auth()->user();
+            if ($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
+
+            $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
+            $validation_rules = $this->generateValidationRules($user_kyc_fields);
+            $validated = Validator::make($request->all(), $validation_rules)->validate();
+            $get_values = $this->placeValueWithFields($user_kyc_fields, $validated);
+
+            $create = [
+                'user_id'       => auth()->user()->id,
+                'data'          => json_encode($get_values),
+                'created_at'    => now(),
+            ];
+
+            $kyc_payload = [
+                'id' => '',
+                'image' => '',
+                'document' => '',
+                'lastName' => '',
+                'country' => ''
+            ];
+
+            $document_map = [
+                'NIN' => 'nin',
+                'Drivers License' => 'license',
+                'Passport' => 'passport'
+            ];
+
+            foreach ($get_values as $key) {
+                if ($key['name'] === "id_number") {
+                    $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
+                } else if ($key['name'] === 'selfie') {
+                    $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
+                } else if ($key['name'] === "id_type") {
+                    $kyc_payload['document'] = $document_map[trim($key['value'])];
+                } else {
+                }
+            }
+
+            $kyc_payload['country'] = $user->address->country;
+            $kyc_payload['lastName'] = $user->lastname;
+            $kyc_payload['firstName'] = $user->firstname;
+            $kyc_payload['mobile'] = $user->full_mobile;
+
+            DB::beginTransaction();
+
             DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
 
             $response = (new YouVerify())->kycVerification($kyc_payload);
@@ -110,6 +112,8 @@ class KycController extends Controller
                 ]);
             }
             DB::commit();
+
+            return redirect()->route('user.kyc.index')->with(['success' => [__('KYC information successfully submitted')]]);
         } catch (Exception $e) {
             DB::rollBack();
             $user->update([
@@ -118,8 +122,6 @@ class KycController extends Controller
             $this->generatedFieldsFilesDelete($get_values);
             return back()->with(['error' => ['Something went wrong! Please try again']]);
         }
-
-        return redirect()->route('user.kyc.index')->with(['success' => [__('KYC information successfully submitted')]]);
     }
 
     private function cleanInvisible($string)
