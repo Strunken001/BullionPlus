@@ -61,6 +61,7 @@ class AddMoneyController extends Controller
             'action_type'           => $instance['type']  ?? false,
             'address_info'          => $instance['address_info'] ?? [],
             'callback_url'          => $instance['callback_url'] ?? null,
+            'cancel_url'            => $instance['cancel_url'] ?? null,
         ], 200);
     }
 

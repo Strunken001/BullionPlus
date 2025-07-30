@@ -402,7 +402,7 @@ class PaymentGateway
                 return $response['PAYMENT_ID'] ?? "";
                 break;
             case PaymentGatewayConst::PAYSTACK:
-                return $response['token'] ?? "";
+                return $response['trxref'] ?? "";
                 break;
             default:
                 throw new Exception("Oops! Gateway not registered in getToken method");
