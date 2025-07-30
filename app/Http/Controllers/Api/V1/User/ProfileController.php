@@ -81,13 +81,22 @@ class ProfileController extends Controller
         }
 
         // $validated['address']       = $user->address;
-        $validated['address']       = [
-            'country'   => $validated['country'] ?? $user->address->country,
-            'state'     => $validated['state'] ?? $user->address->state,
-            'city'      => $validated['city'] ?? $user->address->city,
-            'zip'       => $validated['zip_code'] ?? $user->address->zip,
-            'address'   => $validated['address'] ?? $user->address->address,
+        $validated['address'] = [
+            'country' => $request['country'] ? $validated['country'] : ($user->address->country ?? ''),
+            'state'   => $request['state'] ? $validated['state'] : ($user->address->state ?? ''),
+            'city'    => $request['city'] ? $validated['city'] : ($user->address->city ?? ''),
+            'zip'     => $request['zip_code'] ? $validated['zip_code'] : ($user->address->zip ?? ''),
+            'address' => $request['address'] ? $validated['address'] : ($user->address->address ?? ''),
         ];
+
+
+        if (User::whereNot('id', $user->id)->where("email", $validated['email'])->exists()) {
+            return Response::error([__('Email already exists')], [], 400);
+        }
+
+        if (User::whereNot('id', $user->id)->where("full_mobile", $validated['full_mobile'])->exists()) {
+            return Response::error([__('Phone number already exists')], [], 400);
+        }
 
         if ($request->hasFile("image")) {
             $image = upload_file($validated['image'], 'junk-files', $user->image);
