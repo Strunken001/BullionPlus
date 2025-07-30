@@ -17,6 +17,8 @@ use App\Lib\YouVerify;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Intervention\Image\Facades\Image;
 
 class KycController extends Controller
 {
@@ -57,7 +59,7 @@ class KycController extends Controller
 
         foreach ($get_values as $key) {
             if ($key['name'] === "id_number") {
-                $kyc_payload['id'] = $key['value'];
+                $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
             } else if ($key['name'] === 'selfie') {
                 $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
             } else if ($key['name'] === "id_type") {
@@ -108,5 +110,10 @@ class KycController extends Controller
             "status" => "success",
             "message" => "KYC data submitted successfully. Your verification is pending."
         ], 200);
+    }
+
+    private function cleanInvisible($string)
+    {
+        return preg_replace('/[\p{C}]/u', '', $string);
     }
 }

@@ -15,7 +15,9 @@ use App\Constants\SiteSectionConst;
 use App\Lib\YouVerify;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Intervention\Image\Facades\Image;
 
 class KycController extends Controller
 {
@@ -47,6 +49,7 @@ class KycController extends Controller
 
     public function store(Request $request)
     {
+        set_time_limit(120);
         $user = auth()->user();
         if ($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
 
@@ -77,7 +80,7 @@ class KycController extends Controller
 
         foreach ($get_values as $key) {
             if ($key['name'] === "id_number") {
-                $kyc_payload['id'] = $key['value'];
+                $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
             } else if ($key['name'] === 'selfie') {
                 $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
             } else if ($key['name'] === "id_type") {
@@ -117,5 +120,10 @@ class KycController extends Controller
         }
 
         return redirect()->route('user.kyc.index')->with(['success' => [__('KYC information successfully submitted')]]);
+    }
+
+    private function cleanInvisible($string)
+    {
+        return preg_replace('/[\p{C}]/u', '', $string);
     }
 }

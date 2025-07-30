@@ -56,6 +56,7 @@ trait Paystack
         $temp_data = $this->paystackJunkInsert($temp_record_token); // create temporary information
 
         $callback_url = env('APP_URL') . "/user/dashboard";
+        $cancel_url = env('APP_URL') . '/user/recharge/recharge/view';
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $request_credentials->token,
@@ -67,6 +68,9 @@ trait Paystack
             // "callback_url"  => $this->setGatewayRoute($redirection['return_url'], PaymentGatewayConst::PAYSTACK, $url_parameter),
             "callback_url"  => $callback_url,
             "reference"     => $temp_record_token,
+            "metadata"      => [
+                "cancel_action" => $cancel_url
+            ]
         ])->throw(function (Response $response, RequestException $exception) use ($temp_data) {
             $temp_data->delete();
             throw new Exception($exception->getMessage());
@@ -89,6 +93,7 @@ trait Paystack
             $this->output['redirect_links']         = [];
             $this->output['redirect_url']           = $redirect_url;
             $this->output['callback_url']           = $callback_url;
+            $this->output['cancel_url']             = $cancel_url;
             return $this->get();
         }
 

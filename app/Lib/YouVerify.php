@@ -95,6 +95,7 @@ class YouVerify
     public function kycVerification(array $data)
     {
         Log::info(['data' => $data]);
+
         try {
             $countryData = $this->getVerificationUrl($data['country']);
             $documentType = $data['document'];
