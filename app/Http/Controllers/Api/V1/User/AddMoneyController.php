@@ -120,7 +120,7 @@ class AddMoneyController extends Controller
             return Response::error([$e->getMessage()]);
         }
 
-        return redirect('user.dashboard');
+        return redirect()->to(route('user.dashboard', ['status' => 'success']));
         // return $this->success($request, $gateway);
     }
 
@@ -136,7 +136,7 @@ class AddMoneyController extends Controller
             return Response::error([$e->getMessage()]);
         }
 
-        return redirect('user.dashboard');
+        return redirect()->to(route('user.dashboard', ['status' => 'cancel']));
         // return $this->cancel($request, $gateway);
     }
 
