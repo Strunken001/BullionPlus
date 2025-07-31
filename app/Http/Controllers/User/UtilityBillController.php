@@ -11,6 +11,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
+use App\Http\Requests\VerifyMeterNumberRequest;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Models\VTPassAPIDiscount;
@@ -76,11 +77,7 @@ class UtilityBillController extends Controller
             }
 
             if ($charges->total_payable > $sender_wallet->balance) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Sorry, insufficient balance",
-                    'data' => null
-                ], 400);
+                return back()->with(['error' => [__('Insufficient balance')]]);
             }
 
             $utility_bill_transaction = null;
@@ -92,6 +89,15 @@ class UtilityBillController extends Controller
                 $amount = $request->amount;
                 $account_number = $request->account_number;
                 $phone = auth()->user()->full_mobile;
+
+                $verify_meter_number = (new VTPass())->verifyMeterNumber([
+                    'service_id' => $service_id,
+                    'variation_code' => $variation_code,
+                    'account_number' => $account_number,
+                ]);
+                if ($verify_meter_number['content']['WrongBillersCode']) {
+                    return redirect()->route("user.utility.bill.index")->with(['error' => [__('Invalid number')]]);
+                }
 
                 $payment = (new VTPass())->utilityPayment([
                     'service_id' => $service_id,
@@ -329,5 +335,30 @@ class UtilityBillController extends Controller
                 ->send();
         } catch (Exception $e) {
         }
+    }
+
+    public function verifyMeterNumber(VerifyMeterNumberRequest $request)
+    {
+        Log::info(['request' => $request->all()]);
+
+        $verify_meter_number = (new VTPass())->verifyMeterNumber([
+            'service_id' => $request->service_id,
+            'variation_code' => $request->variation_code,
+            'account_number' => $request->account_number,
+        ]);
+        Log::info(['verify_meter_number' => $verify_meter_number]);
+        if ($verify_meter_number['content']['WrongBillersCode']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'invalid number',
+                'data' => false
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'meter verified',
+            'data' => true
+        ]);
     }
 }

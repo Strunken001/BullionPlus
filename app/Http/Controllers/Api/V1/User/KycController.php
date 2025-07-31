@@ -64,7 +64,11 @@ class KycController extends Controller
                     $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
                 } else if ($key['name'] === 'selfie') {
                     $image_path = files_path('kyc-files')->path;
-                    $kyc_payload['image'] = $image_path . "/" . $key['value'];
+                    $image_data = file_get_contents($image_path . "/" . $key['value']);
+                    $base64 = base64_encode($image_data);
+                    $mime_type = mime_content_type($image_path . "/" . $key['value']);
+                    $data_uri = "data:$mime_type;base64,$base64";
+                    $kyc_payload['image'] = $data_uri;
                     // $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
                 } else if ($key['name'] === "id_type") {
                     $kyc_payload['document'] = $document_map[trim($key['value'])];
