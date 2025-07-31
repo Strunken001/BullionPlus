@@ -84,7 +84,9 @@ class KycController extends Controller
                 if ($key['name'] === "id_number") {
                     $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
                 } else if ($key['name'] === 'selfie') {
-                    $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
+                    $image_path = files_path('kyc-files')->path;
+                    $kyc_payload['image'] = base64_encode(file_get_contents($image_path . "/" . $key['value']));
+                    // $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
                 } else if ($key['name'] === "id_type") {
                     $kyc_payload['document'] = $document_map[trim($key['value'])];
                 } else {

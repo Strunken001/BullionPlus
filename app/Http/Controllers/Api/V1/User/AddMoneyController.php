@@ -120,7 +120,8 @@ class AddMoneyController extends Controller
             return Response::error([$e->getMessage()]);
         }
 
-        return $this->success($request, $gateway);
+        return redirect('user.dashboard');
+        // return $this->success($request, $gateway);
     }
 
     public function postCancel(Request $request, $gateway)
@@ -135,7 +136,8 @@ class AddMoneyController extends Controller
             return Response::error([$e->getMessage()]);
         }
 
-        return $this->cancel($request, $gateway);
+        return redirect('user.dashboard');
+        // return $this->cancel($request, $gateway);
     }
 
     public function manualInputFields(Request $request)
