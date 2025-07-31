@@ -88,10 +88,11 @@ class AddMoneyController extends Controller
             $instance = PaymentGatewayHelper::init($temp_data)->type(PaymentGatewayConst::TYPEADDMONEY)->setProjectCurrency(PaymentGatewayConst::PROJECT_CURRENCY_SINGLE)->responseReceive();
 
             // return $instance;
+            return redirect()->to(route('user.dashboard', ['status' => 'success']));
         } catch (Exception $e) {
             return Response::error([$e->getMessage()], [], 500);
         }
-        return Response::success([__('Successfully added money')], [], 200);
+        // return Response::success([__('Successfully added money')], [], 200);
     }
 
     public function cancel(Request $request, $gateway)
@@ -102,10 +103,11 @@ class AddMoneyController extends Controller
             if ($temp_data != null) {
                 $temp_data->delete();
             }
+            return redirect()->to(route('user.dashboard', ['status' => 'cancel']));
         } catch (Exception $e) {
             // Handel error
         }
-        return Response::success([__('Payment process cancel successfully!')], [], 200);
+        // return Response::success([__('Payment process cancel successfully!')], [], 200);
     }
 
     public function postSuccess(Request $request, $gateway)
