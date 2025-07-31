@@ -50,7 +50,8 @@ class DashboardController extends Controller
             ];
         };
 
-        $gateway = PaymentGateway::take(6)->get();
+        // $gateway = PaymentGateway::take(6)->get();
+        $gateway = PaymentGateway::addMoney()->active()->with('currencies')->has("currencies")->get();
         $gateway->makeHidden([
             "slug",
             "code",

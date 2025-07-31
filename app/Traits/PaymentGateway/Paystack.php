@@ -99,8 +99,8 @@ trait Paystack
             $this->output['redirection_response']   = $response_array;
             $this->output['redirect_links']         = [];
             $this->output['redirect_url']           = $redirect_url;
-            $this->output['callback_url']           = route($web_return_url, PaymentGatewayConst::PAYSTACK);
-            $this->output['cancel_url']             = route($web_cancel_url, PaymentGatewayConst::PAYSTACK);
+            $this->output['callback_url']           = route('user.dashboard');
+            $this->output['cancel_url']             = route('user.dashboard');
             return $this->get();
         }
 
