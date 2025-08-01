@@ -137,7 +137,6 @@ class UtilityBillController extends Controller
             return redirect()->route("user.utility.bill.index")->with(['error' => [__($message)]]);
         }
 
-
         return redirect()->route("user.dashboard")->with(['success' => [__('Payment successful!')]]);
     }
 
@@ -149,6 +148,23 @@ class UtilityBillController extends Controller
 
             if ($charges['total_payable'] < $charges['min_limit_calc'] || $charges['total_payable'] > $charges['max_limit_calc']) {
                 throw new Exception("Please follow the transaction limit!");
+            }
+
+            if ($charges['currency_code'] === "NGN") {
+                $service_id = strtolower(explode(" ", $charges['name'])[0]) . "-electric";
+                $variation_code = strtolower($charges['service_type']);
+                $amount = $request->amount;
+                $account_number = $request->account_number;
+                $phone = auth()->user()->full_mobile;
+
+                $verify_meter_number = (new VTPass())->verifyMeterNumber([
+                    'service_id' => $service_id,
+                    'variation_code' => $variation_code,
+                    'account_number' => $account_number,
+                ]);
+                if ($verify_meter_number['content']['WrongBillersCode']) {
+                    return redirect()->route("user.utility.bill.index")->with(['error' => [__('Invalid number')]]);
+                }
             }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();

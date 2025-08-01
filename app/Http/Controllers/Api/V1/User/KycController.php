@@ -37,7 +37,7 @@ class KycController extends Controller
             $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
             $validation_rules = $this->generateValidationRules($user_kyc_fields);
             $validated = Validator::make($request->all(), $validation_rules)->validate();
-            $get_values = $this->placeValueWithFields($user_kyc_fields, $validated);
+            $get_values = $this->placeValueWithFields($user_kyc_fields, $validated, true);
 
             $create = [
                 'user_id'       => auth()->user()->id,
@@ -63,13 +63,7 @@ class KycController extends Controller
                 if ($key['name'] === "id_number") {
                     $kyc_payload['id'] = $this->cleanInvisible(trim($key['value']));
                 } else if ($key['name'] === 'selfie') {
-                    $image_path = files_path('kyc-files')->path;
-                    $image_data = file_get_contents($image_path . "/" . $key['value']);
-                    $base64 = base64_encode($image_data);
-                    $mime_type = mime_content_type($image_path . "/" . $key['value']);
-                    $data_uri = "data:$mime_type;base64,$base64";
-                    $kyc_payload['image'] = $data_uri;
-                    // $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
+                    $kyc_payload['image'] = get_image($key['value'], 'kyc-files');
                 } else if ($key['name'] === "id_type") {
                     $kyc_payload['document'] = $document_map[trim($key['value'])];
                 } else {
