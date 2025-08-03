@@ -101,8 +101,13 @@ class LoginController extends Controller
             if (Hash::check($validated['password'], $user->password)) {
                 if ($user->status != GlobalConst::ACTIVE) return Response::error([__("Your account is temporary banded. Please contact with system admin")]);
                 // User authenticated
-                $token = $user->createToken("auth_token")->accessToken;
-                return $this->authenticated($user, $token, $type);
+                $token = $user->createToken("auth_token");
+
+                DB::table('oauth_access_tokens')
+                    ->where('id', $token->token->id)
+                    ->update(['expires_at' => now()->addMinutes(1)->toDateTimeString()]);
+
+                return $this->authenticated($user, $token->accessToken, $type);
             }
         }
         return Response::error([__("Credentials didn't match")]);

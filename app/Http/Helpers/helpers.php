@@ -254,22 +254,6 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
             $resulation_break_point = [2048, 2340, 2730, 3276, 4096, 5460, 8192];
             $reduce_percentage = [12.5, 25, 37.5, 50, 62.5, 75];
 
-            $min_size = 48;
-            $max_size = 4096;
-
-            if ($kyc_verification) {
-                if ($width < $min_size || $height < $min_size || $width > $max_size || $height > $max_size) {
-                    try {
-                        $file->resize($max_size, $max_size, function ($constraint) {
-                            $constraint->aspectRatio();
-                            $constraint->upsize();
-                        })->save($path, 70, $kyc_verification ? 'jpg' : null);
-                    } catch (\Exception $e) {
-                        return back()->with(['error' => ['Image Upload Faild!']]);
-                    }
-                }
-            }
-
             // Dynamically Image Resizing & Move to Targeted folder
             if ($width > 0 && $width < 2048) {
                 $new_width = $width;

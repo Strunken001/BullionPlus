@@ -11,8 +11,9 @@ use App\Http\Controllers\Api\V1\User\TransactionController;
 use App\Http\Controllers\Api\V1\User\UtilityBillController;
 use App\Http\Controllers\Api\V1\User\KycController;
 use App\Http\Controllers\Api\V1\User\PurchaseController;
+use Illuminate\Support\Facades\DB;
 
-Route::prefix("user")->name("api.user.")->group(function () {
+Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->group(function () {
     Route::controller(ProfileController::class)->prefix('profile')->group(function () {
         Route::get('info', 'profileInfo');
         Route::post('info/update', 'profileInfoUpdate');
