@@ -141,6 +141,8 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
+        Log::info(['response' => $response]);
+
         if (!$response['success']) {
             Log::error('Unsuccessful request');
             throw new Error('Unsuccessful request');
@@ -172,6 +174,8 @@ class YouVerify
 
                 throw new Exception($message);
             })->json();
+
+        Log::info(['response' => $response]);
 
         if (!$response['success']) {
             Log::error('Unsuccessful request');
@@ -206,6 +210,8 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
+        Log::info(['response' => $response]);
+
         if (!$response['success']) {
             Log::error('Unsuccessful request');
             throw new Error('Unsuccessful request');
@@ -234,6 +240,8 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
+        Log::info(['response' => $response]);
+
         if (!$response['success']) {
             Log::error('Unsuccessful request');
             throw new Error('Unsuccessful request');
@@ -260,6 +268,8 @@ class YouVerify
 
                 throw new Exception($message);
             })->json();
+
+        Log::info(['response' => $response]);
 
         if (!$response['success']) {
             Log::error('Unsuccessful request');
@@ -294,6 +304,8 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
+        Log::info(['response' => $response]);
+
         if (!$response['success']) {
             Log::error('Unsuccessful request');
             throw new Error('Unsuccessful request');
@@ -326,6 +338,8 @@ class YouVerify
 
                 throw new Exception($message);
             })->json();
+
+        Log::info(['response' => $response]);
 
         if (!$response['success']) {
             Log::error('Unsuccessful request');
