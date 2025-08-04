@@ -301,6 +301,20 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
                 }
             }
 
+            if ($kyc_verification) {
+                $new_width = 2048;
+                if ($width < $new_width || $height < $new_width || $width > $new_width || $height > $new_width) {
+                    try {
+                        $file->resize($new_width, $new_width, function ($constraint) {
+                            $constraint->aspectRatio();
+                            $constraint->upsize();
+                        })->save($path, 70, $kyc_verification ? 'jpg' : null);
+                    } catch (\Exception $e) {
+                        return back()->with(['error' => ['Image Upload Faild!']]);
+                    }
+                }
+            }
+
             $file_instance = new UploadedFile(
                 $path,
                 $file_base_name,

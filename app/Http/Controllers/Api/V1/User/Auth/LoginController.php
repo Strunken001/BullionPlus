@@ -105,7 +105,7 @@ class LoginController extends Controller
 
                 DB::table('oauth_access_tokens')
                     ->where('id', $token->token->id)
-                    ->update(['expires_at' => now()->addMinutes(1)->toDateTimeString()]);
+                    ->update(['expires_at' => now()->addMinutes(env('PASSPORT_TTL', 5))->toDateTimeString()]);
 
                 return $this->authenticated($user, $token->accessToken, $type);
             }

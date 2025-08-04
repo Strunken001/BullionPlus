@@ -87,7 +87,7 @@ class RegisterController extends Controller
         $validated['password']              = Hash::make($validated['password']);
         $validated['username']              = make_username($validated['firstname'], $validated['lastname']);
         $validated['address']['country']    = $validated['country'];
-        $validated['mobile']                = remove_speacial_char($validated['mobile']);
+        $validated['mobile']                = remove_speacial_char($request['mobile']);
         $validated['mobile_code']           = remove_speacial_char($validated['phone_code']);
         // $complete_phone                     = $validated['mobile_code'] . $validated['mobile'];
         // $validated['full_mobile']           = $complete_phone;
