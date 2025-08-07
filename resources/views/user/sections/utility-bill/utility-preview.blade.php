@@ -20,6 +20,30 @@
                     </div>
                     <div class="plan-preview">
                         <div class="plan-name">
+                            <span class="badge badge--base">{{ __('Customer') }}</span>
+                        </div>
+                        <div class="plan-quantity">
+                            <span>{{ $charges['customer_name'] }}</span>
+                        </div>
+                    </div>
+                    <div class="plan-preview">
+                        <div class="plan-name">
+                            <span class="badge badge--base">{{ __('Address') }}</span>
+                        </div>
+                        <div class="plan-quantity">
+                            <span>{{ $charges['address'] }}</span>
+                        </div>
+                    </div>
+                    <div class="plan-preview">
+                        <div class="plan-name">
+                            <span class="badge badge--base">{{ __('Meter No') }}</span>
+                        </div>
+                        <div class="plan-quantity">
+                            <span>{{ $charges['meter_no'] }}</span>
+                        </div>
+                    </div>
+                    <div class="plan-preview">
+                        <div class="plan-name">
                             <span class="badge badge--base">{{ __('Service Type') }}</span>
                         </div>
                         <div class="plan-quantity">

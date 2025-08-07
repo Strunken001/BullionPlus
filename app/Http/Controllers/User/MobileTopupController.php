@@ -80,9 +80,9 @@ class MobileTopupController extends Controller
         }
         return response($data);
     }
+
     public function payAutomatic(Request $request)
     {
-        Log::info(['request' => $request]);
         $validated = Validator::make($request->all(), [
             'operator_id' => 'required',
             'phone_code' => 'required',

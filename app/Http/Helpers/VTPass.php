@@ -151,7 +151,7 @@ class VTPass
             throw new Exception($message);
         })->json();
 
-        Log::info(['response' => $response]);
+        Log::info(['utilityPayment response' => $response]);
 
         return $response;
     }

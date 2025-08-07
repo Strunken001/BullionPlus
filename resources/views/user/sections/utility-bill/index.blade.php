@@ -56,8 +56,9 @@
                                 </div>
                             </div>
 
-                            <input type="submit" class="btn btn--base w-100 mt-20"
-                                value="{{ __('Continue') }}">
+                            <button type="submit" class="btn btn--base w-100 mt-20" id="utility-submit-btn" data-loading-text="{{ __('Please wait...') }}">
+                                {{ __('Continue') }}
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -115,9 +116,41 @@
 
         // Trigger initial load
         countrySelect.trigger('change');
+
+        const submitBtn = $('#utility-submit-btn');
+        const utilityForm = $('.card-form');
+
+        utilityForm.on('submit', function (e) {
+            const selectedOption = $('#provider-select option:selected');
+            const min = parseFloat(selectedOption.data('min'));
+            const max = parseFloat(selectedOption.data('max'));
+            const amount = parseFloat($('input[name="amount"]').val());
+
+            if (isNaN(amount) || amount < min || amount > max) {
+                e.preventDefault();
+                alert(`Amount must be between ${min} and ${max}`);
+            } else {
+                // Add loading state
+                submitBtn.prop('disabled', true);
+                const loadingText = submitBtn.data('loading-text') || 'Please wait...';
+                submitBtn.html(`<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`);
+            }
+        });
     });
 </script>
 @endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
+@endpush
+
 
 
 

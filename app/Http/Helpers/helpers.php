@@ -242,6 +242,15 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
         $file_mime_type_array = explode('/', $file_mime_type);
         if (array_shift($file_mime_type_array) == "image" && $file_extension != "svg") { // If Image
 
+            if (strtolower($file_extension) === 'heic') {
+                $converted_path = convert_heic_to_jpg($path);
+                if (!$converted_path) {
+                    return back()->with(['error' => ['HEIC image conversion failed.']]);
+                }
+                $path = $converted_path;
+                $file_extension = 'jpg';
+            }
+
             $file = Image::make($path)->orientate();
 
             if ($kyc_verification) {
@@ -388,6 +397,15 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
     // delete_files_from_fileholder($output_files_name);
     return $output_files_name;
 }
+
+function convert_heic_to_jpg($heic_path)
+{
+    $jpg_path = preg_replace('/\.heic$/i', '.jpg', $heic_path);
+    $cmd = "heif-convert " . escapeshellarg($heic_path) . " " . escapeshellarg($jpg_path);
+    exec($cmd, $output, $result);
+    return $result === 0 && file_exists($jpg_path) ? $jpg_path : false;
+}
+
 
 function get_files_path($slug)
 {

@@ -355,14 +355,11 @@ class UtilityBillController extends Controller
 
     public function verifyMeterNumber(VerifyMeterNumberRequest $request)
     {
-        Log::info(['request' => $request->all()]);
-
         $verify_meter_number = (new VTPass())->verifyMeterNumber([
             'service_id' => $request->service_id,
             'variation_code' => $request->variation_code,
             'account_number' => $request->account_number,
         ]);
-        Log::info(['verify_meter_number' => $verify_meter_number]);
         if ($verify_meter_number['content']['WrongBillersCode']) {
             return response()->json([
                 'status' => 'error',
