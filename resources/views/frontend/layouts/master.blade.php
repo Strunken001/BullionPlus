@@ -5,16 +5,16 @@
     $cookie = App\Models\Admin\SiteSections::siteCookie();
     
     //cookies results
-    $approval_status = Cookie::get('approval_status')('approval_status');
-    $c_user_agent = Cookie::get('user_agent')('user_agent');
-    $c_ip_address = Cookie::get('ip_address')('ip_address');
-    $c_browser = Cookie::get('browser')('browser');
-    $c_platform = Cookie::get('platform')('platform');
-    // $approval_status = request()->cookie('approval_status');
-    // $c_user_agent = request()->cookie('user_agent');
-    // $c_ip_address = request()->cookie('ip_address');
-    // $c_browser = request()->cookie('browser');
-    // $c_platform = request()->cookie('platform');
+    // $approval_status = Cookie::get('approval_status')('approval_status');
+    // $c_user_agent = Cookie::get('user_agent')('user_agent');
+    // $c_ip_address = Cookie::get('ip_address')('ip_address');
+    // $c_browser = Cookie::get('browser')('browser');
+    // $c_platform = Cookie::get('platform')('platform');
+    $approval_status = request()->cookie('approval_status');
+    $c_user_agent = request()->cookie('user_agent');
+    $c_ip_address = request()->cookie('ip_address');
+    $c_browser = request()->cookie('browser');
+    $c_platform = request()->cookie('platform');
     //system informations
     $s_ipAddress = request()->ip();
     $s_location = geoip()->getLocation($s_ipAddress);
@@ -57,7 +57,7 @@
 
     @stack('script')
 
-    {{-- <script>
+    <script>
         var status = "{{  @$cookie->status }}";
          //cookies results
          var approval_status      = "{{ $approval_status}}";
@@ -85,9 +85,9 @@
             pop.style.bottom = "-300px";
         }
         // })
-    </script> --}}
+    </script>
 
-    <script>
+    {{-- <script>
         function getCookieValue(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -131,7 +131,7 @@
                 pop.style.bottom = "-300px";
             }
         });
-    </script>
+    </script> --}}
     
     <script>
         (function ($) {
