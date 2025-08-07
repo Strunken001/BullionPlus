@@ -57,7 +57,7 @@
 
     @stack('script')
 
-    <script>
+    {{-- <script>
         var status = "{{  @$cookie->status }}";
          //cookies results
          var approval_status      = "{{ $approval_status}}";
@@ -85,7 +85,7 @@
             pop.style.bottom = "-300px";
         }
         // })
-    </script>
+    </script> --}}
 
     {{-- <script>
         function getCookieValue(name) {
