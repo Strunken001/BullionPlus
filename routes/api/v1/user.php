@@ -25,6 +25,7 @@ Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->gr
     Route::post('logout', [ProfileController::class, 'logout']);
 
     Route::controller(KycController::class)->prefix('kyc')->name('kyc.')->group(function () {
+        Route::post('update-liveness', 'update_liveness');
         Route::post('submit', 'store')->name('submit');
     });
 

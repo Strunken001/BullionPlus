@@ -48,23 +48,22 @@ class UtilityPaymentMail extends Notification
         $user = $this->user;
         $data = $this->data;
         $trx_id = $this->data->trx_id;
-        $date = Carbon::now();
+        $date = $data->date;
         $dateTime = $date->format('Y-m-d h:i:s A');
 
         return (new MailMessage)
             ->greeting(__("Hello") . " " . $user->fullname . " !")
-            ->subject(__("Utility Payment For") . " " . $data->operator_name . ' (' . $data->account_number . ' )')
-            ->line(__("Utility Payment request successful") . " " . $data->account_number . " ," . __("details of payment") . ":")
-            ->line(__("web_trx_id") . ": " . $trx_id)
-            ->line(__("request Amount") . ": " . $data->request_amount)
-            ->line(__("Exchange Rate") . ": " . $data->exchange_rate)
-            ->line(__("Fees & Charges") . ": " . $data->charges)
-            ->line(__("Total Payable Amount") . ": " . $data->payable)
-            ->line(__("Current Balance") . ": " . $data->current_balance)
-            ->line(__("Status") . ": " . $data->status)
-            ->line(__("Date And Time") . ": " . $dateTime)
+            ->subject(__("UTILITY PAYMENT SUCCESSFUL"))
+            ->line(__("Eko Electricity Prepaid - Meter") . ": " . $data->account_number)
+            ->line(__("Transaction ID") . ": " . $trx_id)
+            ->line(__("CHARGES") . ": ")
+            ->line(__("Bill Amount") . ": " . $data->request_amount . "(" . $data->exchange_rate . ")")
+            ->line(__("Admin Fee") . ": " . $data->charges)
+            ->line(__("Total") . ": " . $data->payable)
+            ->line(__("BALANCE") . ": " . ($data->current_balance + $data->payable) . " -> " . $data->current_balance)
             ->line(__("Token") . ": " . $data->token)
-            ->line(__('Thank you for using our application!'));
+            ->line(__("Date") . ": " . $dateTime)
+            ->line(__('Thank you for using BullionPlus!'));
     }
 
     /**

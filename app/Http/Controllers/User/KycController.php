@@ -15,6 +15,8 @@ use App\Constants\SiteSectionConst;
 use App\Lib\YouVerify;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
+use App\Models\User;
+use App\Models\UserKycData;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
@@ -23,7 +25,7 @@ class KycController extends Controller
 {
     use ControlDynamicInputFields;
 
-    public function index()
+    public function index(Request $request)
     {
         $basic_settings = BasicSettings::first();
         if (!$basic_settings->kyc_verification) {
@@ -43,6 +45,23 @@ class KycController extends Controller
         $kyc_data = $user_kyc;
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
+
+        if ($request->status === "success" && $request->has('email')) {
+            $kyc_owner = User::where('email', $request->email)->first();
+
+            if ($kyc_owner) {
+                $kyc_owner_data = UserKycData::where('user_id', $kyc_owner->id)->first();
+
+                if ($kyc_owner_data && !$kyc_owner_data->has_done_liveness) {
+                    $kyc_owner_data->has_done_liveness = true;
+                    $kyc_owner_data->save();
+
+                    session()->flash('success', __('Liveness check completed successfully.'));
+                }
+            }
+        } elseif ($request->status === 'error') {
+            session()->flash('error', __('Liveness check failed. Please try again.'));
+        }
 
         return view('user.sections.kyc.index', compact('page_title', 'user', 'kyc_fields', 'kyc_data', 'footer'));
     }

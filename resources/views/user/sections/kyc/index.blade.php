@@ -27,64 +27,64 @@
                                             </button>
                                         @endif
                                     </div>
-                                    @if (auth()->user()->kyc_verified == global_const()::REJECTED)
-                                        <div class="rejected">
-                                            <div class="rejected-title">
-                                                <h5 class="title">{{ __('Rejected Reason') }} :</h5>
-                                            </div>
-                                            <div class="rejected-reason">
-                                                {{ auth()->user()->kyc->reject_reason ?? '' }}
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="card-body">
-                                    @if (auth()->user()->kyc_verified == global_const()::PENDING)
-                                        <div class="pending text--warning kyc-text">
-                                            {{ __('Your KYC information is submited. Please wait for admin confirmation. When you are KYC verified you will show your submited information here.') }}
-                                        </div>
-                                    @elseif (auth()->user()->kyc_verified == global_const()::APPROVED)
-                                        @include('user.components.profile.kyc')
-                                    @elseif (auth()->user()->kyc_verified == global_const()::REJECTED)
-                                        @include('user.components.profile.kyc')
-                                        <div class="custom-card mt-10 d-none" id="kyc-form">
-                                            {{-- KYC Submiting form --}}
-                                            <form class="card-form" method="POST"
-                                                action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
-                                                @csrf
-                                                <div class="row">
-                                                    @include('user.components.generate-kyc-fields', [
-                                                        'fields' => $kyc_fields,
-                                                    ])
-                                                </div>
-                                                <div class="resubmit-btn-area text-center pt-30">
-                                                    <button type="submit" class="btn--base text-center">
-                                                        {{ __('Submit') }}
-                                                    </button>
-                                                    <button type="button" id="re-cencel"
-                                                        class="btn--base text-center">
-                                                        {{ __('Cancel') }}
-                                                    </button>
-                                                </div>
-                                            </form>
+                                    @if (!auth()->user()->kyc->has_done_liveness)
+                                        <div class="text-center mt-3">
+                                            <button type="submit" class="btn--base">
+                                                <a href="{{config('app.react_liveness_url')}}?firstname={{auth()->user()->firstname}}&lastname={{auth()->user()->lastname}}&email={{auth()->user()->email}}">
+                                                    {{ __('Start Liveness Check') }}
+                                                </a>
+                                            </button>
                                         </div>
                                     @else
-                                        <div class="custom-card mt-10">
-                                            {{-- KYC Submiting form --}}
-                                            <form class="card-form" method="POST"
-                                                action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
-                                                @csrf
-                                                <div class="row">
-                                                    @include('user.components.generate-kyc-fields', [
-                                                        'fields' => $kyc_fields,
-                                                    ])
+                                        <div class="card-body">
+                                            @if (auth()->user()->kyc_verified == global_const()::PENDING)
+                                                <div class="pending text--warning kyc-text">
+                                                    {{ __('Your KYC information is submitted. Please wait for admin confirmation. When you are KYC verified, your submitted information will be shown here.') }}
                                                 </div>
-                                                <div class="col-12">
-                                                    <button type="submit" class="btn--base w-100 text-center mt-5">
-                                                        {{ __('Submit') }}
-                                                    </button>
+                                            @elseif (auth()->user()->kyc_verified == global_const()::APPROVED)
+                                                @include('user.components.profile.kyc')
+                                            @elseif (auth()->user()->kyc_verified == global_const()::REJECTED)
+                                                @include('user.components.profile.kyc')
+                                                <div class="custom-card mt-10 d-none" id="kyc-form">
+                                                    {{-- KYC Submiting form --}}
+                                                    <form class="card-form" method="POST"
+                                                        action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <div class="row">
+                                                            @include('user.components.generate-kyc-fields', [
+                                                                'fields' => $kyc_fields,
+                                                            ])
+                                                        </div>
+                                                        <div class="resubmit-btn-area text-center pt-30">
+                                                            <button type="submit" class="btn--base text-center">
+                                                                {{ __('Submit') }}
+                                                            </button>
+                                                            <button type="button" id="re-cencel"
+                                                                class="btn--base text-center">
+                                                                {{ __('Cancel') }}
+                                                            </button>
+                                                        </div>
+                                                    </form>
                                                 </div>
-                                            </form>
+                                            @else
+                                                <div class="custom-card mt-10">
+                                                    {{-- KYC Submiting form --}}
+                                                    <form class="card-form" method="POST"
+                                                        action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <div class="row">
+                                                            @include('user.components.generate-kyc-fields', [
+                                                                'fields' => $kyc_fields,
+                                                            ])
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <button type="submit" class="btn--base w-100 text-center mt-5">
+                                                                {{ __('Submit') }}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>

@@ -16,6 +16,8 @@ use App\Constants\SiteSectionConst;
 use App\Lib\YouVerify;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
+use App\Models\User;
+use App\Models\UserKycData;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Intervention\Image\Facades\Image;
@@ -23,6 +25,32 @@ use Intervention\Image\Facades\Image;
 class KycController extends Controller
 {
     use ControlDynamicInputFields;
+
+    public function update_liveness(Request $request)
+    {
+        if ($request->status === "success" && $request->has('email')) {
+            $kyc_owner = User::where('email', $request->email)->first();
+
+            if ($kyc_owner) {
+                $kyc_owner_data = UserKycData::where('user_id', $kyc_owner->id)->first();
+
+                if ($kyc_owner_data && !$kyc_owner_data->has_done_liveness) {
+                    $kyc_owner_data->has_done_liveness = true;
+                    $kyc_owner_data->save();
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Liveness check completed successfully.'
+                    ]);
+                }
+            }
+        } elseif ($request->status === 'error') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Liveness check failed. Please try again.'
+            ]);
+        }
+    }
 
     public function store(Request $request)
     {

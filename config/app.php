@@ -238,4 +238,5 @@ return [
         'Paystack'  => Unicodeveloper\Paystack\Facades\Paystack::class,
     ])->toArray(),
 
+    'react_liveness_url' => env('KYC_FRONTEND_URL'),
 ];

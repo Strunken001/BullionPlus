@@ -10,6 +10,7 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\VTPass;
 use App\Http\Requests\VerifyMeterNumberRequest;
+use App\Models\Transaction;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Models\VTPassAPIDiscount;
@@ -220,7 +221,7 @@ class UtilityBillController extends Controller
         ];
         DB::beginTransaction();
         try {
-            $id = DB::table("transactions")->insertGetId([
+            $transaction = Transaction::create([
                 'user_id'                       => $sender_wallet->user->id,
                 'wallet_id'                     => $authWallet->id,
                 'payment_gateway_currency_id'   => null,
@@ -243,7 +244,7 @@ class UtilityBillController extends Controller
             $this->updateSenderWalletBalance($authWallet, $afterCharge);
 
             try {
-                $this->insertAutomaticCharges($id, $charges, $sender_wallet, $account_number, $trx_id);
+                $this->insertAutomaticCharges($transaction->id, $charges, $sender_wallet, $account_number, $trx_id);
                 $user = auth()->user();
 
                 // dd($charges);
@@ -255,16 +256,17 @@ class UtilityBillController extends Controller
                         'operator_name'     => $operator['name'] ?? '',
                         'account_number'    => $account_number,
                         'request_amount'    => get_amount($charges->amount, $charges->bundle_currency),
-                        'exchange_rate'     => get_amount(1, $charges->bundle_currency) . " = " . get_amount($charges->rate, $charges->wallet_currency_code, 4),
+                        'exchange_rate'     => get_amount($charges->rate, $charges->wallet_currency_code, 4),
                         'charges'           => get_amount($charges->total_charge_calc, $charges->wallet_currency_code),
                         'payable'           => get_amount($charges->total_payable, $charges->wallet_currency_code),
                         'current_balance'   => get_amount($sender_wallet->balance, $charges->wallet_currency_code),
                         'token'             => $utility_bill_transaction['transaction']['billDetails']['pinDetails']['token'] ?? "--",
-                        'status'            => __("Successful"),
+                        'date'              => $transaction->created_at,
                     ];
                     try {
                         $user->notify(new UtilityPaymentMail($user, (object)$notifyData));
                     } catch (Exception $e) {
+                        Log::error("An error occured sending email", $e);
                     }
                 }
                 //admin notification
@@ -289,7 +291,7 @@ class UtilityBillController extends Controller
                 "data" => null
             ], 500);
         }
-        return $id;
+        return $transaction->id;
     }
 
     public function insertAutomaticCharges($id, $charges, $sender_wallet, $account_number, $trx_id)
