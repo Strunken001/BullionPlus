@@ -60,7 +60,7 @@ class UtilityPaymentMail extends Notification
             ->line(__("Bill Amount") . ": " . $data->request_amount . "(" . $data->exchange_rate . ")")
             ->line(__("Admin Fee") . ": " . $data->charges)
             ->line(__("Total") . ": " . $data->payable)
-            ->line(__("BALANCE") . ": " . ($data->current_balance + $data->payable) . " -> " . $data->current_balance)
+            ->line(__("BALANCE") . ": " . ($data->previous_balance) . " -> " . $data->current_balance)
             ->line(__("Token") . ": " . $data->token)
             ->line(__("Date") . ": " . $dateTime)
             ->line(__('Thank you for using BullionPlus!'));

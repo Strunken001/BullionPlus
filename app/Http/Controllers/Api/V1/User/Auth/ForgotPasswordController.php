@@ -11,17 +11,21 @@ use Illuminate\Support\Carbon;
 use App\Models\UserPasswordReset;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Mail\UserForgotPasswordCode;
+use App\Models\Admin\BasicSettings;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Providers\Admin\BasicSettingsProvider;
 use App\Notifications\User\Auth\PasswordResetEmail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ForgotPasswordController extends Controller
 {
     public function findUserSendCode(Request $request)
     {
+        $basic_settings = BasicSettings::first();
         $validator = Validator::make($request->all(), [
             'credentials'       => "required|string|max:50",
         ]);
@@ -48,7 +52,11 @@ class ForgotPasswordController extends Controller
                 'code'          => $code,
             ]);
             $message = __("Your verification code is: " . $password_reset['code']);
-            sendAuthSms($user, $message);
+            // sendAuthSms($user, $message);
+
+            Mail::to($user->email)->queue(
+                new UserForgotPasswordCode($user->username, $code, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
         } catch (Exception $e) {
             Log::error($e);
             return Response::error([__('Something went wrong! Please try again')], [], 500);
@@ -100,6 +108,7 @@ class ForgotPasswordController extends Controller
      */
     public function resendCode(Request $request)
     {
+        $basic_settings = BasicSettings::first();
         $validator = Validator::make($request->all(), [
             'token'     => "required|string|exists:user_password_resets,token"
         ]);
@@ -126,7 +135,11 @@ class ForgotPasswordController extends Controller
             ];
             DB::table('user_password_resets')->where('token', $validated['token'])->update($update_data);
             $message = __("Your verification code is: " . $update_data['code']);
-            sendAuthSms($user, $message);
+            // sendAuthSms($user, $message);
+
+            Mail::to($user->email)->queue(
+                new UserForgotPasswordCode($user->username, $update_data['code'], env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

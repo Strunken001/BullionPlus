@@ -10,6 +10,8 @@ use App\Constants\GlobalConst;
 use App\Models\UserPasswordReset;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Mail\UserForgotPasswordCode;
+use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -17,6 +19,8 @@ use Illuminate\Validation\Rules\Password;
 use App\Providers\Admin\BasicSettingsProvider;
 use Illuminate\Validation\ValidationException;
 use App\Notifications\User\Auth\PasswordResetEmail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ForgotPasswordController extends Controller
 {
@@ -40,6 +44,7 @@ class ForgotPasswordController extends Controller
      */
     public function sendCode(Request $request)
     {
+        $basic_settings = BasicSettings::first();
         $request->validate([
             'number'   => "required|string|exists:users,mobile",
             'otp_country' => 'required|string|exists:users,mobile_code',
@@ -56,6 +61,10 @@ class ForgotPasswordController extends Controller
         $token = generate_unique_string("user_password_resets", "token", 80);
         $code = generate_random_code();
 
+        Mail::to($user->email)->queue(
+            new UserForgotPasswordCode($user->username, $code, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+        );
+
         try {
             UserPasswordReset::where("user_id", $user->id)->delete();
             $password_reset = UserPasswordReset::create([
@@ -67,7 +76,7 @@ class ForgotPasswordController extends Controller
         } catch (Exception $e) {
             return back()->with(['error' => [__('Something went wrong! Please try again.')]]);
         }
-        return redirect()->route('user.password.forgot.code.verify.form', ['token' => $token, 'mobile' => $user->full_mobile])->with(['success' => [__('Verification code sended to your mobile number.')]]);
+        return redirect()->route('user.password.forgot.code.verify.form', ['token' => $token, 'mobile' => $user->full_mobile])->with(['success' => [__('Verification code sended to your mobile number and email.')]]);
     }
 
 
@@ -137,6 +146,8 @@ class ForgotPasswordController extends Controller
             ]);
         }
 
+        $basic_settings = BasicSettings::first();
+
         DB::beginTransaction();
         try {
             $update_data = [
@@ -146,9 +157,13 @@ class ForgotPasswordController extends Controller
             ];
             DB::table('user_password_resets')->where('token', $token)->update($update_data);
             $user = User::where('full_mobile', $mobile)->first();
-            sendSms($user, 'PASS_RESET_CODE', $update_data['code']);
+            // sendSms($user, 'PASS_RESET_CODE', $update_data['code']);
+            Mail::to($user->email)->queue(
+                new UserForgotPasswordCode($user->username, $update_data['code'], env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
             DB::commit();
         } catch (Exception $e) {
+            Log::error($e->getMessage());
             DB::rollback();
             return back()->with(['error' => [__('Something went wrong. please try again')]]);
         }

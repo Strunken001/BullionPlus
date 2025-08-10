@@ -259,6 +259,7 @@ class UtilityBillController extends Controller
                         'exchange_rate'     => get_amount($charges->rate, $charges->wallet_currency_code, 4),
                         'charges'           => get_amount($charges->total_charge_calc, $charges->wallet_currency_code),
                         'payable'           => get_amount($charges->total_payable, $charges->wallet_currency_code),
+                        'previous_balance'  => get_amount($sender_wallet->balance + $charges->total_payable, $charges->wallet_currency_code),
                         'current_balance'   => get_amount($sender_wallet->balance, $charges->wallet_currency_code),
                         'token'             => $utility_bill_transaction['transaction']['billDetails']['pinDetails']['token'] ?? "--",
                         'date'              => $transaction->created_at,
@@ -266,7 +267,7 @@ class UtilityBillController extends Controller
                     try {
                         $user->notify(new UtilityPaymentMail($user, (object)$notifyData));
                     } catch (Exception $e) {
-                        Log::error("An error occured sending email", $e);
+                        Log::error("An error occured sending email:" . $e->getMessage());
                     }
                 }
                 //admin notification
