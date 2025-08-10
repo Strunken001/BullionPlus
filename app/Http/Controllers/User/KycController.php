@@ -49,15 +49,11 @@ class KycController extends Controller
         if ($request->status === "success" && $request->has('email')) {
             $kyc_owner = User::where('email', $request->email)->first();
 
-            if ($kyc_owner) {
-                $kyc_owner_data = UserKycData::where('user_id', $kyc_owner->id)->first();
+            if ($kyc_owner && !$kyc_owner->has_done_liveness) {
+                $kyc_owner->has_done_liveness = true;
+                $kyc_owner->save();
 
-                if ($kyc_owner_data && !$kyc_owner_data->has_done_liveness) {
-                    $kyc_owner_data->has_done_liveness = true;
-                    $kyc_owner_data->save();
-
-                    session()->flash('success', __('Liveness check completed successfully.'));
-                }
+                session()->flash('success', __('Liveness check completed successfully.'));
             }
         } elseif ($request->status === 'error') {
             session()->flash('error', __('Liveness check failed. Please try again.'));
@@ -69,8 +65,6 @@ class KycController extends Controller
     public function store(Request $request)
     {
         try {
-
-
             $user = auth()->user();
             if ($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
 

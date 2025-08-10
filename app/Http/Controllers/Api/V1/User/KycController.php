@@ -31,18 +31,14 @@ class KycController extends Controller
         if ($request->status === "success" && $request->has('email')) {
             $kyc_owner = User::where('email', $request->email)->first();
 
-            if ($kyc_owner) {
-                $kyc_owner_data = UserKycData::where('user_id', $kyc_owner->id)->first();
+            if ($kyc_owner && !$kyc_owner->has_done_liveness) {
+                $kyc_owner->has_done_liveness = true;
+                $kyc_owner->save();
 
-                if ($kyc_owner_data && !$kyc_owner_data->has_done_liveness) {
-                    $kyc_owner_data->has_done_liveness = true;
-                    $kyc_owner_data->save();
-
-                    return response()->json([
-                        'status' => 'success',
-                        'message' => 'Liveness check completed successfully.'
-                    ]);
-                }
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Liveness check completed successfully.'
+                ]);
             }
         } elseif ($request->status === 'error') {
             return response()->json([
@@ -108,8 +104,6 @@ class KycController extends Controller
                 DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
 
                 $response = (new YouVerify())->kycVerification($kyc_payload);
-
-                Log::info(['kyc response' => $response]);
 
                 if ($response) {
                     $user->update([
