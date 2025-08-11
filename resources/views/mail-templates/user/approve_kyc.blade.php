@@ -91,7 +91,7 @@
 <div class="email-templates-section">
     <div class="email-templates-wrapper">
         <div class="email-templates-logo">
-            <img src="{{ $message->embed($logo) }}" alt="logo">
+            <img src="{{ $logo }}" alt="logo">
         </div>
         <div class="email-templates-box">
             <div class="email-templates-content">
