@@ -93,6 +93,7 @@
                     'name' => $item->name,
                     'type' => $item->type,
                     'value' => old($item->name),
+                    'required' => $item->required,
                 ])
             </div>
         @elseif ($item->type == 'textarea')
@@ -101,6 +102,7 @@
                     'label' => $item->label,
                     'name' => $item->name,
                     'value' => old($item->name),
+                    'required' => $item->required,
                 ])
             </div>
         @endif

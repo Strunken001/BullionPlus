@@ -168,5 +168,57 @@
             });
         });
     });
+
+    $(function () {
+        $('form.card-form').on('submit', function (e) {
+            var form = $(this);
+            var isValid = true;
+
+            // Validate all required fields
+            form.find('input[required], select[required], textarea[required]').each(function () {
+                if (!$(this).val()) {
+                    isValid = false;
+                    $(this).addClass('is-invalid'); // Optional visual feedback
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please complete all required fields before submitting.');
+                return false;
+            }
+
+            // Show spinner on the clicked submit button
+            var submitBtn = form.find('button[type=submit]:focus');
+            if (submitBtn.length) {
+                submitBtn.prop('disabled', true);
+                submitBtn.html(
+                    `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Submitting...`
+                );
+            }
+        });
+    });
     </script>
+@endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        border: 0.15em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+    }
+
+    @keyframes spinner-border {
+        100% { transform: rotate(360deg); }
+    }
+
+</style>
 @endpush

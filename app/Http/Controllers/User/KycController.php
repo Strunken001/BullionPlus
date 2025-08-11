@@ -13,12 +13,18 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Constants\SiteSectionConst;
 use App\Lib\YouVerify;
+use App\Mail\AdminKycSubmissionMail;
+use App\Mail\KycApprovalMail;
+use App\Mail\KycRejectionMail;
+use App\Mail\KycSubmissionMail;
+use App\Models\Admin\Admin;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\SiteSections;
 use App\Models\User;
 use App\Models\UserKycData;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Intervention\Image\Facades\Image;
 
 class KycController extends Controller
@@ -59,12 +65,16 @@ class KycController extends Controller
             session()->flash('error', __('Liveness check failed. Please try again.'));
         }
 
+        auth()->user()->refresh();
+
         return view('user.sections.kyc.index', compact('page_title', 'user', 'kyc_fields', 'kyc_data', 'footer'));
     }
 
     public function store(Request $request)
     {
         try {
+            $basic_settings = BasicSettings::first();
+
             $user = auth()->user();
             if ($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]);
 
@@ -113,6 +123,18 @@ class KycController extends Controller
 
             DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
 
+            Mail::to($user->email)->queue(
+                new KycSubmissionMail($user->username, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
+
+            $adminEmails = Admin::where('username', 'superadmin')
+                ->pluck('email')
+                ->toArray();
+
+            Mail::to($adminEmails)->queue(
+                new AdminKycSubmissionMail($user->email, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
+
             $response = (new YouVerify())->kycVerification($kyc_payload);
 
             Log::info(['kyc response' => $response]);
@@ -121,10 +143,18 @@ class KycController extends Controller
                 $user->update([
                     'kyc_verified'  => GlobalConst::APPROVED,
                 ]);
+
+                Mail::to($user->email)->queue(
+                    new KycApprovalMail($user->username, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                );
             } else {
                 $user->update([
                     'kyc_verified'  => GlobalConst::PENDING,
                 ]);
+
+                Mail::to($user->email)->queue(
+                    new KycRejectionMail($user->username, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                );
             }
             DB::commit();
 
