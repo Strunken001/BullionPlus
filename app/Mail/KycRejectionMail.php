@@ -25,7 +25,7 @@ class KycRejectionMail extends Mailable
      */
     public function __construct($username, $site_url, $site_name, $logo)
     {
-        $this->username;
+        $this->username = $username;
         $this->site_url = $site_url;
         $this->site_name = $site_name;
         $this->logo = $logo;
