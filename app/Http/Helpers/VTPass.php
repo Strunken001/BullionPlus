@@ -68,6 +68,7 @@ class VTPass
             'phone' => $params['phone']
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            logger()->error(['error' => $message]);
             throw new Exception($message);
         })->json();
 
@@ -90,6 +91,7 @@ class VTPass
             'public-key' => $this->credentials->public_key
         ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            logger()->error(['error' => $message]);
             throw new Exception($message);
         })->json();
 
@@ -115,8 +117,11 @@ class VTPass
             'amount' => $params['amount'],
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            logger()->error(['error' => $message]);
             throw new Exception($message);
         })->json();
+
+        logger()->info(['dataBundleTopUp' => $response]);
 
         $response['content']['response'] = $response['content']['transactions'];
         $response['content']['response']['recipientPhone'] = $response['content']['transactions']['unique_element'];

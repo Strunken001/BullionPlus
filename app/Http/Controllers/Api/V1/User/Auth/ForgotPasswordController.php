@@ -35,8 +35,7 @@ class ForgotPasswordController extends Controller
         $validated = $validator->validate();
 
         // Find User
-        $column = "full_mobile";
-        $user = User::where($column, $validated['credentials'])->first();
+        $user = User::where('email', $validated['credentials'])->first();
         if (!$user) return Response::error([__("Oops! User doesn't exists")], [], 404);
         if ($user->status != GlobalConst::ACTIVE) return Response::error([__('Your account is temporary banded. Please contact with system admin')], []);
 

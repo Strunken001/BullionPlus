@@ -20,7 +20,7 @@
                             <div class="verification-otp-content ptb-30">
                                 <h4 class="title text-center">{{ __('Please enter the code') }}</h4>
                                 <p class="d-block text-center">
-                                    {{ __('We sent a 6 digit code here') }} <strong>{{ $mobile }}</strong>
+                                    {{ __('We sent a 6 digit code your email') }}</strong>
                                 </p>
                             </div>
                             <form class="account-form" action="{{ setRoute('user.password.forgot.verify.code', $token) }}"

@@ -46,13 +46,9 @@ class ForgotPasswordController extends Controller
     {
         $basic_settings = BasicSettings::first();
         $request->validate([
-            'number'   => "required|string|exists:users,mobile",
-            'otp_country' => 'required|string|exists:users,mobile_code',
+            'email'   => "required|string|exists:users,email",
         ]);
-        $phone = $request->otp_country . $request->number;
-        $column = "full_mobile";
-        if (check_email($request->credentials)) $column = "email";
-        $user = User::where($column, $phone)->first();
+        $user = User::where('email', $request->email)->first();
         if (!$user) {
             throw ValidationException::withMessages([
                 'credentials'       => "User doesn't exists.",

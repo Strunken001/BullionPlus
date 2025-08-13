@@ -36,14 +36,8 @@
                                         <div class="account-number country-code">
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
-                                                    <select class="input-group-text copytext nice-select" name="otp_country">
-                                                        @foreach (get_all_countries_array() as $item)
-                                                            <option value="{{ get_country_phone_code($item['name']) }}">
-                                                                {{ $item['name'] }} ({{ $item['mobile_code'] }})</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <input type="tel" required class="form--control" name="number"
-                                                        placeholder="{{ __('Phone Number') }}" spellcheck="false"
+                                                    <input type="text" required class="form--control" name="email"
+                                                        placeholder="{{ __('Enter your email') }}" spellcheck="false"
                                                         data-ms-editor="true">
                                                 </div>
                                             </div>
