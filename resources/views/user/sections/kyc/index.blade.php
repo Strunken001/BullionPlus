@@ -30,7 +30,7 @@
                                     @if (!auth()->user()->has_done_liveness)
                                         <div class="text-center mt-3">
                                             <button type="submit" class="btn--base">
-                                                <a href="{{ config('app.react_liveness_url') }}?firstname={{ auth()->user()->firstname }}&lastname={{ auth()->user()->lastname }}&email={{ auth()->user()->email }}&redirect_url={{ urlencode(env('APP_URL') . '/user/kyc') }}">
+                                                <a href="{{ config('app.react_liveness_url') }}?firstname={{ auth()->user()->firstname }}&lastname={{ auth()->user()->lastname }}&email={{ auth()->user()->email }}&redirect_url={{ env('APP_URL') . '/user/kyc' }}">
                                                     {{ __('Start Liveness Check') }}
                                                 </a>
                                             </button>
