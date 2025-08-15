@@ -193,6 +193,8 @@ class VTPass
 
         $request_amount     = $amount = $data['amount'] ?? 0; // $amount is local amount
 
+        $api_discount_percentage = $data['api_discount_percentage'] ?? 0;
+
         $user_wallet        = auth()->user()->wallets; // GBP
         $wallet_currency    = $user_wallet->currency;
 
@@ -220,7 +222,8 @@ class VTPass
         $percent_charge_calc    = (($request_amount / 100) * $percent_charge) * $exchange_rate;
 
         $total_charge_calc      = $fixed_charge_calc + $percent_charge_calc;
-        $total_payable          = $exchange_wallet_amount + $total_charge_calc;
+        $discounted_amount      = ($exchange_wallet_amount + $total_charge_calc) * $api_discount_percentage;
+        $total_payable          = ($exchange_wallet_amount + $total_charge_calc) - $discounted_amount;
 
         $min_limit              = $transaction_charges->min_limit;
         $max_limit              = $transaction_charges->max_limit;

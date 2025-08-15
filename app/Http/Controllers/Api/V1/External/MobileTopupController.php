@@ -137,7 +137,8 @@ class MobileTopupController extends Controller
         }
 
         $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
-        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge);
+        $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge, $api_discount_percentage);
 
         if ($charges['payable'] > $sender_wallet->balance) {
             return response()->json([
@@ -156,12 +157,12 @@ class MobileTopupController extends Controller
 
             $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
 
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
-            $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
-            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+            // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            // $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+            // $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
+            // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
-            $validated['amount'] = $validated['amount'] - $discount_price_amount;
+            $validated['amount'] = $validated['amount'];
 
             $topUpData = [
                 "service_id" => $service_id,
@@ -172,11 +173,11 @@ class MobileTopupController extends Controller
 
             $topUpData = (new VTPass())->mobileTopUp($topUpData);
         } else {
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $provider_discount_amount = ($operator['internationalDiscount'] / 100) * $request->amount;
-            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+            // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            // $provider_discount_amount = ($operator['internationalDiscount'] / 100) * $request->amount;
+            // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
-            $validated['amount'] = $validated['amount'] - $discount_price_amount;
+            $validated['amount'] = $validated['amount'];
             //topup api
             $topUpData = [
                 'operatorId'        => $operator['operatorId'],
@@ -269,7 +270,7 @@ class MobileTopupController extends Controller
                 'status' => 'error',
                 'message' => "Something went wrong! Please try again.",
                 'data' => null
-            ], 500);
+            ], $e->getCode() ?? 500);
         }
     }
 
@@ -370,9 +371,8 @@ class MobileTopupController extends Controller
         }
     }
 
-    public function topupChargeAutomatic($sender_amount, $operator, $sender_wallet, $charges)
+    public function topupChargeAutomatic($sender_amount, $operator, $sender_wallet, $charges, $api_discount_percentage = 0)
     {
-
         $destinationCurrency = ExchangeRate::where(['currency_code' => $operator['destinationCurrencyCode']])->first();
         $exchange_rate = $sender_wallet->currency->rate / $destinationCurrency->rate;
 
@@ -387,7 +387,8 @@ class MobileTopupController extends Controller
         $data['fixed_charge']                       = $sender_wallet->currency->rate * $charges->fixed_charge ?? 0;
         $data['total_charge']                       = $data['percent_charge'] + $data['fixed_charge'];
         $data['sender_wallet_balance']              = $sender_wallet->balance;
-        $data['payable']                            = $data['conversion_amount'] + $data['total_charge'];
+        $discount_amount                          = ($data['conversion_amount'] + $data['total_charge']) * $api_discount_percentage;
+        $data['payable']                            = ($data['conversion_amount'] + $data['total_charge']) - $discount_amount;
         return $data;
     }
 

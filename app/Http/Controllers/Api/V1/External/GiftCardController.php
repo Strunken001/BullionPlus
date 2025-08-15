@@ -304,8 +304,10 @@ class GiftCardController extends Controller
                 ], 400);
             }
 
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+
             $cardCharge = TransactionSetting::where('slug', 'gift_card')->where('status', 1)->first();
-            $charges = $this->giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country);
+            $charges = $this->giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country, $api_discount_percentage);
             if ($charges['payable'] > $userWallet->balance) {
                 return response()->json([
                     "status" => 'error',
@@ -521,7 +523,7 @@ class GiftCardController extends Controller
             'balance'   => $afterCharge,
         ]);
     }
-    public function giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country)
+    public function giftCardCharge($form_data, $cardCharge, $userWallet, $sender_country, $receiver_country, $api_discount_percentage = 0)
     {
         $exchange_rate = $sender_country->rate / $receiver_country->rate;
 
@@ -536,7 +538,8 @@ class GiftCardController extends Controller
         $data['fixed_charge']                       = $sender_country->rate * $cardCharge->fixed_charge ?? 0;
         $data['total_charge']                       = $data['percent_charge'] + $data['fixed_charge'];
         $data['sender_wallet_balance']              = $userWallet->balance;
-        $data['payable']                            =  $data['conversion_amount'] + $data['total_charge'];
+        $discounted_amount                          = ($data['conversion_amount'] + $data['total_charge']) * $api_discount_percentage;
+        $data['payable']                            =  ($data['conversion_amount'] + $data['total_charge']) - $discounted_amount;
         $data['wallet_currency']                    =  $sender_country->code;
 
         return $data;
