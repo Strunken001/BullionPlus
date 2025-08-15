@@ -69,7 +69,7 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE','Asia/Dhaka'),
+    'timezone' => env('APP_TIMEZONE', 'Asia/Dhaka'),
 
     /*
     |--------------------------------------------------------------------------
@@ -238,4 +238,5 @@ return [
         'Paystack'  => Unicodeveloper\Paystack\Facades\Paystack::class,
     ])->toArray(),
 
+    'react_liveness_url' => env('KYC_FRONTEND_URL'),
 ];

@@ -88,5 +88,6 @@ class Kernel extends HttpKernel
         'api.user.auth.guard'           => \App\Http\Middleware\Api\V1\User\AuthGuard::class,
         'api.kyc'                       => \App\Http\Middleware\Api\V1\User\KycApi::class,
         'api.client'                    => \App\Http\Middleware\Api\V1\User\ApiClientMiddleware::class,
+        'enforce.token.expiry'          => \App\Http\Middleware\EnforceTokenExpiration::class,
     ];
 }

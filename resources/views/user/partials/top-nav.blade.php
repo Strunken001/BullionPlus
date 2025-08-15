@@ -1,8 +1,16 @@
 @php
     $current_url = URL::current();
-    $pages = App\Models\Admin\SetupPage::where(['status' => true])
-        ->orWhere('slug', 'home')
-        ->get();
+    if (!Auth::check()) {
+        $pages = App\Models\Admin\SetupPage::where(['status' => true])
+            ->where('show_offline', true)
+            ->orWhere('slug', 'home')
+            ->get();
+    } else {
+        $pages = App\Models\Admin\SetupPage::where(['status' => true])
+            ->where('show_offline', false)
+            ->orWhere('slug', 'dashboard')
+            ->get();
+    }
 @endphp
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Start Header
@@ -56,30 +64,6 @@
                                                 <div class="title-area">
                                                     <a
                                                         href="{{ setRoute('user.profile.password') }}">{{ __('Change Password') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.gift.card.index') }}">{{ __('Buy Giftcard') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.mobile.topup.automatic.index') }}">{{ __('Mobile Topup') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.utility.bill.index') }}">{{ __('Utility Bill') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.data.bundle.index') }}">{{ __('Data Bundle') }}</a>
                                                 </div>
                                             </li>
                                             <li>
@@ -184,30 +168,6 @@
                                                 <div class="title-area">
                                                     <a
                                                         href="{{ setRoute('user.profile.password') }}">{{ __('Change Password') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.gift.card.index') }}">{{ __('Buy Giftcard') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.mobile.topup.automatic.index') }}">{{ __('Mobile Topup') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.utility.bill.index') }}">{{ __('Utility Bill') }}</a>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="title-area">
-                                                    <a
-                                                        href="{{ setRoute('user.data.bundle.index') }}">{{ __('Data Bundle') }}</a>
                                                 </div>
                                             </li>
                                             <li>

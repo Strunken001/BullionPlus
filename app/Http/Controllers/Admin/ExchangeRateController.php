@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Helpers\Response;
 use App\Models\Admin\ExchangeRate;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ExchangeRateController extends Controller
@@ -20,7 +21,7 @@ class ExchangeRateController extends Controller
     {
         $page_title = __("Exchange Rate");
         $exchange_rates = ExchangeRate::orderBy('name', 'asc')->paginate(20);
-        return view('admin.sections.exchange-rate.index',compact(
+        return view('admin.sections.exchange-rate.index', compact(
             'page_title',
             'exchange_rates'
         ));
@@ -31,31 +32,39 @@ class ExchangeRateController extends Controller
      * @param Request closer
      * @return back view
      */
-    public function update(Request $request) {
-        try{
+    public function update(Request $request)
+    {
+        try {
             foreach ($request->id as $key => $id) {
-                ExchangeRate::find($id)->update(['rate' => $request->rate[$key] ? $request->rate[$key] : 0]);
+                $rate = $request->rate[$key] ?? 0;
+                $autoUpdate = $request->automatic_update[$key] ?? 0;
+
+                ExchangeRate::find($id)->update([
+                    'rate' => $rate,
+                    'automatic_update' => $autoUpdate,
+                ]);
             }
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return back()->with(['error' => ["Something Went Wrong! Please Try Again."]]);
         }
         return back()->with(['success' => ['Exchange Rate Updated Successfully!']]);
     }
 
 
-    public function search(Request $request) {
-        $validator = Validator::make($request->all(),[
+    public function search(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'text'  => 'required|string',
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             $error = ['error' => $validator->errors()];
-            return Response::error($error,null,400);
+            return Response::error($error, null, 400);
         }
 
         $validated = $validator->validate();
         $exchange_rates = ExchangeRate::search($validated['text'])->select()->limit(10)->get();
-        return view('admin.components.data-table.exchange-rate-table',compact(
+        return view('admin.components.data-table.exchange-rate-table', compact(
             'exchange_rates',
         ));
     }

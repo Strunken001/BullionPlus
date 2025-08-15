@@ -45,6 +45,7 @@
                                         <select class="form--control select-2 select2-auto-tokenize country-select"
                                             data-placeholder="{{ __('Select Country') }}" name="country"
                                             data-old="{{ old('country', auth()->user()->address->country ?? '') }}">
+                                            <option selected disabled>Loading...</option>
                                         </select>
                                     </div>
                                     <div class="col-12 mb-10">
@@ -78,15 +79,17 @@
                                                 <input type="checkbox" id="level-1" name="agree">
                                                 <label for="level-1">{{ __('I have agreed with') }} <a
                                                         href="{{ route('global.usefull.page', 'refund-policy') }}"
-                                                        target="_blanck">{{ __('Terms Of Use') }}</a> & <a
+                                                        target="_blank">{{ __('Terms Of Use') }}</a> & <a
                                                         href="{{ route('global.usefull.page', 'privacy-policy') }}"
-                                                        target="_blanck">{{ __('Privacy Policy') }}</a></label>
+                                                        target="_blank">{{ __('Privacy Policy') }}</a></label>
                                             </div>
                                         </div>
                                     @endif
                                 </div>
                                 <div class="register-btn pt-4">
-                                    <button type="submit" class="btn--base w-100">{{ __('Register Now') }}</button>
+                                    <button type="submit" class="btn--base w-100" id="register-btn" data-loading-text="{{ __('Please wait...') }}">
+                                        {{ __('Register Now') }}
+                                    </button>
                                 </div>
                                 <div class="register-page">
                                     <div class="account-item">
@@ -105,16 +108,68 @@
 
 
 @push('script')
-    <script>
+   <script>
         getAllCountries("{{ setRoute('global.countries') }}");
-        $(document).ready(function() {
-            $("select[name=country]").change(function() {
-                var phoneCode = $("select[name=country] :selected").attr("data-mobile-code");
+
+        $('input[name=mobile]').on('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        $(document).ready(function () {
+            const countrySelectElement = $("select[name=country]");
+
+            // When user selects a country manually
+            countrySelectElement.change(function () {
+                var phoneCode = countrySelectElement.find(":selected").attr("data-mobile-code");
                 placePhoneCode(phoneCode);
             });
 
+            // After country list is populated (assumed async), re-select the old value
+            const oldCountry = countrySelectElement.data('old');
+            if (oldCountry) {
+                const checkInterval = setInterval(function () {
+                    if (countrySelectElement.find("option").length > 1) {
+                        countrySelectElement.val(oldCountry).trigger('change');
+                        clearInterval(checkInterval);
+                    }
+                }, 100); // Poll every 100ms until options are loaded
+            }
+
+            // Initialize country and state select if applicable
             countrySelect(".country-select", $(".country-select").siblings(".select2"));
             stateSelect(".state-select", $(".state-select").siblings(".select2"));
         });
+
+        function placePhoneCode(code) {
+            if (code) {
+                $(".input-group-text.phone-code").text("+" + code);
+                $("input[name=phone_code]").val(code);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const registerForm = document.querySelector('.account-form');
+            const registerBtn = document.getElementById('register-btn');
+
+            if (registerForm && registerBtn) {
+                registerForm.addEventListener('submit', function () {
+                    registerBtn.disabled = true;
+                    const loadingText = registerBtn.getAttribute('data-loading-text') || 'Please wait...';
+                    registerBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+                });
+            }
+        });
     </script>
 @endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
+@endpush
+

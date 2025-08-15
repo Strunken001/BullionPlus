@@ -345,8 +345,10 @@ $default_lng = 'en';
                                                 </div>
                                             </div>
                                             <div class="modal-btn mt-4">
-                                                <button type="submit" class="btn--base w-100 fundBtn btn-loading">{{ __('Confirm') }}
-                                                    <i class="las la-plus-circle ms-1"></i></button>
+                                                <button type="submit" class="btn--base w-100 fundBtn btn-loading" id="submitButton">
+                                                    <span class="btn-text">{{ __('Confirm') }}</span>
+                                                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -707,5 +709,24 @@ $default_lng = 'en';
             getPreview();
             modal.modal('show');
         });
+
+        $(document).ready(function () {
+            $('form.card-form').on('submit', function (e) {
+                const btn = $('#submitButton');
+                btn.attr('disabled', true);
+                btn.find('.btn-text').text('{{ __("Please wait...") }}');
+                btn.find('.spinner-border').removeClass('d-none');
+            });
+        });
+
     </script>
+@endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        vertical-align: middle;
+        margin-left: 0.5rem;
+    }
+</style>
 @endpush

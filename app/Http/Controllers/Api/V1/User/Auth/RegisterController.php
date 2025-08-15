@@ -17,6 +17,7 @@ use Illuminate\Validation\Rules\Password;
 use App\Providers\Admin\BasicSettingsProvider;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use PhpOffice\PhpSpreadsheet\Calculation\Logical\Boolean;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
@@ -38,27 +39,32 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
 
-        $validator = $this->validator($request->all());
-        if ($validator->fails()) {
-            return Response::error($validator->errors()->all(), []);
+        $request['mobile'] = preg_replace('/[^0-9]/', '', $request['mobile'] ?? '');
+        if (Str::startsWith($request['mobile'], '0')) {
+            $request['mobile'] = ltrim($request['mobile'], '0');
         }
 
-        $validated = $validator->validate();
+        $request['full_mobile'] = remove_speacial_char($request['phone_code']) . $request['mobile'];
+
+        $validated = $this->validator($request->all())->validate();
+
         $basic_settings             = $this->basic_settings;
 
-        $validated['email_verified']    = ($basic_settings->email_verification == true) ? false : true;
-        $validated['sms_verified']      = ($basic_settings->sms_verification == true) ? false : true;
-        $validated['kyc_verified']      = ($basic_settings->kyc_verification == true) ? false : true;
-        $validated['password']          = Hash::make($validated['password']);
-        $validated['address']['country']= $validated['country'];
-        $validated['mobile']            = remove_speacial_char($validated['mobile']);
-        $validated['mobile_code']       = remove_speacial_char($validated['phone_code']);
-        $complete_phone                 = $validated['mobile_code'] . $validated['mobile'];
-        $validated['full_mobile']       = $complete_phone;
-        $validated['username']          = make_username($validated['firstname'], $validated['lastname']);
-        // $validated['referral_id']       = generate_unique_string('users','referral_id',8,'number');
+        $validated = Arr::except($validated, ['agree']);
+        $validated['email_verified']        = ($basic_settings->email_verification == true) ? false : true;
+        $validated['sms_verified']          = ($basic_settings->sms_verification == true) ? false : true;
+        $validated['kyc_verified']          = ($basic_settings->kyc_verification == true) ? false : true;
+        $validated['password']              = Hash::make($validated['password']);
+        $validated['username']              = make_username($validated['firstname'], $validated['lastname']);
+        $validated['address']['country']    = $validated['country'];
+        $validated['mobile']                = remove_speacial_char($request['mobile']);
+        $validated['mobile_code']           = remove_speacial_char($validated['phone_code']);
+        // $complete_phone                     = $validated['mobile_code'] . $validated['mobile'];
+        // $validated['full_mobile']           = $complete_phone;
+        $validated                          = Arr::except($validated, ['agree', 'phone_code', 'phone']);
+        // $validated['referral_id']       = generate_unique_string('users','referral_id',8,'number');0
 
-        if (User::where("username", $validated['username'])->exists()) return Response::error([__('User already exists!')], [], 400);
+        if (User::where("username", $validated['username'])->exists()) return Response::error([__('User already exists!')], [], 404);
 
         try {
             event(new Registered($user = $this->create($validated)));
@@ -94,7 +100,7 @@ class RegisterController extends Controller
         $basic_settings = $this->basic_settings;
         $password_rule = "required|string|min:6";
         if ($basic_settings->secure_password) {
-            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
+            $password_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()];
         }
 
         return Validator::make($data, [
@@ -179,6 +185,6 @@ class RegisterController extends Controller
             //     'status'    => count($sms_response) > 0 ? true : false,
             //     'token'     => $sms_response['token'] ?? "",
             // ],
-        ], 200);
+        ], 201);
     }
 }

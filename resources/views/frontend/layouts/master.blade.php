@@ -5,6 +5,11 @@
     $cookie = App\Models\Admin\SiteSections::siteCookie();
     
     //cookies results
+    // $approval_status = Cookie::get('approval_status')('approval_status');
+    // $c_user_agent = Cookie::get('user_agent')('user_agent');
+    // $c_ip_address = Cookie::get('ip_address')('ip_address');
+    // $c_browser = Cookie::get('browser')('browser');
+    // $c_platform = Cookie::get('platform')('platform');
     $approval_status = request()->cookie('approval_status');
     $c_user_agent = request()->cookie('user_agent');
     $c_ip_address = request()->cookie('ip_address');
@@ -52,7 +57,7 @@
 
     @stack('script')
 
-    <script>
+    {{-- <script>
         var status = "{{  @$cookie->status }}";
          //cookies results
          var approval_status      = "{{ $approval_status}}";
@@ -80,7 +85,54 @@
             pop.style.bottom = "-300px";
         }
         // })
-    </script>
+    </script> --}}
+
+    {{-- <script>
+        function getCookieValue(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var status = "{{ $cookie->status ?? 0 }}";
+
+            const pop = document.querySelector('.cookie-main-wrapper');
+            if (!pop) return;
+
+            const approval_status = getCookieValue('approval_status');
+            const c_user_agent    = getCookieValue('user_agent');
+            const c_ip_address    = getCookieValue('ip_address');
+            const c_browser       = getCookieValue('browser');
+            const c_platform      = getCookieValue('platform');
+
+            const s_ipAddress = "{{ $s_ipAddress }}";
+            const s_browser   = "{{ $s_browser }}";
+            const s_platform  = "{{ $s_platform }}";
+            const s_agent     = "{{ $s_agent }}";
+
+            if (status == 1) {
+                if (
+                    approval_status === 'allow' ||
+                    approval_status === 'decline' ||
+                    c_user_agent === s_agent ||
+                    c_ip_address === s_ipAddress ||
+                    c_browser === s_browser ||
+                    c_platform === s_platform
+                ) {
+                    pop.style.bottom = "-300px";
+                } else {
+                    setTimeout(() => {
+                        pop.style.bottom = "20px";
+                    }, 2000);
+                }
+            } else {
+                pop.style.bottom = "-300px";
+            }
+        });
+    </script> --}}
+    
     <script>
         (function ($) {
             "use strict";

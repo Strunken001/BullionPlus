@@ -10,6 +10,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="row mb-30-none">
                 <div class="col-lg-7 col-md-12 mb-30">
                     <div class="airtime-topup-form">
@@ -55,6 +56,13 @@
 
                                 <div class="add_item">
 
+                                {{-- <div class="col-xxl-12 col-xl-12 col-lg-12 form-group">
+                                    <label>{{ __('Amount') }}<span>*</span></label>
+                                    <div class="input-group currency-type">
+                                        <input type="text" class="form--control number-input" required placeholder="{{ __('Enter Amount') }}" name="amount" value="{{ old('amount') }}">
+                                    </div>
+                                </div> --}}
+
                                 </div>
                                 <div class="col-lg-12 form-group">
                                     <div class="note-area">
@@ -63,6 +71,12 @@
                                     </div>
                                 </div>
                             </div>
+
+                        <div id="operator-loader" style="display: none;" class="text-center my-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{ __('Loading...') }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-5 col-md-12 mb-30">
@@ -193,13 +207,14 @@
                                 </div>
                             </div>
                             <div class="topup-btn mt-3">
-                                <button type="submit"
-                                    class="btn--base w-100 btn-loading mobileTopupBtn">{{ __('Recharge Now') }} <i
-                                        class="fas fa-mobile ms-1"></i></button>
+                                <button type="submit" class="btn--base w-100 btn-loading mobileTopupBtn d-none">
+                                    {{ __('Recharge Now') }} 
+                                    <i class="fas fa-mobile ms-1"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    </form>
+                </form>
                 </div>
             </div>
         </div>
@@ -211,14 +226,19 @@
     <script>
         var defualCurrency = "{{ get_default_currency_code() }}";
         var defualCurrencyRate = "{{ get_default_currency_rate() }}";
-        $('.mobileTopupBtn').attr('disabled', true);
+        let debounceTimer;
+
+        $('.mobileTopupBtn').addClass('d-none');
         $("select[name=mobile_code]").change(function() {
             if (acceptVar().mobileNumber != '') {
                 checkOperator();
             }
         });
-        $("input[name=mobile_number]").focusout(function() {
-            checkOperator();
+        $("input[name=mobile_number]").on("keyup", function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                checkOperator();
+            }, 300);
         });
         $(document).on("click", ".radio_amount", function() {
             preview();
@@ -227,12 +247,24 @@
             var operator = JSON.parse($("input[name=operator]").val());
             var denominationType = operator.denominationType;
             if (denominationType === "RANGE") {
-                enterLimit();
+                if (($("input[name=amount]").val() !== "") ) {
+                    enterLimit();
+                }
             }
             preview();
+            if ($("input[name=amount]").val()) {
+                $('.mobileTopupBtn').removeClass('d-none');
+            }
         });
         $(document).on("keyup", "input[name=amount]", function() {
             preview();
+            if ($("input[name=amount]").val()) {
+                $('.mobileTopupBtn').removeClass('d-none');
+            }
+        });
+
+        $('.card-form').on('submit', function() {
+            $('.mobileTopupBtn').attr('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> {{ __("Please wait...") }}');
         });
 
         function acceptVar() {
@@ -258,11 +290,13 @@
         }
 
         function checkOperator() {
+            $('#operator-loader').show();
             var url = '{{ route('user.mobile.topup.automatic.check.operator') }}';
             var mobile_code = acceptVar().selectedMobileCode.data('mobile-code');
             var phone = acceptVar().mobileNumber;
             var iso = acceptVar().selectedMobileCode.val();
             var token = '{{ csrf_token() }}';
+            $('.mobileTopupBtn').addClass('d-none');
 
             var data = {
                 _token: token,
@@ -330,7 +364,6 @@
                                 @endforelse
                             </div>
                         </div>
-                        </div>
                     `);
                         $("select[name=currency]").niceSelect();
 
@@ -380,6 +413,7 @@
                     $('.mobileTopupBtn').attr('disabled', false);
                     setTimeout(function() {
                         $('.btn-ring-input').hide();
+                        $('#operator-loader').hide();
                     }, 1000);
                 } else if (response.status === false && response.from === "error") {
                     $('.add_item, .limit-show').empty();
@@ -390,6 +424,7 @@
                     $('.mobileTopupBtn').attr('disabled', true);
                     setTimeout(function() {
                         $('.btn-ring-input').hide();
+                        $('#operator-loader').hide();
                         throwMessage('error', [response.message]);
                     }, 1000);
                     return false;
@@ -399,6 +434,9 @@
                 $('[name=q-recharge]').on('click', function() {
                     $rechargeInput.val($(this).data('recharge-value'));
                     preview();
+                    if ($("input[name=amount]").val()) {
+                        $('.mobileTopupBtn').removeClass('d-none');
+                    }
                 });
             });
         }
@@ -506,7 +544,6 @@
             $('input[name=phone_code]').val(phone_code);
             $('input[name=country_code]').val(acceptVar().selectedMobileCode.val());
             $('input[name=operator_id]').val(operator.operatorId);
-
         }
         var amount = 0;
 
@@ -547,8 +584,11 @@
             }
 
         }
-    </script>
-    <script>
+
+        const mobileNumber = $("input[name=mobile_number]").val();
+        if (mobileNumber.trim() !== '') {
+            checkOperator();
+        }
         $(function() {
             var $rechargeInput = $('[name=amount]');
             $('[name=q-recharge]').on('click', function() {
@@ -556,4 +596,15 @@
             });
         });
     </script>
+@endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
 @endpush

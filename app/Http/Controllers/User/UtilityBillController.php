@@ -11,7 +11,10 @@ use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
+use App\Http\Requests\VerifyMeterNumberRequest;
+use App\Models\Transaction;
 use App\Models\UserNotification;
+use App\Models\UserWallet;
 use App\Models\VTPassAPIDiscount;
 use App\Notifications\Admin\ActivityNotification;
 use App\Notifications\UtilityPaymentMail;
@@ -42,15 +45,15 @@ class UtilityBillController extends Controller
         try {
             $billers = null;
 
-            if ($request->iso2 === "NG") {
-                $billers = VTPassAPIDiscount::where("type", "utility_bill")->get();
-            } else {
-                $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers([
-                    'countryISOCode' => $request->iso2,
-                    'page' => $request->page ?? 1,
-                    'size' => $request->size ?? 10,
-                ]);
-            }
+            // if ($request->iso2 === "NG") {
+            //     $billers = VTPassAPIDiscount::where("type", "utility_bill")->get();
+            // } else {
+            $billers = (new UtilityPaymentHelper())->getInstance()->getUtilityBillers([
+                'countryISOCode' => $request->iso2,
+                'page' => $request->page ?? 1,
+                'size' => $request->size ?? 10,
+            ]);
+            // }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
@@ -69,6 +72,15 @@ class UtilityBillController extends Controller
         try {
             $charges = json_decode($request->charges);
 
+            $sender_wallet = UserWallet::where('user_id', auth()->id())->first();
+            if (!$sender_wallet) {
+                return back()->with(['error' => [__('User Wallet not found')]]);
+            }
+
+            if ($charges->total_payable > $sender_wallet->balance) {
+                return back()->with(['error' => [__('Insufficient balance')]]);
+            }
+
             $utility_bill_transaction = null;
             $account_number = null;
 
@@ -78,6 +90,15 @@ class UtilityBillController extends Controller
                 $amount = $request->amount;
                 $account_number = $request->account_number;
                 $phone = auth()->user()->full_mobile;
+
+                $verify_meter_number = (new VTPass())->verifyMeterNumber([
+                    'service_id' => $service_id,
+                    'variation_code' => $variation_code,
+                    'account_number' => $account_number,
+                ]);
+                if ($verify_meter_number['content']['WrongBillersCode']) {
+                    return redirect()->route("user.utility.bill.index")->with(['error' => [__('Invalid number')]]);
+                }
 
                 $payment = (new VTPass())->utilityPayment([
                     'service_id' => $service_id,
@@ -117,7 +138,6 @@ class UtilityBillController extends Controller
             return redirect()->route("user.utility.bill.index")->with(['error' => [__($message)]]);
         }
 
-
         return redirect()->route("user.dashboard")->with(['success' => [__('Payment successful!')]]);
     }
 
@@ -129,6 +149,23 @@ class UtilityBillController extends Controller
 
             if ($charges['total_payable'] < $charges['min_limit_calc'] || $charges['total_payable'] > $charges['max_limit_calc']) {
                 throw new Exception("Please follow the transaction limit!");
+            }
+
+            if ($charges['currency_code'] === "NGN") {
+                $service_id = strtolower(explode(" ", $charges['name'])[0]) . "-electric";
+                $variation_code = strtolower($charges['service_type']);
+                $amount = $request->amount;
+                $account_number = $request->account_number;
+                $phone = auth()->user()->full_mobile;
+
+                $verify_meter_number = (new VTPass())->verifyMeterNumber([
+                    'service_id' => $service_id,
+                    'variation_code' => $variation_code,
+                    'account_number' => $account_number,
+                ]);
+                if ($verify_meter_number['content']['WrongBillersCode']) {
+                    return redirect()->route("user.utility.bill.index")->with(['error' => [__('Invalid number')]]);
+                }
             }
         } catch (Exception $e) {
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
@@ -155,7 +192,7 @@ class UtilityBillController extends Controller
         ];
         DB::beginTransaction();
         try {
-            $id = DB::table("transactions")->insertGetId([
+            $transaction = Transaction::create([
                 'user_id'                       => $sender_wallet->user->id,
                 'wallet_id'                     => $authWallet->id,
                 'payment_gateway_currency_id'   => null,
@@ -178,7 +215,7 @@ class UtilityBillController extends Controller
             $this->updateSenderWalletBalance($authWallet, $afterCharge);
 
             try {
-                $this->insertAutomaticCharges($id, $charges, $sender_wallet, $account_number, $trx_id);
+                $this->insertAutomaticCharges($transaction->id, $charges, $sender_wallet, $account_number, $trx_id);
                 $user = auth()->user();
 
                 // dd($charges);
@@ -190,16 +227,19 @@ class UtilityBillController extends Controller
                         'operator_name'     => $operator['name'] ?? '',
                         'account_number'    => $account_number,
                         'request_amount'    => get_amount($charges->amount, $charges->bundle_currency),
-                        'exchange_rate'     => get_amount(1, $charges->bundle_currency) . " = " . get_amount($charges->rate, $charges->wallet_currency_code, 4),
+                        'exchange_rate'     => get_amount($charges->rate, $charges->wallet_currency_code, 4),
                         'charges'           => get_amount($charges->total_charge_calc, $charges->wallet_currency_code),
                         'payable'           => get_amount($charges->total_payable, $charges->wallet_currency_code),
+                        'previous_balance'  => get_amount($sender_wallet->balance + $charges->total_payable, $charges->wallet_currency_code),
                         'current_balance'   => get_amount($sender_wallet->balance, $charges->wallet_currency_code),
                         'token'             => $utility_bill_transaction['transaction']['billDetails']['pinDetails']['token'] ?? "--",
-                        'status'            => __("Successful"),
+                        'date'              => $transaction->created_at,
                     ];
+                    Log::info(['notifyData' => $notifyData]);
                     try {
                         $user->notify(new UtilityPaymentMail($user, (object)$notifyData));
                     } catch (Exception $e) {
+                        Log::error("An error occured sending email:" . $e->getMessage());
                     }
                 }
                 //admin notification
@@ -215,7 +255,7 @@ class UtilityBillController extends Controller
             DB::rollBack();
             throw new Exception(__("Something went wrong! Please try again."));
         }
-        return $id;
+        return $transaction->id;
     }
 
     public function insertAutomaticCharges($id, $charges, $sender_wallet, $account_number, $trx_id)
@@ -315,5 +355,27 @@ class UtilityBillController extends Controller
                 ->send();
         } catch (Exception $e) {
         }
+    }
+
+    public function verifyMeterNumber(VerifyMeterNumberRequest $request)
+    {
+        $verify_meter_number = (new VTPass())->verifyMeterNumber([
+            'service_id' => $request->service_id,
+            'variation_code' => $request->variation_code,
+            'account_number' => $request->account_number,
+        ]);
+        if ($verify_meter_number['content']['WrongBillersCode']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'invalid number',
+                'data' => false
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'meter verified',
+            'data' => true
+        ]);
     }
 }

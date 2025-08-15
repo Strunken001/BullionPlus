@@ -12,30 +12,32 @@ use Illuminate\Support\Facades\Validator;
 
 class TransactionController extends Controller
 {
-    public function slugValue($slug) {
+    public function slugValue($slug)
+    {
         $values =  [
             'add-money'         => PaymentGatewayConst::TYPEADDMONEY,
             'giftcard'         => PaymentGatewayConst::GIFTCARD,
             'mobile-topup'    => PaymentGatewayConst::MOBILETOPUP,
         ];
 
-        if(!array_key_exists($slug,$values)) return abort(404);
+        if (!array_key_exists($slug, $values)) return abort(404);
         return $values[$slug];
     }
 
-    public function log(Request $request) {
+    public function log(Request $request)
+    {
 
-        $validator = Validator::make($request->all(),[
-            'slug'      => "nullable|string|in:add-money,mobile-topup,giftcard",
+        $validator = Validator::make($request->all(), [
+            'slug'      => "nullable|string",
         ]);
-        if($validator->fails()) return Response::error($validator->errors()->all(),[]);
+        if ($validator->fails()) return Response::error($validator->errors()->all(), []);
 
         $validated = $validator->validate();
 
-        try{
-            if(isset($validated['slug']) && $validated['slug'] != "") {
-                $transactions = Transaction::where('user_id',auth()->guard('api')->user()->id)->where("type",$this->slugValue($validated['slug']))->orderByDesc("id")->get();
-            }else {
+        try {
+            if (isset($validated['slug']) && $validated['slug'] != "") {
+                $transactions = Transaction::where('user_id', auth()->guard('api')->user()->id)->where("type", $this->slugValue($validated['slug']))->orderByDesc("id")->get();
+            } else {
                 $transactions = Transaction::auth()->orderByDesc("id")->get();
             }
 
@@ -63,12 +65,11 @@ class TransactionController extends Controller
                 'updated_at',
                 'gateway_currency',
             ]);
-
-        }catch(Exception $e) {
-            return Response::error([__('Something went wrong! Please try again')],[],500);
+        } catch (Exception $e) {
+            return Response::error([__('Something went wrong! Please try again')], [], 500);
         }
 
-        return Response::success([__('Transactions fetch successfully!')],[
+        return Response::success([__('Transactions fetch successfully!')], [
             'instructions'  => [
                 'slug'      => "add-money,money-transfer,withdraw",
                 'status'    => "1: Success, 2: Pending, 3: Hold, 4: Rejected, 5: Waiting"
@@ -79,6 +80,6 @@ class TransactionController extends Controller
                 PaymentGatewayConst::TYPEWITHDRAW,
             ],
             'transactions'  => $transactions,
-        ],200);
+        ], 200);
     }
 }

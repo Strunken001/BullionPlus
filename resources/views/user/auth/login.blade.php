@@ -3,25 +3,13 @@
 @push('css')
 @endpush
 
-
 @section('content')
-    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            Start body overlay
-                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
     <div id="body-overlay" class="body-overlay"></div>
-    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            End body overlay
-                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            Start Scroll-To-Top
-                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
     <a href="#" class="scrollToTop">
         <i class="las la-hand-point-up"></i>
         <small>{{ __('top') }}</small>
     </a>
-    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                            End Scroll-To-Top
-                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
     <section class="login-account-section">
         <div class="container">
@@ -40,68 +28,26 @@
                             <div class="form-header">
                                 <h3 class="title text-center">{{ __('Log in and Stay Connected') }}</h3>
                             </div>
-                            <div class="access-btn">
-                                <h4 class="title">{{ __('Login With') }}</h4>
-                                <div class="switch-field">
-                                    <input type="radio" id="radio-one" name="switch_one" value="OTP" checked />
-                                    <label for="radio-one">{{ __('OTP') }}</label>
-                                    <input type="radio" id="radio-two" name="switch_one" value="Password" />
-                                    <label for="radio-two">{{ __('Password') }}</label>
-                                </div>
-                            </div>
-                            <div class="otp-login-form" id="otp-login-form">
-                                <div class="account-number country-code">
-                                    <label>{{ __('Phone Number') }}:</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <select class="input-group-text copytext nice-select" name="otp_country">
-                                                @foreach (get_all_countries_array() as $item)
-                                                    <option value="{{ get_country_phone_code($item['name']) }}">
-                                                        {{ $item['name'] }} ({{ $item['mobile_code'] }})</option>
-                                                @endforeach
-                                            </select>
-                                            <input type="tel" type="number" class="form--control" name="otp_number"
-                                                placeholder="Enter Number" id="phone-number">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="custom-check-group pt-20">
-                                    <input type="checkbox" id="level-112" name="stay">
-                                    <label for="level-112">{{ __('Stay Login Next Time.') }}</label>
-                                </div>
-                                <div class="login-btn">
-                                    <button type="submit" class="btn--base w-100">{{ __('Continue') }}</button>
-                                </div>
-                                @if ($basic_settings->user_registration)
-                                    <div class="register-page">
-                                        <div class="account-item">
-                                            <label>{{ __("Don't Have An Account?") }} <a
-                                                    href="{{ setRoute('user.register') }}"
-                                                    class="account-control-btn">{{ __('Register Now') }}</a></label>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="passwoard-login-area" id="password-login-area" style="display: none;">
+
+                            <div class="passwoard-login-area">
                                 <div class="account-number mb-20">
                                     <label>{{ __('Phone Number') }}:</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
-                                            <select class="input-group-text copytext nice-select" name="pass_country"
-                                                id="">
+                                            <select class="input-group-text copytext nice-select" name="pass_country">
                                                 @foreach (get_all_countries_array() as $item)
                                                     <option value="{{ get_country_phone_code($item['name']) }}">
                                                         {{ $item['name'] }} ({{ $item['mobile_code'] }})</option>
                                                 @endforeach
                                             </select>
                                             <input type="tel" class="form--control" name="password_number"
-                                            placeholder="Enter Number" value="123456789">
+                                                placeholder="Enter Number" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="account-passwoard show_hide_password mt-20">
                                         <label>{{ __('Password') }}:</label>
-                                        <input type="password" class=" form--control" name="password"
-                                            placeholder="Enter Password..." value="appdevs">
+                                        <input type="password" class="form--control" name="password"
+                                            placeholder="Enter Password..." autocomplete="off">
                                         <a href="#0" class="show-pass"><i class="fa fa-eye-slash"
                                                 aria-hidden="true"></i></a>
                                     </div>
@@ -114,18 +60,23 @@
                                         <label for="level-141">{{ __('Remember Me') }}</label>
                                     </div>
                                     <div class="login-btn">
-                                        <button type="submit" class="btn--base w-100">{{ __('Continue') }}</button>
+                                        <button type="submit" class="btn--base w-100" id="login-btn" data-loading-text="{{ __('Please wait...') }}">
+                                            {{ __('Continue') }}
+                                        </button>
                                     </div>
+
                                     @if ($basic_settings->user_registration)
                                         <div class="register-page">
                                             <div class="account-item">
-                                                <label>{{ __("Don't Have An Account?") }} <a
-                                                        href="{{ setRoute('user.register') }}"
-                                                        class="account-control-btn">{{ __('Register Now') }}</a></label>
+                                                <label>{{ __("Don't Have An Account?") }}
+                                                    <a href="{{ setRoute('user.register') }}"
+                                                        class="account-control-btn">{{ __('Register Now') }}</a>
+                                                </label>
                                             </div>
                                         </div>
                                     @endif
                                 </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -136,26 +87,35 @@
 
 @push('script')
     <script>
-        // Function to update the display based on the selected login option
-        function updateLoginForm() {
-            const otpForm = document.getElementById('otp-login-form');
-            const passwordForm = document.getElementById('password-login-area');
-            const otpRadio = document.getElementById('radio-one');
-
-            if (otpRadio.checked) {
-                otpForm.style.display = 'block';
-                passwordForm.style.display = 'none';
-            } else {
-                otpForm.style.display = 'none';
-                passwordForm.style.display = 'block';
+        document.addEventListener('DOMContentLoaded', function () {
+            const phoneInput = document.querySelector('input[name="password_number"]');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
             }
-        }
 
-        // Add event listeners to the radio buttons
-        document.getElementById('radio-one').addEventListener('change', updateLoginForm);
-        document.getElementById('radio-two').addEventListener('change', updateLoginForm);
+            const loginForm = document.querySelector('.account-form');
+            const loginBtn = document.getElementById('login-btn');
 
-        // Initial call to set the correct display on page load
-        updateLoginForm();
+            if (loginForm && loginBtn) {
+                loginForm.addEventListener('submit', function () {
+                    loginBtn.disabled = true;
+                    const loadingText = loginBtn.getAttribute('data-loading-text') || 'Loading...';
+                    loginBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+                });
+            }
+        });
     </script>
+@endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
 @endpush

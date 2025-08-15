@@ -851,6 +851,15 @@ class Reloadly
 
         $utility_bill = $this->getUtilityBill($request_data['biller_id']);
 
+        $service_id = strtolower(explode(" ", $utility_bill['name'])[0]) . "-electric";
+        $variation_code = strtolower($utility_bill['serviceType']);
+
+        $verify_meter_number = (new VTPass())->verifyMeterNumber([
+            'service_id' => $service_id,
+            'variation_code' => $variation_code,
+            'account_number' => $request_data['account_number'],
+        ]);
+
         $currency_code = $utility_bill['localTransactionCurrencyCode'] ?? "USD";
 
         $receiver_currency  = ExchangeRate::where('currency_code', $currency_code)->first(); // XOF
@@ -921,6 +930,9 @@ class Reloadly
             'min_limit_calc'                => get_amount($min_limit_calc),
             'max_limit_calc'                => get_amount($max_limit_calc),
             'bundle_currency'               => $currency_code ?? "--",
+            'customer_name'                 => $verify_meter_number['content']['Customer_Name'] ?? '--',
+            'address'                       => $verify_meter_number['content']['Address'] ?? '--',
+            'meter_no'                      => $verify_meter_number['content']['Meter_Number'] ?? '--',
         ];
 
         return $this->charge_result;

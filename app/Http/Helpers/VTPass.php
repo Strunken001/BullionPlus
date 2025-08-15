@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class VTPass
 {
@@ -67,6 +68,7 @@ class VTPass
             'phone' => $params['phone']
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            logger()->error(['error' => $message]);
             throw new Exception($message);
         })->json();
 
@@ -89,6 +91,7 @@ class VTPass
             'public-key' => $this->credentials->public_key
         ])->get($endpoint)->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            logger()->error(['error' => $message]);
             throw new Exception($message);
         })->json();
 
@@ -114,8 +117,11 @@ class VTPass
             'amount' => $params['amount'],
         ])->throw(function (Response $response, RequestException $exception) {
             $message = $exception->getMessage();
+            logger()->error(['error' => $message]);
             throw new Exception($message);
         })->json();
+
+        logger()->info(['dataBundleTopUp' => $response]);
 
         $response['content']['response'] = $response['content']['transactions'];
         $response['content']['response']['recipientPhone'] = $response['content']['transactions']['unique_element'];
@@ -150,7 +156,7 @@ class VTPass
             throw new Exception($message);
         })->json();
 
-        Log::info(['response' => $response]);
+        Log::info(['utilityPayment response' => $response]);
 
         return $response;
     }

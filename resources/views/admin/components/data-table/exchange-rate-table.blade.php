@@ -4,7 +4,8 @@
             <th>{{ __('Country') }}</th>
             <th>{{ __("Currency Name") }}</th>
             <th>{{ __("Currency Code") }}</th>
-            <th>{{ __("Currency Symbol") }}l</th>
+            <th>{{ __("Currency Symbol") }}</th>
+            <th>{{ __("Automatic Update")}}</th>
             <th>{{ __("Rate") }}</th>
         </tr>
     </thead>
@@ -15,6 +16,10 @@
                 <td>{{ $item->currency_name }}</td>
                 <td>{{ $item->currency_code }}</td>
                 <td>{{ $item->currency_symbol }}</td>
+                <td>
+                    <input type="hidden" name="automatic_update[{{ $key }}]" value="0">
+                    <input type="checkbox" name="automatic_update[{{ $key }}]" value="1" {{ $item->automatic_update ? 'checked' : '' }}>
+                </td>
                 <td>
                     <div class="input-group">
                         <span class="input-group-text">1 {{ get_default_currency_code() }} =</span>

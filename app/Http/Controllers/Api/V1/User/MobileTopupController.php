@@ -76,12 +76,13 @@ class MobileTopupController extends Controller
         return response()->json([
             'status' => "success",
             'message' => 'Successfully Get Operator',
-            'data' => [
-                'operator_id' => $operator['operatorId'],
-                'name' => $operator['name'],
-                'country' => $operator['country'],
-                'logoUrls' => $operator['logoUrls'],
-            ],
+            // 'data' => [
+            //     'operator_id' => $operator['operatorId'],
+            //     'name' => $operator['name'],
+            //     'country' => $operator['country'],
+            //     'logoUrls' => $operator['logoUrls'],
+            // ],
+            'data' => $operator,
         ], 200);
     }
 
@@ -135,6 +136,17 @@ class MobileTopupController extends Controller
             ], 404);
         }
 
+        $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
+        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge);
+
+        if ($charges['payable'] > $sender_wallet->balance) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Sorry, insufficient balance",
+                'data' => null
+            ], 400);
+        }
+
         $topUpData = [];
 
         if ($request->country_code === "NG") {
@@ -144,12 +156,7 @@ class MobileTopupController extends Controller
 
             $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
 
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
-            $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
-            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
-
-            $validated['amount'] = $validated['amount'] - $discount_price_amount;
+            $validated['amount'] = $validated['amount'];
 
             $topUpData = [
                 "service_id" => $service_id,
@@ -160,11 +167,7 @@ class MobileTopupController extends Controller
 
             $topUpData = (new VTPass())->mobileTopUp($topUpData);
         } else {
-            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            $provider_discount_amount = ($operator['localDiscount'] / 100) * $request->amount;
-            $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
-
-            $validated['amount'] = $validated['amount'] - $discount_price_amount;
+            $validated['amount'] = $validated['amount'];
             //topup api
             $topUpData = [
                 'operatorId'        => $operator['operatorId'],
@@ -194,9 +197,6 @@ class MobileTopupController extends Controller
             ], 500);
         }
 
-        $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
-        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge);
-
         if ($operator['denominationType'] === "RANGE") {
             $min_amount = 0;
             $max_amount = 0;
@@ -217,14 +217,6 @@ class MobileTopupController extends Controller
                     'data' => null
                 ], 400);
             }
-        }
-
-        if ($charges['payable'] > $sender_wallet->balance) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "Sorry, insufficient balance",
-                'data' => null
-            ], 400);
         }
 
         try {

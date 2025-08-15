@@ -42,6 +42,7 @@ use App\Models\Transaction;
 use App\Models\TransactionCharge;
 use App\Models\UserSupportChat;
 use App\Models\UserWallet;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -114,6 +115,20 @@ function get_country_phone_code_by_iso2($iso2)
     }
     $phone_code = str_replace("+", "", $phone_code);
     return $phone_code;
+}
+
+function get_country_code_by_iso2($iso2)
+{
+    $countries = json_decode(file_get_contents(resource_path('world/countries.json')), true);
+    $country_code = "";
+
+    foreach ($countries as $item) {
+        if ($item['iso2'] == $iso2) {
+            $country_code = $item['currency'];
+        }
+    }
+
+    return $country_code;
 }
 
 function get_all_timezones()
@@ -210,14 +225,16 @@ function delete_files_from_fileholder(array $files_link)
     return true;
 }
 
-function upload_files_from_path_dynamic($files_path, $destination_path, $old_files = null)
+function upload_files_from_path_dynamic($files_path, $destination_path, $old_files = null, $kyc_verification = false)
 {
     $output_files_name = [];
     foreach ($files_path as $path) {
         $file_name      = File::name($path);
         $file_extension = File::extension($path);
-        $file_base_name = $file_name . "." . $file_extension;
-        $file_mime_type = File::mimeType($path);
+        // $file_base_name = $file_name . "." . $file_extension;
+        // $file_mime_type = File::mimeType($path);
+        $file_base_name = $file_name . ($kyc_verification ? ".jpg" : "." . $file_extension);
+        $file_mime_type = ($kyc_verification ? 'image/jpeg' : File::mimeType($path));
         $file_size      = File::size($path);
 
         $save_path = get_files_path($destination_path);
@@ -225,7 +242,20 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
         $file_mime_type_array = explode('/', $file_mime_type);
         if (array_shift($file_mime_type_array) == "image" && $file_extension != "svg") { // If Image
 
+            if (strtolower($file_extension) === 'heic') {
+                $converted_path = convert_heic_to_jpg($path);
+                if (!$converted_path) {
+                    return back()->with(['error' => ['HEIC image conversion failed.']]);
+                }
+                $path = $converted_path;
+                $file_extension = 'jpg';
+            }
+
             $file = Image::make($path)->orientate();
+
+            if ($kyc_verification) {
+                $file->encode('jpg', 70);
+            }
 
             $width = $file->width();
             $height = $file->height();
@@ -239,7 +269,7 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
                 try {
                     $file->resize($new_width, null, function ($constraint) {
                         $constraint->aspectRatio();
-                    })->save($path, 70);
+                    })->save($path, 70, $kyc_verification ? 'jpg' : null);
                 } catch (\Exception $e) {
                     return back()->with(['error' => ['Image Upload Faild!']]);
                 }
@@ -249,7 +279,7 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
                 try {
                     $file->resize($new_width, null, function ($constraint) {
                         $constraint->aspectRatio();
-                    })->save($path, 70);
+                    })->save($path, 70, $kyc_verification ? 'jpg' : null);
                 } catch (\Exception $e) {
                     return back()->with(['error' => ['Image Upload Faild!']]);
                 }
@@ -261,7 +291,7 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
                             try {
                                 $file->resize($new_width, null, function ($constraint) {
                                     $constraint->aspectRatio();
-                                })->save($path, 70);
+                                })->save($path, 70, $kyc_verification ? 'jpg' : null);
                             } catch (\Exception $e) {
                                 return back()->with(['error' => ['Image Upload Faild!']]);
                             }
@@ -273,7 +303,21 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
                     try {
                         $file->resize($new_width, null, function ($constraint) {
                             $constraint->aspectRatio();
-                        })->save($path, 70);
+                        })->save($path, 70, $kyc_verification ? 'jpg' : null);
+                    } catch (\Exception $e) {
+                        return back()->with(['error' => ['Image Upload Faild!']]);
+                    }
+                }
+            }
+
+            if ($kyc_verification) {
+                $new_width = 2048;
+                if ($width < $new_width || $height < $new_width || $width > $new_width || $height > $new_width) {
+                    try {
+                        $file->resize($new_width, $new_width, function ($constraint) {
+                            $constraint->aspectRatio();
+                            $constraint->upsize();
+                        })->save($path, 70, $kyc_verification ? 'jpg' : null);
                     } catch (\Exception $e) {
                         return back()->with(['error' => ['Image Upload Faild!']]);
                     }
@@ -286,6 +330,17 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
                 $file_mime_type,
                 $file_size,
             );
+
+            if ($kyc_verification) {
+                File::move($file_instance, $save_path . "/" . $file_base_name);
+                array_push($output_files_name, $file_base_name);
+
+                if (count($output_files_name) == 1) {
+                    return $output_files_name[0];
+                }
+                // delete_files_from_fileholder($output_files_name);
+                return $output_files_name;
+            }
 
             $store_file_name = $file_name . ".webp";
             try {
@@ -342,6 +397,15 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
     // delete_files_from_fileholder($output_files_name);
     return $output_files_name;
 }
+
+function convert_heic_to_jpg($heic_path)
+{
+    $jpg_path = preg_replace('/\.heic$/i', '.jpg', $heic_path);
+    $cmd = "heif-convert " . escapeshellarg($heic_path) . " " . escapeshellarg($jpg_path);
+    exec($cmd, $output, $result);
+    return $result === 0 && file_exists($jpg_path) ? $jpg_path : false;
+}
+
 
 function get_files_path($slug)
 {
@@ -1745,6 +1809,7 @@ function sendAuthSms($user, $message, $shortCodes = [])
     $sendSms = new SendSms;
     $sendSms->$gateway($user->full_mobile, $general->site_name, $message, $general->sms_config);
 }
+
 // login otp verification
 function loginVerificationTemplate($user, $stay)
 {

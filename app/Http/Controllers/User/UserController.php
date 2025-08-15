@@ -235,6 +235,7 @@ class UserController extends Controller
             }
         }
     }
+
     public function enterPwdResetCode(Request $request)
     {
         if ($request->isMethod("POST")) {

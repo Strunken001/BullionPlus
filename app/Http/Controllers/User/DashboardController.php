@@ -77,7 +77,7 @@ class DashboardController extends Controller
         $transactions = Transaction::where('user_id', auth()->user()->id)->with(
             'payment_gateway:name',
             'gateway_currency:id,name,alias,payment_gateway_id,currency_code,rate',
-        )->AddMoney()->paginate(5);
+        )->AddMoney()->latest()->paginate(5);
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);
         $footer       = SiteSections::getData($section_slug)->first();
         return view('user.page.recharge-history', compact("page_title", "footer", "transactions"));

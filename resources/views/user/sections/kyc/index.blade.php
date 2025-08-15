@@ -27,64 +27,64 @@
                                             </button>
                                         @endif
                                     </div>
-                                    @if (auth()->user()->kyc_verified == global_const()::REJECTED)
-                                        <div class="rejected">
-                                            <div class="rejected-title">
-                                                <h5 class="title">{{ __('Rejected Reason') }} :</h5>
-                                            </div>
-                                            <div class="rejected-reason">
-                                                {{ auth()->user()->kyc->reject_reason ?? '' }}
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="card-body">
-                                    @if (auth()->user()->kyc_verified == global_const()::PENDING)
-                                        <div class="pending text--warning kyc-text">
-                                            {{ __('Your KYC information is submited. Please wait for admin confirmation. When you are KYC verified you will show your submited information here.') }}
-                                        </div>
-                                    @elseif (auth()->user()->kyc_verified == global_const()::APPROVED)
-                                        @include('user.components.profile.kyc')
-                                    @elseif (auth()->user()->kyc_verified == global_const()::REJECTED)
-                                        @include('user.components.profile.kyc')
-                                        <div class="custom-card mt-10 d-none" id="kyc-form">
-                                            {{-- KYC Submiting form --}}
-                                            <form class="card-form" method="POST"
-                                                action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
-                                                @csrf
-                                                <div class="row">
-                                                    @include('user.components.generate-kyc-fields', [
-                                                        'fields' => $kyc_fields,
-                                                    ])
-                                                </div>
-                                                <div class="resubmit-btn-area text-center pt-30">
-                                                        <button type="submit" class="btn--base text-center">
-                                                            {{ __('Submit') }}
-                                                        </button>
-                                                        <button type="button" id="re-cencel"
-                                                            class="btn--base text-center">
-                                                            {{ __('Cancel') }}
-                                                        </button>
-                                                </div>
-                                            </form>
+                                    @if (!auth()->user()->has_done_liveness)
+                                        <div class="text-center mt-3">
+                                            <button type="submit" class="btn--base">
+                                                <a href="{{ config('app.react_liveness_url') }}?firstname={{ auth()->user()->firstname }}&lastname={{ auth()->user()->lastname }}&email={{ auth()->user()->email }}&redirect_url={{ env('APP_URL') . '/user/kyc' }}">
+                                                    {{ __('Start Liveness Check') }}
+                                                </a>
+                                            </button>
                                         </div>
                                     @else
-                                        <div class="custom-card mt-10">
-                                            {{-- KYC Submiting form --}}
-                                            <form class="card-form" method="POST"
-                                                action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
-                                                @csrf
-                                                <div class="row">
-                                                    @include('user.components.generate-kyc-fields', [
-                                                        'fields' => $kyc_fields,
-                                                    ])
+                                        <div class="card-body">
+                                            @if (auth()->user()->kyc_verified == global_const()::PENDING)
+                                                <div class="pending text--warning kyc-text">
+                                                    {{ __('Your KYC information is submitted. Please wait for admin confirmation. When you are KYC verified, your submitted information will be shown here.') }}
                                                 </div>
-                                                <div class="col-12">
-                                                    <button type="submit" class="btn--base w-100 text-center mt-5">
-                                                        {{ __('Submit') }}
-                                                    </button>
+                                            @elseif (auth()->user()->kyc_verified == global_const()::APPROVED)
+                                                @include('user.components.profile.kyc')
+                                            @elseif (auth()->user()->kyc_verified == global_const()::REJECTED)
+                                                @include('user.components.profile.kyc')
+                                                <div class="custom-card mt-10 d-none" id="kyc-form">
+                                                    {{-- KYC Submiting form --}}
+                                                    <form class="card-form" method="POST"
+                                                        action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <div class="row">
+                                                            @include('user.components.generate-kyc-fields', [
+                                                                'fields' => $kyc_fields,
+                                                            ])
+                                                        </div>
+                                                        <div class="resubmit-btn-area text-center pt-30">
+                                                            <button type="submit" class="btn--base text-center">
+                                                                {{ __('Submit') }}
+                                                            </button>
+                                                            <button type="button" id="re-cencel"
+                                                                class="btn--base text-center">
+                                                                {{ __('Cancel') }}
+                                                            </button>
+                                                        </div>
+                                                    </form>
                                                 </div>
-                                            </form>
+                                            @else
+                                                <div class="custom-card mt-10">
+                                                    {{-- KYC Submiting form --}}
+                                                    <form class="card-form" method="POST"
+                                                        action="{{ setRoute('user.kyc.submit') }}" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <div class="row">
+                                                            @include('user.components.generate-kyc-fields', [
+                                                                'fields' => $kyc_fields,
+                                                            ])
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <button type="submit" class="btn--base w-100 text-center mt-5">
+                                                                {{ __('Submit') }}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -114,5 +114,111 @@
                 $kycForm.addClass('d-none');
             });
         });
+
+       $(function () {
+        $('.webcam-btn').on('click', function () {
+            const name = $(this).data('name');
+            const video = document.getElementById('webcam_' + name);
+            const canvas = document.getElementById('canvas_' + name);
+            const fileInput = document.getElementById('file_input_' + name);
+
+            const webcamBtn = $(this);
+            const captureBtn = $('.capture-btn[data-name="' + name + '"]');
+            const retakeBtn = $('.retake-btn[data-name="' + name + '"]');
+
+            webcamBtn.addClass('d-none');
+            captureBtn.removeClass('d-none');
+            retakeBtn.addClass('d-none');
+            canvas.classList.add('d-none');
+            video.classList.remove('d-none');
+
+            navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
+                video.srcObject = stream;
+                video.play();
+
+                video.dataset.streamId = stream.id;
+
+                captureBtn.off('click').on('click', function () {
+                    const context = canvas.getContext('2d');
+
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob(function (blob) {
+                        const file = new File([blob], name + ".png", { type: "image/png" });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                    }, 'image/png');
+
+                    video.classList.add('d-none');
+                    canvas.classList.remove('d-none');
+                    captureBtn.addClass('d-none');
+                    retakeBtn.removeClass('d-none');
+
+                    stream.getTracks().forEach(track => track.stop());
+                });
+
+                retakeBtn.off('click').on('click', function () {
+                    retakeBtn.addClass('d-none');
+                    webcamBtn.click();
+                });
+            }).catch(function (err) {
+                alert("Could not access the camera. Please allow permission.");
+                console.error(err);
+            });
+        });
+    });
+
+    $(function () {
+        $('form.card-form').on('submit', function (e) {
+            var form = $(this);
+            var isValid = true;
+
+            // Validate all required fields
+            form.find('input[required], select[required], textarea[required]').each(function () {
+                if (!$(this).val()) {
+                    isValid = false;
+                    $(this).addClass('is-invalid'); // Optional visual feedback
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please complete all required fields before submitting.');
+                return false;
+            }
+
+            // Show spinner on the clicked submit button
+            var submitBtn = form.find('button[type=submit]:focus');
+            if (submitBtn.length) {
+                submitBtn.prop('disabled', true);
+                submitBtn.html(
+                    `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Submitting...`
+                );
+            }
+        });
+    });
     </script>
+@endpush
+
+@push('css')
+<style>
+    .spinner-border {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        border: 0.15em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+    }
+
+    @keyframes spinner-border {
+        100% { transform: rotate(360deg); }
+    }
+
+</style>
 @endpush

@@ -9,9 +9,7 @@ use App\Http\Helpers\PaymentGateway;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use App\Constants\PaymentGatewayConst;
-use App\Http\Controllers\Api\V1\User\AddMoneyController;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 trait Paystack
@@ -57,6 +55,16 @@ trait Paystack
 
         $temp_data = $this->paystackJunkInsert($temp_record_token); // create temporary information
 
+        $paymentGatewayInstance = (new PaymentGatewayConst());
+
+        $web_return_url = $paymentGatewayInstance->registerRedirection()['web']['return_url'] ?? 'user.recharge.payment.success';
+        $web_cancel_url = $paymentGatewayInstance->registerRedirection()['web']['cancel_url'] ?? 'user.recharge.payment.cancel';
+        $api_return_url = $paymentGatewayInstance->registerRedirection()['api']['return_url'] ?? 'user.recharge.payment.success';
+        $api_cancel_url = $paymentGatewayInstance->registerRedirection()['api']['cancel_url'] ?? 'user.recharge.payment.cancel';
+
+        // $callback_url = env('APP_URL') . "/user/dashboard";
+        // $cancel_url = env('APP_URL') . '/user/recharge/recharge/view';
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $request_credentials->token,
             'Content-Type'  => 'application/json',
@@ -64,8 +72,12 @@ trait Paystack
             "email"         => $user->email,
             "amount"        => get_amount($output['amount']->total_amount, null, 2) * 100, // as per paystack policy,
             "currency"      => $output['currency']->currency_code,
-            "callback_url"  => $this->setGatewayRoute($redirection['return_url'], PaymentGatewayConst::PAYSTACK, $url_parameter),
+            // "callback_url"  => $this->setGatewayRoute($redirection['return_url'], PaymentGatewayConst::PAYSTACK, $url_parameter),
+            "callback_url"  => route(request()->expectsJson() ? $api_return_url : $web_return_url, PaymentGatewayConst::PAYSTACK),
             "reference"     => $temp_record_token,
+            "metadata"      => [
+                "cancel_action" => route(request()->expectsJson() ? $api_cancel_url : $web_cancel_url, PaymentGatewayConst::PAYSTACK)
+            ]
         ])->throw(function (Response $response, RequestException $exception) use ($temp_data) {
             $temp_data->delete();
             throw new Exception($exception->getMessage());
@@ -87,6 +99,8 @@ trait Paystack
             $this->output['redirection_response']   = $response_array;
             $this->output['redirect_links']         = [];
             $this->output['redirect_url']           = $redirect_url;
+            $this->output['callback_url']           = route('user.dashboard');
+            $this->output['cancel_url']             = route('user.dashboard');
             return $this->get();
         }
 

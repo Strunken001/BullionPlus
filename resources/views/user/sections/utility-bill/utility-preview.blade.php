@@ -20,6 +20,30 @@
                     </div>
                     <div class="plan-preview">
                         <div class="plan-name">
+                            <span class="badge badge--base">{{ __('Customer') }}</span>
+                        </div>
+                        <div class="plan-quantity">
+                            <span>{{ $charges['customer_name'] }}</span>
+                        </div>
+                    </div>
+                    <div class="plan-preview">
+                        <div class="plan-name">
+                            <span class="badge badge--base">{{ __('Address') }}</span>
+                        </div>
+                        <div class="plan-quantity">
+                            <span>{{ $charges['address'] }}</span>
+                        </div>
+                    </div>
+                    <div class="plan-preview">
+                        <div class="plan-name">
+                            <span class="badge badge--base">{{ __('Meter No') }}</span>
+                        </div>
+                        <div class="plan-quantity">
+                            <span>{{ $charges['meter_no'] }}</span>
+                        </div>
+                    </div>
+                    <div class="plan-preview">
+                        <div class="plan-name">
                             <span class="badge badge--base">{{ __('Service Type') }}</span>
                         </div>
                         <div class="plan-quantity">
@@ -50,7 +74,7 @@
                             <span>{{ $info['amount'] * $charges['rate'] }} {{ $charges['wallet_currency_code'] }}</span>
                         </div>
                     </div>
-                    <form action="{{ setRoute('user.utility.bill.pay') }}" method="POST">
+                    <form action="{{ setRoute('user.utility.bill.pay') }}" class="utility-form" method="POST">
                         @csrf
                         
                         <input name="charges" class="d-none" value="{{ json_encode($charges) }}">
@@ -58,7 +82,9 @@
                         <input name="account_number" class="d-none" value="{{ $info['account_number'] }}">
                         <input name="amount" class="d-none" value="{{ $info['amount'] }}">
                         <div class="planbuy-btn pt-20">
-                            <button type="submit" class="btn--base w-100">{{ __('Buy Now') }}</button>
+                            <button type="submit" class="btn--base w-100" id="pay-now-btn" data-loading-text="{{ __('Please wait...') }}">
+                                {{ __('Buy Now') }}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -66,3 +92,32 @@
         </div>
     </div>
 </section>
+
+@push('script')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector('.utility-form');
+        const payNowBtn = document.getElementById('pay-now-btn');
+
+        if (form && payNowBtn) {
+            form.addEventListener('submit', function () {
+                payNowBtn.disabled = true;
+                const loadingText = payNowBtn.getAttribute('data-loading-text') || 'Please wait...';
+                payNowBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+            });
+        }
+    });
+</script>
+@endpush
+
+@push('css')
+<style>
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    margin-right: 5px;
+}
+</style>
+@endpush
+

@@ -85,7 +85,7 @@ class LoginController extends Controller
         }
 
         $user = User::where($this->username(), $validated[$type])->first();
-        if (!$user) return Response::error([__("User doesn't exists!")]);
+        if (!$user) return Response::error([__("User doesn't exists!")], [], 404);
 
 
         if ($type === 'otp_number') {
@@ -101,8 +101,13 @@ class LoginController extends Controller
             if (Hash::check($validated['password'], $user->password)) {
                 if ($user->status != GlobalConst::ACTIVE) return Response::error([__("Your account is temporary banded. Please contact with system admin")]);
                 // User authenticated
-                $token = $user->createToken("auth_token")->accessToken;
-                return $this->authenticated($user, $token, $type);
+                $token = $user->createToken("auth_token");
+
+                DB::table('oauth_access_tokens')
+                    ->where('id', $token->token->id)
+                    ->update(['expires_at' => now()->addMinutes(env('PASSPORT_TTL', 5))->toDateTimeString()]);
+
+                return $this->authenticated($user, $token->accessToken, $type);
             }
         }
         return Response::error([__("Credentials didn't match")]);
@@ -177,25 +182,18 @@ class LoginController extends Controller
         }
         $this->createLoginLog($user);
 
+        unset($user->two_factor_secret);
+        unset($user->ver_code);
+        unset($user->ver_code_send_at);
+
+        $response_data = $user;
+
+        $response_data['country'] = $user->address->country ?? "";
+
         return Response::success([__('User successfully logged in')], [
             'token'         => $token,
             'type'          => $type,
-            'user_info'     => $user->only([
-                'id',
-                'firstname',
-                'lastname',
-                'fullname',
-                'username',
-                'email',
-                'mobile_code',
-                'mobile',
-                'full_mobile',
-                'sms_verified',
-                'kyc_verified',
-                'two_factor_verified',
-                'two_factor_status',
-                'two_factor_secret',
-            ]),
+            'user_info'     => $response_data,
             'authorization' => [
                 'status'    => count($sms_response) > 0 ? true : false,
                 'token'     => $sms_response['token'] ?? "",
@@ -222,8 +220,9 @@ class LoginController extends Controller
             DB::commit();
             try {
                 $message = __("Your verification code is: " . $data['code']);
-                sendAuthSms($user,$message);
-            } catch (Exception $e) {}
+                sendAuthSms($user, $message);
+            } catch (Exception $e) {
+            }
         } catch (Exception $e) {
             DB::rollBack();
             return Response::error([__('Something went wrong! Please try again')], [], 500);
@@ -251,7 +250,7 @@ class LoginController extends Controller
             'otp.exists'        => 'OTP is invalid',
             'type.required'     => 'Login type is required',
             'user.required'     => 'User id is required',
-            'user.exists'       => 'User dose not exist'
+            'user.exists'       => 'User does not exist'
         ];
         $validator = Validator::make($request->only(array_keys($rules)), $rules, $messages);
 
@@ -290,7 +289,7 @@ class LoginController extends Controller
         $resend_code = User::where("id", $request->user)->first();
         if (!$resend_code) return Response::error([__('User is invalid')]);;
         if (Carbon::now() <= Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) {
-            return Response::error([__('You can resend verification code after ').Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)). __(' seconds')],['user' => $user, 'wait_time' => (string) Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE))],400);
+            return Response::error([__('You can resend verification code after ') . Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE)) . __(' seconds')], ['user' => $user, 'wait_time' => (string) Carbon::now()->diffInSeconds(Carbon::parse($resend_code->ver_code_send_at)->addMinutes(GlobalConst::USER_PASS_RESEND_TIME_MINUTE))], 400);
         }
         DB::beginTransaction();
         try {
@@ -302,11 +301,11 @@ class LoginController extends Controller
                 'ver_code'          =>  $update_data['code'],
                 'ver_code_send_at'  =>  $update_data['created_at'],
             ]);
-            try{
+            try {
                 $message = __("Your verification code is: " . $update_data['code']);
-                sendAuthSms($resend_code,$message);
+                sendAuthSms($resend_code, $message);
+            } catch (Exception $e) {
             }
-            catch(Exception $e){}
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

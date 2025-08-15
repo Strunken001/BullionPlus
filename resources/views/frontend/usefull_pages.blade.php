@@ -22,8 +22,8 @@
                             <div class="blog-content">
                                 <h2 class="title mb-30 text-center"><a href="javascript:void(0)">{{ $page->title->language->$defualt->title ?? $page->title->language->$default_lng->title }}</a></h2>
                                 @php
-                                echo $page->content->language->$defualt->content ?? $page->content->language->$default_lng->content
-                            @endphp
+                                    echo $page->content->language->$defualt->content ?? $page->content->language->$default_lng->content
+                                @endphp
                             </div>
                         </div>
                     </div>

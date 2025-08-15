@@ -48,10 +48,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="custom-check-group pt-20">
+                        {{-- <div class="custom-check-group pt-20">
                             <input type="checkbox" id="level-111" name='invoice'>
                             <label for="level-111">{{ __('Get invoice in my mobile') }}</label>
-                        </div>
+                        </div> --}}
                         <div class="planbuy-btn pt-20">
                             <button type="submit" class="btn--base w-100">{{ __('Add Money') }}</button>
                         </div>

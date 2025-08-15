@@ -50,7 +50,7 @@
                             <span>{{ $info['amount'] * $charges['exchange_rate'] }} {{ $charges['wallet_currency_code'] }}</span>
                         </div>
                     </div>
-                    <form action="{{ setRoute('user.data.bundle.buy') }}" method="POST">
+                    <form action="{{ setRoute('user.data.bundle.buy') }}" class="bundle-preview-form" method="POST">
                         @csrf
                         <div class="package-number pt-20">
                             <div class="package-select">
@@ -74,7 +74,9 @@
                             </div>
                         </div>
                         <div class="planbuy-btn pt-20">
-                            <button type="submit" class="btn--base w-100">{{ __('Buy Now') }}</button>
+                            <button type="submit" class="btn--base w-100" id="buy-now-btn" data-loading-text="{{ __('Please wait...') }}">
+                                {{ __('Buy Now') }}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -82,3 +84,32 @@
         </div>
     </div>
 </section>
+
+@push('script')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector('.bundle-preview-form');
+        const buyNowBtn = document.getElementById('buy-now-btn');
+
+        if (form && buyNowBtn) {
+            form.addEventListener('submit', function () {
+                buyNowBtn.disabled = true;
+                const loadingText = buyNowBtn.getAttribute('data-loading-text') || 'Please wait...';
+                buyNowBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${loadingText}`;
+            });
+        }
+    });
+</script>
+@endpush
+
+
+@push('css')
+<style>
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        margin-right: 5px;
+    }
+</style>
+@endpush

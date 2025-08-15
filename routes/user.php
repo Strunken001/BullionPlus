@@ -83,7 +83,7 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
     Route::controller(RechargeController::class)->prefix('recharge')->name('recharge.')->group(function () {
         Route::post('recharge/preview', 'addMoneyPreview')->name('recharge.preview');
         Route::post('submit/amount', 'submitAmount')->name('submit.amount');
-        Route::get('recharge/view/{amount}', 'rechargeView')->name('recharge.view');
+        Route::get('recharge/view', 'rechargeView')->name('recharge.view');
         Route::post('submit', 'submit')->name('submit');
 
         Route::get('success/response/{gateway}', 'success')->name('payment.success')->withoutMiddleware('sms.verification.guard');
@@ -129,7 +129,7 @@ Route::middleware('sms.verification.guard')->prefix("user")->name("user.")->grou
         Route::prefix('automatic')->name('automatic.')->group(function () {
             Route::get('/', 'automaticTopUp')->name('index');
             Route::post('check-operator', 'checkOperator')->name('check.operator');
-            Route::post('pay', 'payAutomatic')->name('pay')->middleware('kyc.verification.guard');
+            Route::post('pay', 'payAutomatic')->name('pay');
         });
     });
 

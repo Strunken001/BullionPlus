@@ -9,8 +9,11 @@ use App\Http\Controllers\Api\V1\User\DataBundleController;
 use App\Http\Controllers\Api\V1\User\MobileTopupController;
 use App\Http\Controllers\Api\V1\User\TransactionController;
 use App\Http\Controllers\Api\V1\User\UtilityBillController;
+use App\Http\Controllers\Api\V1\User\KycController;
+use App\Http\Controllers\Api\V1\User\PurchaseController;
+use Illuminate\Support\Facades\DB;
 
-Route::prefix("user")->name("api.user.")->group(function () {
+Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->group(function () {
     Route::controller(ProfileController::class)->prefix('profile')->group(function () {
         Route::get('info', 'profileInfo');
         Route::post('info/update', 'profileInfoUpdate');
@@ -20,6 +23,11 @@ Route::prefix("user")->name("api.user.")->group(function () {
 
     // Logout Route
     Route::post('logout', [ProfileController::class, 'logout']);
+
+    Route::controller(KycController::class)->prefix('kyc')->name('kyc.')->group(function () {
+        Route::post('update-liveness', 'update_liveness');
+        Route::post('submit', 'store')->name('submit');
+    });
 
     // // Add Money Routes
     Route::controller(AddMoneyController::class)->prefix("add-money")->name('add.money.')->group(function () {
@@ -63,6 +71,10 @@ Route::prefix("user")->name("api.user.")->group(function () {
         Route::get("log", "log");
     });
 
+    Route::controller(PurchaseController::class)->prefix('purchase-history')->group(function () {
+        Route::get("", "getPaginatedHistory");
+    });
+
     //gift card
     Route::controller(GiftCardController::class)->prefix('gift-card')->group(function () {
         Route::get('/', 'index');
@@ -77,7 +89,7 @@ Route::prefix("user")->name("api.user.")->group(function () {
         //automatic methodm
         Route::prefix('automatic')->group(function () {
             Route::post('check-operator', 'checkOperator');
-            Route::post('pay', 'payAutomatic')->middleware('api.kyc');
+            Route::post('pay', 'payAutomatic');
         });
     });
 

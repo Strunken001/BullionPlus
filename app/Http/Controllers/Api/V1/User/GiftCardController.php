@@ -79,25 +79,25 @@ class GiftCardController extends Controller
             'page' => $request->page ?? 1
         ]);
 
-        $products = [];
+        // $products = [];
 
-        foreach ($productsData['content'] as $p) {
-            $products[] = [
-                'productId' => $p['productId'],
-                'productName' => $p['productName'],
-                'global' => $p['global'],
-                'status' => $p['status'],
-                'supportsPreOrder' => $p['supportsPreOrder'],
-                'logoUrls' => $p['logoUrls'],
-                'brand' => $p['brand'],
-                'category' => $p['category'],
-                'country' => $p['country'],
-                'redeemInstruction' => $p['redeemInstruction'],
-                'additionalRequirements' => $p['additionalRequirements'],
-            ];
-        }
+        // foreach ($productsData['content'] as $p) {
+        //     $products[] = [
+        //         'productId' => $p['productId'],
+        //         'productName' => $p['productName'],
+        //         'global' => $p['global'],
+        //         'status' => $p['status'],
+        //         'supportsPreOrder' => $p['supportsPreOrder'],
+        //         'logoUrls' => $p['logoUrls'],
+        //         'brand' => $p['brand'],
+        //         'category' => $p['category'],
+        //         'country' => $p['country'],
+        //         'redeemInstruction' => $p['redeemInstruction'],
+        //         'additionalRequirements' => $p['additionalRequirements'],
+        //     ];
+        // }
 
-        $productsData['content'] = $products;
+        // $productsData['content'] = $products;
 
         return response()->json([
             'status' => 'success',
@@ -134,30 +134,31 @@ class GiftCardController extends Controller
             ], 500);
         }
 
-        $products = [];
+        // $products = [];
 
-        foreach ($productsData as $p) {
-            $products[] = [
-                'productId' => $p['productId'],
-                'productName' => $p['productName'],
-                'global' => $p['global'],
-                'status' => $p['status'],
-                'supportsPreOrder' => $p['supportsPreOrder'],
-                'logoUrls' => $p['logoUrls'],
-                'brand' => $p['brand'],
-                'category' => $p['category'],
-                'country' => $p['country'],
-                'redeemInstruction' => $p['redeemInstruction'],
-                'additionalRequirements' => $p['additionalRequirements'],
-            ];
-        }
+        // foreach ($productsData as $p) {
+        //     $products[] = [
+        //         'productId' => $p['productId'],
+        //         'productName' => $p['productName'],
+        //         'global' => $p['global'],
+        //         'status' => $p['status'],
+        //         'supportsPreOrder' => $p['supportsPreOrder'],
+        //         'logoUrls' => $p['logoUrls'],
+        //         'brand' => $p['brand'],
+        //         'category' => $p['category'],
+        //         'country' => $p['country'],
+        //         'redeemInstruction' => $p['redeemInstruction'],
+        //         'additionalRequirements' => $p['additionalRequirements'],
+        //     ];
+        // }
 
-        $productsData['content'] = $products;
+        // $productsData['content'] = $products;
 
         return response()->json([
             'status' => 'success',
             'message' => "Gift cards returned successfully",
-            'data' => $products
+            // 'data' => $products
+            'data' => $productsData
         ]);
     }
 
@@ -226,29 +227,17 @@ class GiftCardController extends Controller
             ];
         })->first();
 
-        // $data = [
-        //     'product'           => $product,
-        //     'productCurrency'   => $productCurrency,
-        //     'userWallet'        => $userWallet,
-        //     'cardCharge'        => $cardCharge,
-        // ];
+        $data = [
+            'product'           => $product,
+            'productCurrency'   => $productCurrency,
+            'userWallet'        => $userWallet,
+            'cardCharge'        => $cardCharge,
+        ];
 
         return response()->json([
             'status' => 'success',
             'message' => "Gift card details retrieved successfully",
-            'data' => [
-                "productId" => $product['productId'],
-                "productName" => $product['productName'],
-                "global" => $product['global'],
-                "status" => $product['status'],
-                "supportsPreOrder" => $product['supportsPreOrder'],
-                "logoUrls" => $product['logoUrls'],
-                "brand" => $product['brand'],
-                "category" => $product['category'],
-                "country" => $product['country'],
-                "redeemInstruction" => $product['redeemInstruction'],
-                "additionalRequirements" => $product['additionalRequirements'],
-            ]
+            'data' => $data
         ]);
     }
 
