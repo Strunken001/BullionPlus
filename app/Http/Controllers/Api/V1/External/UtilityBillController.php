@@ -87,6 +87,10 @@ class UtilityBillController extends Controller
             ], 400);
         }
 
+        $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+
+        $request->merge(["api_discount_percentage" => $api_discount_percentage]);
+
         $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($request->all());
         $charges = json_decode(json_encode($charges));
 
@@ -129,12 +133,12 @@ class UtilityBillController extends Controller
                     ]);
                 }
 
-                $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-                $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
-                $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $amount;
-                $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+                // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+                // $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+                // $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $amount;
+                // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
-                $request['amount'] = $amount - $discount_price_amount;
+                $request['amount'] = $amount;
 
                 $payment = (new VTPass())->utilityPayment([
                     'service_id' => $service_id,
@@ -153,11 +157,11 @@ class UtilityBillController extends Controller
 
                 $utility_bill = (new UtilityPaymentHelper())->getInstance()->getUtilityBill($request->biller_id);
 
-                $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-                $provider_discount_amount = ($utility_bill['internationalDiscountPercentage'] / 100) * $request->amount;
-                $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+                // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+                // $provider_discount_amount = ($utility_bill['internationalDiscountPercentage'] / 100) * $request->amount;
+                // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
 
-                $request['amount'] = $request->amount - $discount_price_amount;
+                $request['amount'] = $request->amount;
 
                 $payment = (new UtilityPaymentHelper())->getInstance()->payBill($request->all());
                 $tx_ref = $payment['referenceId'];

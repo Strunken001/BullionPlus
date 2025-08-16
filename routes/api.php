@@ -54,4 +54,5 @@ Route::controller(DataBundleController::class)->prefix('data-bundles')->name('da
 Route::controller(UtilityBillController::class)->prefix('utility-bills')->name('utility.bill.')->group(function () {
     Route::get('', 'getUtiityBiller');
     Route::post("pay", "payBill");
+    Route::get("verify-meter", "verifyMeterNumber");
 });

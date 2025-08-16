@@ -333,6 +333,8 @@ class Reloadly
         $validated          = $this->validateChargeData($data);
         $operator           = $this->getOperator($validated['operator'], $validated['cache_key'] ?? null);
 
+        $api_discount_percentage = $data['api_discount_percentage'] ?? 0;
+
         $local_currency     = $operator['destinationCurrencyCode'];
         $rate               = $operator['fx']['rate'];
 
@@ -400,7 +402,9 @@ class Reloadly
         $percent_charge_calc    = (($request_amount / 100) * $percent_charge) * $exchange_rate;
 
         $total_charge_calc      = $fixed_charge_calc + $percent_charge_calc;
-        $total_payable          = $exchange_wallet_amount + $total_charge_calc;
+
+        $discounted_amount      = ($exchange_wallet_amount + $total_charge_calc) * $api_discount_percentage;
+        $total_payable          = ($exchange_wallet_amount + $total_charge_calc) - $discounted_amount;
 
         $min_limit              = $transaction_charges->min_limit;
         $max_limit              = $transaction_charges->max_limit;
@@ -847,6 +851,8 @@ class Reloadly
             throw ValidationException::withMessages($vaildate->errors()->all());
         }
 
+        $api_discount_percentage = $request->data['api_discount_percentage'] ?? 0;
+
         $request_data['referenceId'] = generate_unique_string('transactions', 'trx_id', 16);
 
         $utility_bill = $this->getUtilityBill($request_data['biller_id']);
@@ -890,7 +896,8 @@ class Reloadly
         $exchange_wallet_amount     = $default_currency_amount * $wallet_currency->rate; // GBP
 
         $total_charge_calc      = $fixed_charge_calc + $percent_charge_calc;
-        $total_payable          = $exchange_wallet_amount + $total_charge_calc;
+        $discounted_amount      = ($exchange_wallet_amount + $total_charge_calc) * $api_discount_percentage;
+        $total_payable          = ($exchange_wallet_amount + $total_charge_calc) - $discounted_amount;
 
         $receiver_currency_exchange_rate    = 1 / $rate; // 1 XOF = ? BDT
         $default_currency_exchange_amount   = $receiver_currency_exchange_rate / $merchant_currency->rate; // 1 XOF = ? USD

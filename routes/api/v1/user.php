@@ -105,5 +105,6 @@ Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->gr
     Route::controller(UtilityBillController::class)->prefix('utility-bills')->name('utility.bill.')->group(function () {
         Route::get('', 'getUtiityBiller');
         Route::post("pay", "payBill");
+        Route::get("verify-meter", "verifyMeterNumber");
     });
 });

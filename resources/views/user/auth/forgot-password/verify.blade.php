@@ -28,18 +28,12 @@
                                 @csrf
                                 <div class="row ml-b-20">
                                     <div class="col-lg-12 form-group text-center">
-                                        <input class="otp" type="text" oninput='digitValidate(this)'
-                                            onkeyup='tabChange(1)' maxlength=1 required name="otp[]">
-                                        <input class="otp" type="text" oninput='digitValidate(this)'
-                                            onkeyup='tabChange(2)' maxlength=1 required name="otp[]">
-                                        <input class="otp" type="text" oninput='digitValidate(this)'
-                                            onkeyup='tabChange(3)' maxlength=1 required name="otp[]">
-                                        <input class="otp" type="text" oninput='digitValidate(this)'
-                                            onkeyup='tabChange(4)' maxlength=1 required name="otp[]">
-                                        <input class="otp" type="text" oninput='digitValidate(this)'
-                                            onkeyup='tabChange(5)' maxlength=1 required name="otp[]">
-                                        <input class="otp" type="text" oninput='digitValidate(this)'
-                                            onkeyup='tabChange(6)' maxlength=1 required name="otp[]">
+                                        <input class="otp" type="text" maxlength="1" required name="otp[]">
+                                        <input class="otp" type="text" maxlength="1" required name="otp[]">
+                                        <input class="otp" type="text" maxlength="1" required name="otp[]">
+                                        <input class="otp" type="text" maxlength="1" required name="otp[]">
+                                        <input class="otp" type="text" maxlength="1" required name="otp[]">
+                                        <input class="otp" type="text" maxlength="1" required name="otp[]">
                                     </div>
                                     <div class="col-lg-12 form-group ">
                                         <div class="time-area">{{ __('You can resend the code after') }} <span
@@ -69,19 +63,17 @@
             var coundDownSec = second;
             var countDownDate = new Date();
             countDownDate.setMinutes(countDownDate.getMinutes() + 120);
-            var x = setInterval(function() { // Get today's date and time
-                var now = new Date().getTime(); // Find the distance between now and the count down date
+            var x = setInterval(function() {
+                var now = new Date().getTime();
                 var distance = countDownDate -
-                    now; // Time calculations for days, hours, minutes and seconds  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    now;
                 var minutes = Math.floor((distance % (1000 * coundDownSec)) / (1000 * coundDownSec));
                 var seconds = Math.floor((distance % (1000 * coundDownSec)) /
-                    1000); // Output the result in an element with id="time"
+                    1000); 
                 document.getElementById("time").innerHTML = second +
-                    "s "; // If the count down is over, write some text
+                    "s ";
                 if (distance <= 0 || second <= 0) {
-                    // alert();
                     clearInterval(x);
-                    // document.getElementById("time").innerHTML = "RESEND";
                     document.querySelector(".time-area").innerHTML =
                         `Didn't get the code? <a class='text--danger' href='${resendCodeLink}'>Resend</a>`;
                 }
@@ -91,18 +83,36 @@
         resetTime(resendTime);
     </script>
     <script>
-        let digitValidate = function (ele) {
-            console.log(ele.value);
-            ele.value = ele.value.replace(/[^0-9]/g, '');
-        }
+        const inputs = document.querySelectorAll('.otp');
 
-        let tabChange = function (val) {
-            let ele = document.querySelectorAll('.otp');
-            if (ele[val - 1].value != '') {
-                ele[val].focus()
-            } else if (ele[val - 1].value == '') {
-                ele[val - 2].focus()
-            }
-        }
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, ''); // digits only
+                if (e.target.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                let pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                pasteData = pasteData.replace(/[^0-9]/g, ''); // digits only
+
+                pasteData.split('').forEach((char, i) => {
+                    if (inputs[index + i]) {
+                        inputs[index + i].value = char;
+                    }
+                });
+
+                let nextEmpty = [...inputs].find(inp => inp.value === '');
+                if (nextEmpty) nextEmpty.focus();
+            });
+        });
     </script>
 @endpush

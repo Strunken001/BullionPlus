@@ -231,6 +231,10 @@ class DataBundleController extends Controller
             return back()->with(['error' => [__('User Wallet not found')]]);
         }
 
+        $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+
+        $request->merge(["api_discount_percentage" => $api_discount_percentage]);
+
         if ($request->iso2 === "NG") {
             $charges = (new VTPass())->getCharges($request->all());
         } else {
