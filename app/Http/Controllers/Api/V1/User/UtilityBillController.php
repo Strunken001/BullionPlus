@@ -391,24 +391,33 @@ class UtilityBillController extends Controller
 
     public function verifyMeterNumber(VerifyMeterNumberRequest $request)
     {
-        $verify_meter_number = (new VTPass())->verifyMeterNumber([
-            'service_id' => $request->service_id,
-            'variation_code' => $request->variation_code,
-            'account_number' => $request->account_number,
-        ]);
+        try {
+            $verify_meter_number = (new VTPass())->verifyMeterNumber([
+                'service_id' => $request->service_id,
+                'variation_code' => $request->variation_code,
+                'account_number' => $request->account_number,
+            ]);
 
-        if ($verify_meter_number['content']['WrongBillersCode']) {
+            if ($verify_meter_number['content']['WrongBillersCode']) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'invalid number',
+                    'data' => []
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'meter verified',
+                'data' => $verify_meter_number['content']
+            ]);
+        } catch (\Exception $e) {
+            logger()->error(["An error occured verifying meter number" => $e->getMessage()]);
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'invalid number',
-                'data' => []
+                'message' => "An error occured verifying meter number. Please try again later"
             ]);
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'meter verified',
-            'data' => $verify_meter_number['content']
-        ]);
     }
 }
