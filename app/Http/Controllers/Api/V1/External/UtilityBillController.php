@@ -409,18 +409,11 @@ class UtilityBillController extends Controller
             'variation_code' => $request->variation_code,
             'account_number' => $request->account_number,
         ]);
-        if ($verify_meter_number['content']['WrongBillersCode']) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'invalid number',
-                'data' => false
-            ]);
-        }
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'meter verified',
-            'data' => true
+            'status' => 'error',
+            'message' => 'invalid number',
+            'data' => $verify_meter_number['content']
         ]);
     }
 }
