@@ -61,6 +61,7 @@ class UtilityBillController extends Controller
 
         foreach ($billers['content'] as &$b) {
             $b['biller_id'] = $b['id'];
+            $b['service_id'] = strtolower(explode(" ", $b['name'])[0]) . "-electric";
             unset($b['id']);
         }
         unset($b);

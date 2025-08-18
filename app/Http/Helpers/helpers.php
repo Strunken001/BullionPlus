@@ -401,10 +401,20 @@ function upload_files_from_path_dynamic($files_path, $destination_path, $old_fil
 function convert_heic_to_jpg($heic_path)
 {
     $jpg_path = preg_replace('/\.heic$/i', '.jpg', $heic_path);
-    $cmd = "heif-convert " . escapeshellarg($heic_path) . " " . escapeshellarg($jpg_path);
-    exec($cmd, $output, $result);
-    return $result === 0 && file_exists($jpg_path) ? $jpg_path : false;
+
+    try {
+        $imagick = new \Imagick($heic_path);
+        $imagick->setImageFormat("jpg");
+        $imagick->writeImage($jpg_path);
+        $imagick->clear();
+        $imagick->destroy();
+
+        return file_exists($jpg_path) ? $jpg_path : false;
+    } catch (\Exception $e) {
+        return false;
+    }
 }
+
 
 
 function get_files_path($slug)
