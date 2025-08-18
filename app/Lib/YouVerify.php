@@ -2,7 +2,6 @@
 
 namespace App\Lib;
 
-use Error;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -94,25 +93,24 @@ class YouVerify
 
     public function kycVerification(array $data)
     {
-        Log::info(['data' => $data]);
         try {
             $countryData = $this->getVerificationUrl($data['country']);
             $documentType = $data['document'];
 
             if (!isset($countryData[$documentType]['function'])) {
-                throw new Error("Verification function not defined for document type: {$documentType}");
+                throw new Exception("Verification function not defined for document type: {$documentType}");
             }
 
             $verificationFunction = $countryData[$documentType]['function'];
 
             if (!is_callable($verificationFunction)) {
-                throw new Error("Verification method for {$documentType} is not callable.");
+                throw new Exception("Verification method for {$documentType} is not callable.");
             }
 
             return call_user_func($verificationFunction, $data);
         } catch (Exception $e) {
             Log::error($e->getMessage());
-            throw new Error("An error occurred performing KYC verification");
+            throw new Exception("An error occurred performing KYC verification");
         }
     }
 
@@ -141,11 +139,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['validations']['selfie']['selfieVerification']['match'];
@@ -175,11 +171,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['validations']['selfie']['selfieVerification']['match'];
@@ -210,11 +204,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['validations']['selfie']['selfieVerification']['match'];
@@ -240,11 +232,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['firstName'] == $data['firstName'] && $response['data']['lastName'] == $data['lastName'];
@@ -269,11 +259,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['allValidationPassed'];
@@ -304,11 +292,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['validations']['data']['lastName']['validated'] && $response['data']['validations']['data']['firstName']['validated'];
@@ -339,11 +325,9 @@ class YouVerify
                 throw new Exception($message);
             })->json();
 
-        Log::info(['response' => $response]);
-
         if (!$response['success']) {
             Log::error('Unsuccessful request');
-            throw new Error('Unsuccessful request');
+            throw new Exception('Unsuccessful request');
         }
 
         return $response['data']['validationDetails']['percentage']['percentageNotMatched'] < 50;

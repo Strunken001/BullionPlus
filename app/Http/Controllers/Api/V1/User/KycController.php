@@ -125,8 +125,6 @@ class KycController extends Controller
 
                 $response = (new YouVerify())->kycVerification($kyc_payload);
 
-                Log::info(['kyc response' => $response]);
-
                 if ($response) {
                     $user->update([
                         'kyc_verified'  => GlobalConst::APPROVED,
