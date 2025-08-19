@@ -851,7 +851,7 @@ class Reloadly
             throw ValidationException::withMessages($vaildate->errors()->all());
         }
 
-        $api_discount_percentage = $request->data['api_discount_percentage'] ?? 0;
+        $api_discount_percentage = $request_data['api_discount_percentage'] ?? 0;
 
         $request_data['referenceId'] = generate_unique_string('transactions', 'trx_id', 16);
 
