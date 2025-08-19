@@ -39,12 +39,18 @@
                                         <div class="card-body">
                                             @if (auth()->user()->kyc_verified == global_const()::PENDING)
                                                 <div class="pending text--warning kyc-text">
-                                                    {{ __('Your KYC information is submitted. Please wait for admin confirmation. When you are KYC verified, your submitted information will be shown here.') }}
+                                                    {{ __('Your KYC information is submitted. Please wait for admin confirmation.') }}
                                                 </div>
                                             @elseif (auth()->user()->kyc_verified == global_const()::APPROVED)
-                                                @include('user.components.profile.kyc')
+                                                {{-- @include('user.components.profile.kyc') --}}
+                                                <div class="pending text--success kyc-text">
+                                                    {{ __('Your KYC has been verified') }}
+                                                </div>
                                             @elseif (auth()->user()->kyc_verified == global_const()::REJECTED)
-                                                @include('user.components.profile.kyc')
+                                                {{-- @include('user.components.profile.kyc') --}}
+                                                 <div class="pending text--danger kyc-text">
+                                                    {{ __('Your KYC has been rejected. Kindly resubmit') }}
+                                                </div>
                                                 <div class="custom-card mt-10 d-none" id="kyc-form">
                                                     {{-- KYC Submiting form --}}
                                                     <form class="card-form" method="POST"

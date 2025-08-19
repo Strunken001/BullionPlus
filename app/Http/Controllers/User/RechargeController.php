@@ -21,6 +21,7 @@ use App\Lib\SendSms;
 use App\Traits\ControlDynamicInputFields;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin\CryptoTransaction;
+use App\Models\Admin\ExchangeRate;
 use Illuminate\Support\Str;
 use App\Models\Admin\SiteSections;
 use Illuminate\Support\Facades\Log;
@@ -36,13 +37,15 @@ class RechargeController extends Controller
             'gateway_currency'            => 'required',
         ])->validate();
         $currency_details = PaymentGatewayCurrency::where('alias', $request->gateway_currency)->first();
-        $total_charge = ((($request->amount * $currency_details->rate) * $currency_details->percent_charge) / 100) + $currency_details->fixed_charge;
+
+        $exchange_rate = ExchangeRate::where('currency_code', $currency_details->currency_code)->first();
+        $total_charge = ((($request->amount * $exchange_rate->rate ?? $currency_details->rate) * $currency_details->percent_charge) / 100) + $currency_details->fixed_charge;
         $details = [
             'amount'            => $request->amount,
             'currency'          => $currency_details->currency_code,
             'payment_method'    => $currency_details->gateway->name,
             'total_charge'      => $total_charge,
-            'total_payable'     => $total_charge + $request->amount * $currency_details->rate,
+            'total_payable'     => $total_charge + $request->amount * ($exchange_rate->rate ?? $currency_details->rate),
             'invoice'           => $request->invoice ?? null,
         ];
         $section_slug = Str::slug(SiteSectionConst::FOOTER_SECTION);

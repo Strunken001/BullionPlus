@@ -12,6 +12,7 @@ use App\Traits\PaymentGateway\Gpay;
 use App\Traits\PaymentGateway\Paypal;
 use App\Constants\PaymentGatewayConst;
 use App\Models\Admin\BasicSettings;
+use App\Models\Admin\ExchangeRate;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\PaymentGatewayCurrency;
 use App\Models\Transaction;
@@ -68,6 +69,13 @@ class PaymentGateway
         if (empty($request_data)) throw new Exception("Gateway Information is not available. Please provide payment gateway currency alias");
         $validated = $this->validator($request_data)->validate();
         $gateway_currency = PaymentGatewayCurrency::where("alias", $validated[$this->currency_input_name])->first();
+
+        $exchange_rate = ExchangeRate::where("currency_code", $gateway_currency->currency_code)->first();
+        if ($exchange_rate) {
+            $gateway_currency->rate = $exchange_rate->rate;
+        } else {
+            $gateway_currency->rate = $gateway_currency->rate ?? 0;
+        }
         // dd($gateway_currency->gateway);
 
         if (!$gateway_currency || !$gateway_currency->gateway) {

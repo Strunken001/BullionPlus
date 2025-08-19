@@ -20,6 +20,7 @@ use App\Traits\ControlDynamicInputFields;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\PaymentGatewayCurrency;
 use App\Http\Helpers\PaymentGateway as PaymentGatewayHelper;
+use App\Models\Admin\ExchangeRate;
 
 class AddMoneyController extends Controller
 {
@@ -28,8 +29,31 @@ class AddMoneyController extends Controller
     public function getPaymentGateways()
     {
         try {
-            $payment_gateways = PaymentGateway::addMoney()->active()->get();
-            $payment_gateways->makeHidden(['credentials', 'created_at', 'input_fields', 'last_edit_by', 'updated_at', 'supported_currencies', 'env', 'slug', 'title', 'alias', 'code']);
+            $payment_gateways = PaymentGateway::addMoney()
+                ->active()
+                ->with('currencies')
+                ->get();
+
+            $payment_gateways->each(function ($gateway) {
+                $gateway->makeHidden([
+                    'credentials',
+                    'created_at',
+                    'input_fields',
+                    'last_edit_by',
+                    'updated_at',
+                    'supported_currencies',
+                    'env',
+                    'slug',
+                    'title',
+                    'alias',
+                    'code'
+                ]);
+
+                foreach ($gateway->currencies as $currency) {
+                    $rate = ExchangeRate::where('currency_code', $currency->currency_code)->first();
+                    $currency->rate = $rate ? $rate->rate : $currency->rate;
+                }
+            });
         } catch (Exception $e) {
             return Response::error([__('Failed to fetch data. Please try again')], [], 500);
         }
