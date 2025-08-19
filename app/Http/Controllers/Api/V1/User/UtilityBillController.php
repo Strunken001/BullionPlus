@@ -418,7 +418,7 @@ class UtilityBillController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => "An error occured verifying meter number. Please try again later"
-            ]);
+            ], 500);
         }
     }
 }

@@ -52,6 +52,11 @@ class KycController extends Controller
                 'status' => 'error',
                 'message' => 'Liveness check failed. Please try again.'
             ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid request.'
+            ], 400);
         }
     }
 
