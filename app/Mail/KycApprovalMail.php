@@ -13,7 +13,7 @@ class KycApprovalMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $username;
+    public $firstname;
     public $site_url;
     public $site_name;
     public $logo;
@@ -23,9 +23,9 @@ class KycApprovalMail extends Mailable
      *
      * @return void
      */
-    public function __construct($username, $site_url, $site_name, $logo)
+    public function __construct($firstname, $site_url, $site_name, $logo)
     {
-        $this->username = $username;
+        $this->firstname = $firstname;
         $this->site_url = $site_url;
         $this->site_name = $site_name;
         $this->logo = $logo;
@@ -33,6 +33,6 @@ class KycApprovalMail extends Mailable
 
     public function build()
     {
-        return $this->view('mail-templates.user.approve_kyc')->with(['username' => $this->username, 'site_url' => $this->site_url, 'site_name' => $this->site_name, 'logo' => $this->logo]);
+        return $this->view('mail-templates.user.approve_kyc')->with(['firstname' => $this->firstname, 'site_url' => $this->site_url, 'site_name' => $this->site_name, 'logo' => $this->logo]);
     }
 }

@@ -124,7 +124,7 @@ class KycController extends Controller
             DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
 
             Mail::to($user->email)->queue(
-                new KycSubmissionMail($user->username, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                new KycSubmissionMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
             );
 
             $adminEmails = Admin::where('username', 'superadmin')
@@ -143,7 +143,7 @@ class KycController extends Controller
                 ]);
 
                 Mail::to($user->email)->queue(
-                    new KycApprovalMail($user->username, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                    new KycApprovalMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
                 );
             } else {
                 $user->update([
@@ -151,7 +151,7 @@ class KycController extends Controller
                 ]);
 
                 Mail::to($user->email)->queue(
-                    new KycRejectionMail($user->username, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                    new KycRejectionMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
                 );
             }
             DB::commit();

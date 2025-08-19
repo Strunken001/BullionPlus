@@ -95,10 +95,11 @@
         </div>
         <div class="email-templates-box">
             <div class="email-templates-content">
-                <p class="hello">Hello {{ $username }},</p>
-                <p>Kindly know your KYC has been approved</p>
-                <p class="thanks">Thanks!</p>
-                <span><a href="{{ $site_url }}">{{ $site_name }}</a> Support Team</span>
+                <p class="hello">Hello {{ $firstname }},</p>
+                <p>Good news! Your KYC has been approved and your account is now fully activated. You can start enjoying seamless transactions on {{ $site_name }} right away.</p>
+                <p>Thank you for trusting us.</p>
+                <p>Best regards,</p>
+                <span>The <a href="{{ $site_url }}">{{ $site_name }}</a> Team</span>
             </div>
         </div>
     </div>

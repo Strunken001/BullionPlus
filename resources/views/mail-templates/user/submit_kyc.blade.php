@@ -95,10 +95,11 @@
         </div>
         <div class="email-templates-box">
             <div class="email-templates-content">
-                <p class="hello">Hello {{ $username }},</p>
-                <p>Kindly know your KYC has been submitted for review</p>
-                <p class="thanks">Thanks!</p>
-                <span><a href="{{ $site_url }}">{{ $site_name }}</a> Support Team</span>
+                <p class="hello">Hello {{ $firstname }},</p>
+                <p>Your KYC details have been submitted successfully and are under review. Verification usually takes 24–48 hours. You’ll be notified once it’s complete.</p>
+                <p>Thank you for choosing {{ $site_name }}</p>
+                <p>Best regards,</p>
+                <span>The <a href="{{ $site_url }}">{{ $site_name }}</a> Team</span>
             </div>
         </div>
     </div>
