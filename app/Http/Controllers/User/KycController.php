@@ -171,4 +171,9 @@ class KycController extends Controller
     {
         return preg_replace('/[\p{C}]/u', '', $string);
     }
+
+    public function verification()
+    {
+        return view('user.page.verification');
+    }
 }

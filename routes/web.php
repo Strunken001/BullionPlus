@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\User\KycController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,7 @@ use App\Http\Controllers\SiteController;
 Route::get('/', function () {
     return view('frontend.index');
 })->name('index');
+
+Route::get('verification', [KycController::class, 'verification'])
+    ->name('verification')
+    ->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
