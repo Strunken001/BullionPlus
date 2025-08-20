@@ -170,7 +170,7 @@ class UtilityBillController extends Controller
             }
 
             $this->insertTransaction($tx_ref, auth()->user()->wallets, $charges, $utility_bill_transaction, $account_number);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 
@@ -412,7 +412,7 @@ class UtilityBillController extends Controller
                 'message' => 'meter verified',
                 'data' => $verify_meter_number['content']
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             logger()->error(["An error occured verifying meter number" => $e->getMessage()]);
 
             return response()->json([

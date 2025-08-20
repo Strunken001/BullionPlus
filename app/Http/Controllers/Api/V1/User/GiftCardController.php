@@ -265,7 +265,7 @@ class GiftCardController extends Controller
             $form_data = $request->all();
             try {
                 $product = (new GiftCardHelper())->getProductInfo($form_data['product_id']);
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 return response()->json([
                     "status" => 'error',
                     "message" => app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage(),

@@ -72,6 +72,8 @@ class VTPass
             throw new Exception($message);
         })->json();
 
+        logger()->info(['mobileTopUp' => $response]);
+
         $response['content']['transactions']['message'] = $response['response_description'];
         $response['content']['transactions']['status'] = $response['content']['transactions']['status'] === "delivered" ? "SUCCESSFUL" : strtoupper($response['content']['transactions']['status']);
         $response['content']['transactions']['customIdentifier'] = $params['customIdentifier'];
@@ -292,6 +294,8 @@ class VTPass
             $message = $exception->getMessage();
             throw new Exception($message);
         })->json();
+
+        logger()->info(['verifyMeterNumber response' => $response]);
 
         return $response;
     }

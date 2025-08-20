@@ -275,7 +275,7 @@ class DataBundleController extends Controller
             }
 
             $this->insertTransaction($trx_ref, auth()->user()->wallets, $charges, $operator, $topup['response']['recipientPhone'], $topup['response']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("An error occured: " . $e->getMessage());
             $message = app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage();
 

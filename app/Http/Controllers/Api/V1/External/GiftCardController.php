@@ -332,7 +332,7 @@ class GiftCardController extends Controller
             ];
             try {
                 $order = (new GiftCardHelper())->createOrder($orderData);
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 Log::error("An error occured: " . $e->getMessage());
                 return response()->json([
                     "status" => 'error',

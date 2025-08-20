@@ -88,148 +88,148 @@ class MobileTopupController extends Controller
 
     public function payAutomatic(Request $request)
     {
-        $validator = Validator::make(request()->all(), [
-            'operator_id' => 'required',
-            'mobile_code' => 'required',
-            'mobile_number' => 'required|min:6|max:15',
-            'country_code' => 'required',
-            'amount' => 'required|numeric|gt:0',
-        ]);
+        try {
+            $validator = Validator::make(request()->all(), [
+                'operator_id' => 'required',
+                'mobile_code' => 'required',
+                'mobile_number' => 'required|min:6|max:15',
+                'country_code' => 'required',
+                'amount' => 'required|numeric|gt:0',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                "message" => $validator->errors()->first(),
-                "data" => null
-            ], 400);
-        }
-
-        $validated = $validator->validate();
-
-        $user = auth()->user();
-        $sender_phone = $user->full_mobile ?? "";
-        $sender_country_name = @$user->address->country;
-        $foundItem = '';
-        foreach (get_all_countries(GlobalConst::USER) ?? [] as $item) {
-            if ($item->name === $sender_country_name) {
-                $foundItem = $item;
-            }
-        }
-
-        $sender_country_iso = $foundItem->iso2;
-        $phone = remove_special_char($validated['mobile_code']) . $validated['mobile_number'];
-        $operator = (new AirtimeHelper())->autoDetectOperator($phone, $validated['country_code']);
-        if ($operator['status'] === false) {
-            return response()->json([
-                "status" => "error",
-                "message" => $operator['message'] ?? "",
-                "data" => null
-            ], 500);
-        }
-
-        $sender_wallet = UserWallet::where('user_id', $user->id)->first();
-        if (!$sender_wallet) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User Wallet not found',
-                'data' => null
-            ], 404);
-        }
-
-        $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
-        $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-        $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge, $api_discount_percentage);
-
-        if ($charges['payable'] > $sender_wallet->balance) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "Sorry, insufficient balance",
-                'data' => null
-            ], 400);
-        }
-
-        $topUpData = [];
-
-        if ($request->country_code === "NG") {
-            $network_provider = $operator['name'] ?? null;
-
-            $vtpass_service_id = explode(" ", $network_provider)[0];
-
-            $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
-
-            // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            // $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
-            // $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
-            // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
-
-            $validated['amount'] = $validated['amount'];
-
-            $topUpData = [
-                "service_id" => $service_id,
-                "amount" => $validated['amount'],
-                "phone" => $validated['mobile_number'],
-                "customIdentifier" => Str::uuid() . "|" . "AIRTIME",
-            ];
-
-            $topUpData = (new VTPass())->mobileTopUp($topUpData);
-        } else {
-            // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
-            // $provider_discount_amount = ($operator['internationalDiscount'] / 100) * $request->amount;
-            // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
-
-            $validated['amount'] = $validated['amount'];
-            //topup api
-            $topUpData = [
-                'operatorId'        => $operator['operatorId'],
-                'amount'            => $validated['amount'],
-                'useLocalAmount'    => $operator['supportsLocalAmounts'],
-                'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
-                'recipientEmail'    => null,
-                'recipientPhone'  => [
-                    'countryCode' => $validated['country_code'],
-                    'number'  => $phone,
-                ],
-                'senderPhone'   => [
-                    'countryCode' => $sender_country_iso,
-                    'number'      => $sender_phone,
-                ]
-
-            ];
-
-            $topUpData = (new AirtimeHelper())->makeTopUp($topUpData);
-        }
-
-        if (isset($topUpData['status']) && ($topUpData['status'] === false || $topUpData['status'] !== "SUCCESSFUL")) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $topUpData['message'] ?? 'Something went wrong! Please try again.',
-                'data' => null
-            ], 500);
-        }
-
-        if ($operator['denominationType'] === "RANGE") {
-            $min_amount = 0;
-            $max_amount = 0;
-            if ($operator["supportsLocalAmounts"] == true && $operator["destinationCurrencyCode"] == $operator["senderCurrencyCode"] && $operator["localMinAmount"] == null && $operator["localMaxAmount"] == null) {
-                $min_amount = $operator['minAmount'];
-                $max_amount = $operator['maxAmount'];
-            } else if ($operator["supportsLocalAmounts"] == true && $operator["localMinAmount"] != null && $operator["localMaxAmount"] != null) {
-                $min_amount = $operator["localMinAmount"];
-                $max_amount = $operator["localMaxAmount"];
-            } else {
-                $min_amount = $operator['minAmount'];
-                $max_amount = $operator['maxAmount'];
-            }
-            if ($charges['sender_amount'] < $min_amount || $charges['sender_amount'] > $max_amount) {
+            if ($validator->fails()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => "Please follow the transaction limit",
+                    "message" => $validator->errors()->first(),
+                    "data" => null
+                ], 400);
+            }
+
+            $validated = $validator->validate();
+
+            $user = auth()->user();
+            $sender_phone = $user->full_mobile ?? "";
+            $sender_country_name = @$user->address->country;
+            $foundItem = '';
+            foreach (get_all_countries(GlobalConst::USER) ?? [] as $item) {
+                if ($item->name === $sender_country_name) {
+                    $foundItem = $item;
+                }
+            }
+
+            $sender_country_iso = $foundItem->iso2;
+            $phone = remove_special_char($validated['mobile_code']) . $validated['mobile_number'];
+            $operator = (new AirtimeHelper())->autoDetectOperator($phone, $validated['country_code']);
+            if ($operator['status'] === false) {
+                return response()->json([
+                    "status" => "error",
+                    "message" => $operator['message'] ?? "",
+                    "data" => null
+                ], 500);
+            }
+
+            $sender_wallet = UserWallet::where('user_id', $user->id)->first();
+            if (!$sender_wallet) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User Wallet not found',
+                    'data' => null
+                ], 404);
+            }
+
+            $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
+            $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+            $charges = $this->topupChargeAutomatic($validated['amount'], $operator, $sender_wallet, $topupCharge, $api_discount_percentage);
+
+            if ($charges['payable'] > $sender_wallet->balance) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Sorry, insufficient balance",
                     'data' => null
                 ], 400);
             }
-        }
 
-        try {
+            $topUpData = [];
+
+            if ($request->country_code === "NG") {
+                $network_provider = $operator['name'] ?? null;
+
+                $vtpass_service_id = explode(" ", $network_provider)[0];
+
+                $service_id = $vtpass_service_id == "9Mobile" ? "etisalat" : strtolower($vtpass_service_id);
+
+                // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+                // $vtpass_discount = VTPassAPIDiscount::where('service_id', $service_id)->first();
+                // $provider_discount_amount = ($vtpass_discount->api_discount_percentage / 100) * $request->amount;
+                // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+                $validated['amount'] = $validated['amount'];
+
+                $topUpData = [
+                    "service_id" => $service_id,
+                    "amount" => $validated['amount'],
+                    "phone" => $validated['mobile_number'],
+                    "customIdentifier" => Str::uuid() . "|" . "AIRTIME",
+                ];
+
+                $topUpData = (new VTPass())->mobileTopUp($topUpData);
+            } else {
+                // $api_discount_percentage = $this->basic_settings->api_discount_percentage / 100;
+                // $provider_discount_amount = ($operator['internationalDiscount'] / 100) * $request->amount;
+                // $discount_price_amount = (1 - $api_discount_percentage) * $provider_discount_amount;
+
+                $validated['amount'] = $validated['amount'];
+                //topup api
+                $topUpData = [
+                    'operatorId'        => $operator['operatorId'],
+                    'amount'            => $validated['amount'],
+                    'useLocalAmount'    => $operator['supportsLocalAmounts'],
+                    'customIdentifier'  => Str::uuid() . "|" . "AIRTIME",
+                    'recipientEmail'    => null,
+                    'recipientPhone'  => [
+                        'countryCode' => $validated['country_code'],
+                        'number'  => $phone,
+                    ],
+                    'senderPhone'   => [
+                        'countryCode' => $sender_country_iso,
+                        'number'      => $sender_phone,
+                    ]
+
+                ];
+
+                $topUpData = (new AirtimeHelper())->makeTopUp($topUpData);
+            }
+
+            if (isset($topUpData['status']) && ($topUpData['status'] === false || $topUpData['status'] !== "SUCCESSFUL")) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $topUpData['message'] ?? 'Something went wrong! Please try again.',
+                    'data' => null
+                ], 500);
+            }
+
+            if ($operator['denominationType'] === "RANGE") {
+                $min_amount = 0;
+                $max_amount = 0;
+                if ($operator["supportsLocalAmounts"] == true && $operator["destinationCurrencyCode"] == $operator["senderCurrencyCode"] && $operator["localMinAmount"] == null && $operator["localMaxAmount"] == null) {
+                    $min_amount = $operator['minAmount'];
+                    $max_amount = $operator['maxAmount'];
+                } else if ($operator["supportsLocalAmounts"] == true && $operator["localMinAmount"] != null && $operator["localMaxAmount"] != null) {
+                    $min_amount = $operator["localMinAmount"];
+                    $max_amount = $operator["localMaxAmount"];
+                } else {
+                    $min_amount = $operator['minAmount'];
+                    $max_amount = $operator['maxAmount'];
+                }
+                if ($charges['sender_amount'] < $min_amount || $charges['sender_amount'] > $max_amount) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Please follow the transaction limit",
+                        'data' => null
+                    ], 400);
+                }
+            }
+
             $trx_id = 'MP' . getTrxNum();
             $sender = $this->insertTransaction($trx_id, $sender_wallet, $charges, $operator, $phone, $topUpData);
             $this->insertAutomaticCharges($sender, $charges, $sender_wallet);
@@ -264,7 +264,7 @@ class MobileTopupController extends Controller
                     'operator' => $operator['name'] ?? '',
                 ]
             ], 200);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("An error occured: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
