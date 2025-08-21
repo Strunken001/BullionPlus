@@ -113,68 +113,60 @@ class KycController extends Controller
             $kyc_payload['mobile'] = $user->full_mobile;
 
             DB::beginTransaction();
-            try {
-                DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
+
+            DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id], $create);
+
+            Mail::to($user->email)->queue(
+                new KycSubmissionMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
+
+            $adminEmails = Admin::where('username', 'superadmin')
+                ->pluck('email')
+                ->toArray();
+
+            Mail::to($adminEmails)->queue(
+                new AdminKycSubmissionMail($user->email, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+            );
+
+            $response = (new YouVerify())->kycVerification($kyc_payload);
+
+            if ($response) {
+                $user->update([
+                    'kyc_verified'  => GlobalConst::APPROVED,
+                ]);
 
                 Mail::to($user->email)->queue(
-                    new KycSubmissionMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                    new KycApprovalMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
                 );
-
-                $adminEmails = Admin::where('username', 'superadmin')
-                    ->pluck('email')
-                    ->toArray();
-
-                Mail::to($adminEmails)->queue(
-                    new AdminKycSubmissionMail($user->email, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
-                );
-
-                $response = (new YouVerify())->kycVerification($kyc_payload);
-
-                if ($response) {
-                    $user->update([
-                        'kyc_verified'  => GlobalConst::APPROVED,
-                    ]);
-
-                    Mail::to($user->email)->queue(
-                        new KycApprovalMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
-                    );
-                } else {
-                    $user->update([
-                        'kyc_verified'  => GlobalConst::PENDING,
-                    ]);
-
-                    Mail::to($user->email)->queue(
-                        new KycRejectionMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
-                    );
-                }
-
-                DB::commit();
-            } catch (Exception $e) {
-                DB::rollBack();
+            } else {
                 $user->update([
-                    'kyc_verified'  => GlobalConst::DEFAULT,
+                    'kyc_verified'  => GlobalConst::PENDING,
                 ]);
-                $this->generatedFieldsFilesDelete($get_values);
-                Log::error('KYC Submission Error: ' . $e->getMessage(), [
-                    'user_id' => $user->id,
-                    'data' => $get_values
-                ]);
-                return response()->json([
-                    "status" => "error",
-                    "message" => "Something went wrong! Please try again"
-                ], 500);
+
+                Mail::to($user->email)->queue(
+                    new KycRejectionMail($user->firstname, env('FRONTEND_URL'), $basic_settings->site_name, get_logo($basic_settings))
+                );
             }
+
+            DB::commit();
 
             return response()->json([
                 "status" => "success",
                 "message" => "KYC data submitted successfully. Your verification is pending."
             ], 200);
-        } catch (\Exception $e) {
-            Log::error(['An error occured while verifying kyc' => $e->getMessage()]);
-
+        } catch (Exception $e) {
+            DB::rollBack();
+            $user->update([
+                'kyc_verified'  => GlobalConst::DEFAULT,
+            ]);
+            $this->generatedFieldsFilesDelete($get_values);
+            Log::error('KYC Submission Error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'data' => $get_values
+            ]);
             return response()->json([
                 "status" => "error",
-                "message" => "Failed to verify KYC. Please try again later"
+                "message" => "Invalid data provided"
             ], 500);
         }
     }

@@ -25,6 +25,6 @@ class Authenticate extends Middleware
             return route('frontend.index');
         }
 
-        return abort(Response::error(['Access denied! Unauthenticated'], [], 401));
+        // return abort(Response::error(['Access denied! Unauthenticated'], [], 401));
     }
 }

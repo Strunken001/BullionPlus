@@ -55,7 +55,7 @@
                                             <input class="phone-code" type="hidden" name="phone_code"
                                                 value="{{ old('phone_code') }}" />
                                             <input type="text" class="form--control"
-                                                placeholder="{{ __('Enter Phone Number') }}" name="mobile"
+                                                placeholder="{{ __('7000000000') }}" name="mobile"
                                                 value="{{ old('mobile') }}">
                                         </div>
                                     </div>

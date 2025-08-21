@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\User\Auth\AuthorizationController;
 use App\Providers\Admin\BasicSettingsProvider;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller
 {
@@ -101,13 +102,9 @@ class LoginController extends Controller
             if (Hash::check($validated['password'], $user->password)) {
                 if ($user->status != GlobalConst::ACTIVE) return Response::error([__("Your account is temporary banded. Please contact with system admin")]);
                 // User authenticated
-                $token = $user->createToken("auth_token");
+                $token = JWTAuth::fromUser($user);
 
-                DB::table('oauth_access_tokens')
-                    ->where('id', $token->token->id)
-                    ->update(['expires_at' => now()->addMinutes(env('PASSPORT_TTL', 5))->toDateTimeString()]);
-
-                return $this->authenticated($user, $token->accessToken, $type);
+                return $this->authenticated($user, $token, $type);
             }
         }
         return Response::error([__("Credentials didn't match")]);

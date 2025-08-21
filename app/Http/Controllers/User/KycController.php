@@ -163,7 +163,7 @@ class KycController extends Controller
                 'kyc_verified'  => GlobalConst::DEFAULT,
             ]);
             $this->generatedFieldsFilesDelete($get_values);
-            return back()->with(['error' => ['Something went wrong! Please try again']]);
+            return back()->with(['error' => ['Invalid data provided']]);
         }
     }
 

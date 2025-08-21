@@ -163,13 +163,14 @@ class ProfileController extends Controller
 
     public function logout(Request $request)
     {
-        $user = Auth::guard(get_auth_guard())->user();
-        $token = $user->token();
-        try {
-            $token->revoke();
-        } catch (Exception $e) {
-            return Response::error([__('Something went wrong! Please try again')], [], 500);
-        }
+        auth()->logout();
         return Response::success([__('Logout success!')], [], 200);
+    }
+
+    public function refreshToken()
+    {
+        $token = auth()->refresh();
+
+        return Response::success([_("Token refreshed")], ["token" => $token], 200);
     }
 }

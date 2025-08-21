@@ -41,7 +41,7 @@
                                                 @endforeach
                                             </select>
                                             <input type="tel" class="form--control" name="password_number"
-                                                placeholder="Enter Number" autocomplete="off">
+                                                placeholder="7000000000" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="account-passwoard show_hide_password mt-20">

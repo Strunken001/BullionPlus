@@ -4,6 +4,11 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\AuthenticationException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -53,5 +58,43 @@ class Handler extends ExceptionHandler
                 'message' => 'Your session expired. Please log in again.',
             ]);
         });
+    }
+
+    public function render($request, Throwable $e)
+    {
+        if ($request->is('api/*')) {
+            if ($e instanceof ValidationException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->validator->errors()->first(),
+                ], 422);
+            }
+
+            if ($e instanceof AuthenticationException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthenticated'
+                ], 401);
+            }
+
+            if (
+                $e instanceof TokenExpiredException ||
+                $e instanceof TokenBlacklistedException
+            ) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Token has expired'
+                ], 401);
+            }
+
+            if ($e instanceof TokenInvalidException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Token is invalid'
+                ], 401);
+            }
+        }
+
+        return parent::render($request, $e);
     }
 }
