@@ -23,7 +23,7 @@ Route::middleware(['api.user.auth.guard'])->group(function () {
     Route::controller(ForgotPasswordController::class)->prefix("password/forgot")->group(function () {
         Route::post('find/user', 'findUserSendCode');
         Route::post('verify/code', 'verifyCode');
-        Route::get('resend/code', 'resendCode');
+        Route::post('resend/code', 'resendCode');
         Route::post('reset', 'resetPassword');
     });
 });

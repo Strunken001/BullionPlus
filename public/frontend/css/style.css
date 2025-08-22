@@ -2006,12 +2006,12 @@ option {
     color: rgba(0, 0, 0, 0.5);
 }
 
-.form--control:disabled {
+/* .form--control:disabled {
     background-color: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.15);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-}
+} */
 
 .fileholder.active {
     border: 2px dashed var(--primary-color);

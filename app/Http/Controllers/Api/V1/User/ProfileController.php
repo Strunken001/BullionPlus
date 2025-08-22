@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Providers\Admin\BasicSettingsProvider;
 use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProfileController extends Controller
 {
@@ -167,9 +168,9 @@ class ProfileController extends Controller
         return Response::success([__('Logout success!')], [], 200);
     }
 
-    public function refreshToken()
+    public function refreshToken(Request $request)
     {
-        $token = auth()->refresh();
+        $token = JWTAuth::parseToken()->refresh();
 
         return Response::success([_("Token refreshed")], ["token" => $token], 200);
     }

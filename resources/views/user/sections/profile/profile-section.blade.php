@@ -52,16 +52,16 @@
                                         <div class="input-group-text phone-code">+{{ auth()->user()->mobile_code }}
                                         </div>
                                         <input class="phone-code" type="hidden" name="phone_code"
-                                            value="{{ auth()->user()->mobile_code }}" />
+                                            value="{{ auth()->user()->mobile_code }}" disabled/>
                                         <input type="number" class="form--control"
                                             placeholder="{{ __('enter Phone Number') }}" name="mobile"
-                                            value="{{ __(auth()->user()->mobile) }}">
+                                            value="{{ __(auth()->user()->mobile) }}" disabled>
                                     </div>
                                 </div>
                                 <div class="col-lg-6 col-md-6 col-sm-12 mb-10">
                                     <label>{{ __('Email Address') }}</label>
                                     <input type="email" class="form--control" value="{{ __(auth()->user()->email) }}"
-                                        name="email">
+                                        name="email" disabled>
                                 </div>
                                 <div class="col-lg-12 col-md-12 col-sm-12 mb-10">
                                     <label>{{ __('Country') }}</label>

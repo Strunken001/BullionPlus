@@ -1240,77 +1240,29 @@ function setPageTitle(string $title)
 
 function make_username($first_name, $last_name, $table = "users")
 {
-    // Make username Dynamically
-    $generate_name_with_count = "";
+    $first = strtolower(preg_replace('/\s+/', '', $first_name));
+    $last = strtolower(preg_replace('/\s+/', '', $last_name));
+
+    // 1. Try first name
+    $username = $first;
+    if (!DB::table($table)->where('username', $username)->exists()) {
+        return $username;
+    }
+
+    // 2. Try first + last name
+    $username = $first . $last;
+    if (!DB::table($table)->where('username', $username)->exists()) {
+        return $username;
+    }
+
+    // 3. Try first + last name + 2 random digits until unique
     do {
-        // Generate username
-        $firstName = $first_name;
-        $lastName = $last_name;
+        $username = $first . $last . rand(10, 99);
+    } while (DB::table($table)->where('username', $username)->exists());
 
-        if ($generate_name_with_count == "") {
-            if (strlen($firstName) >= 6) {
-                $generate_name = filter_string_lower($firstName);
-            } else {
-                $modfy_last_name = explode(' ', $lastName);
-                $lastName = filter_string_lower($modfy_last_name[0]);
-                $firstName = filter_string_lower($firstName);
-                $generate_name = $firstName . $lastName;
-                if (strlen($generate_name) < 6) {
-                    $firstName = filter_string_lower($firstName);
-                    $lastName = filter_string_lower($lastName);
-                    $generate_name = $firstName . $lastName;
-
-                    if (strlen($generate_name) < 6) {
-                        $getCurrentLen = strlen($generate_name);
-                        $dueChar = 6 - $getCurrentLen;
-                        $generate_due_char = strtolower(generate_random_string($dueChar));
-                        $generate_name = $generate_name . $generate_due_char;
-                    }
-                }
-            }
-        } else {
-            $generate_name = $generate_name_with_count;
-        }
-
-        // Find User is already exists or not
-        $chekUser = DB::table($table)->where('username', $generate_name)->first();
-
-        if ($chekUser == null) {
-            $loop = false;
-        } else {
-            $generate_name_with_count = $generate_name;
-
-            $split_string = array_reverse(str_split($generate_name_with_count));
-            $username_string_part = "";
-            $last_numeric_values = "";
-            $numeric_close = false;
-
-            foreach ($split_string as $character) {
-                if ($numeric_close == false) {
-                    if (is_numeric($character)) {
-                        $last_numeric_values .= $character;
-                    } else {
-                        $numeric_close = true;
-                    }
-                }
-                if ($numeric_close == true) {
-                    $username_string_part .= $character;
-                }
-            }
-
-            if ($last_numeric_values == "") { // If has no number in username string;
-                $last_numeric_values = 1;
-            }
-
-            $username_string_part = strrev($username_string_part); // usernaem back to reverse;
-            $last_numeric_values = strrev($last_numeric_values); // last number back to reverse;
-            $generate_name_with_count = $username_string_part . ($last_numeric_values + 1);
-            $loop = true;
-        }
-    } while ($loop);
-
-    return $generate_name;
+    return $username;
 }
+
 
 function filter_string_lower($string)
 {

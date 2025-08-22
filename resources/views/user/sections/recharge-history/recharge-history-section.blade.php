@@ -30,10 +30,10 @@
                                                 <th>{{ $loop->iteration }}</th>
                                                 <th>{{ get_amount($value->request_amount, get_default_currency_code()) }}
                                                 </th>
-                                                <td>{{ get_amount($value->total_payable, $value->payment_currency) }}
+                                                <td>{{ get_amount($value->total_payable ?? 0, $value->payment_currency) }}
                                                 </td>
-                                                <td>{{ $value->gateway_currency->name }}</td>
-                                                <td>{{ $value->gateway_currency->gateway->type }}</td>
+                                                <td>{{ $value->gateway_currency->name ?? "ADMIN" }}</td>
+                                                <td>{{ $value->gateway_currency->gateway->type ?? "MANUAL" }}</td>
                                                 <td>
                                                     @if ($value->status === 1)
                                                         <p>{{ __('Complete') }}</p>
