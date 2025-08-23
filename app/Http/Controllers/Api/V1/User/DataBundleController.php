@@ -11,6 +11,7 @@ use App\Http\Helpers\NotificationHelper;
 use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\Response;
 use App\Http\Helpers\VTPass;
+use App\Http\Requests\GetDataBundleChargeRequest;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Notifications\Admin\ActivityNotification;
@@ -482,5 +483,20 @@ class DataBundleController extends Controller
                 ->send();
         } catch (Exception $e) {
         }
+    }
+
+    public function getBundleCharges(GetDataBundleChargeRequest $request)
+    {
+        if ($request->iso2 === "NG") {
+            $charges = (new VTPass())->getCharges($request->all());
+        } else {
+            $charges = (new MobileTopUpHelper())->getInstance()->getCharges($request->all());
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'charge returned',
+            'data' => $charges
+        ]);
     }
 }

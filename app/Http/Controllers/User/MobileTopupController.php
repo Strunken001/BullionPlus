@@ -300,6 +300,7 @@ class MobileTopupController extends Controller
             throw new Exception(__("Something went wrong! Please try again."));
         }
     }
+
     public function topupChargeAutomatic($sender_amount, $operator, $sender_wallet, $charges)
     {
 

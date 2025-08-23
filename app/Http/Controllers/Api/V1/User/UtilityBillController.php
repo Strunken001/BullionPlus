@@ -9,6 +9,7 @@ use App\Http\Helpers\NotificationHelper;
 use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\UtilityPaymentHelper;
 use App\Http\Helpers\VTPass;
+use App\Http\Requests\GetUtilityBillChargeRequest;
 use App\Http\Requests\VerifyMeterNumberRequest;
 use App\Models\Transaction;
 use App\Models\UserNotification;
@@ -420,5 +421,16 @@ class UtilityBillController extends Controller
                 'message' => "An error occured verifying meter number. Please try again later"
             ], 500);
         }
+    }
+
+    public function getCharges(GetUtilityBillChargeRequest $request)
+    {
+        $charges = (new UtilityPaymentHelper())->getInstance()->getUtilityBillCharge($request->all());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'charges returned',
+            'data' => $charges
+        ]);
     }
 }

@@ -84,6 +84,7 @@ Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->gr
         Route::get('search', 'searchGiftCard');
         Route::get('details', 'giftCardDetails');
         Route::post('order', 'orderPlace')->middleware('api.kyc');
+        Route::post('get-charge', 'getCharge')->name('get.charge');
     });
 
 
@@ -93,6 +94,7 @@ Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->gr
             Route::post('check-operator', 'checkOperator');
             Route::post('pay', 'payAutomatic');
         });
+        Route::post('get-charge', 'getCharges')->name('get.charge');
     });
 
     //Bundle TopUp
@@ -101,6 +103,7 @@ Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->gr
         Route::get('plans', 'getDataBundlePlans');
         Route::post('get/bundle/charges', 'getCharges');
         Route::post('buy', 'buyBundle')->name('buy');
+        Route::post('get-charge', 'getBundleCharges')->name('get.charge');
         // Route::post('bundle/webhook', 'receiveWebhook')->name('webhook')->withoutMiddleware(['web', 'auth', 'verification.guard', 'user.google.two.factor']);
     });
 
@@ -108,5 +111,6 @@ Route::prefix("user")->middleware('enforce.token.expiry')->name("api.user.")->gr
         Route::get('', 'getUtiityBiller');
         Route::post("pay", "payBill");
         Route::get("verify-meter", "verifyMeterNumber");
+        Route::post("get-charge", "getCharges")->name('get.charge');
     });
 });

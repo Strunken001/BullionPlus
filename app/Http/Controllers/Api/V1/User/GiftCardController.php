@@ -14,6 +14,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Helpers\GiftCardHelper;
 use App\Http\Helpers\NotificationHelper;
 use App\Http\Helpers\PushNotificationHelper;
+use App\Http\Requests\GetGiftCardChargeRequest;
 use App\Models\Admin\Currency;
 use App\Models\Admin\ExchangeRate;
 use App\Models\UserNotification;
@@ -594,5 +595,54 @@ class GiftCardController extends Controller
                 ->send();
         } catch (Exception $e) {
         }
+    }
+
+    public function getCharge(GetGiftCardChargeRequest $request)
+    {
+        try {
+            $product = (new GiftCardHelper())->getProductInfo($request['product_id']);
+        } catch (\Throwable $e) {
+            return response()->json([
+                "status" => 'error',
+                "message" => app()->environment() == "production" ? __("Oops! Something went wrong! Please try again") : $e->getMessage(),
+                "data" => null
+            ], 500);
+        }
+
+        $sender_country = Currency::where('code', "USD")->first();
+        if (!$sender_country) {
+            return response()->json([
+                "status" => 'error',
+                "message" => "Sender Country Is Not Valid",
+                "data" => null
+            ], 400);
+        }
+
+        $userWallet = UserWallet::where(['user_id' => auth()->id(), 'currency_id' => $sender_country->id, 'status' => 1])->first();
+        if (!$userWallet) {
+            return response()->json([
+                "status" => 'error',
+                "message" => "User wallet not found",
+                "data" => null
+            ], 404);
+        }
+
+        $receiver_country = ExchangeRate::where('currency_code', $product['recipientCurrencyCode'])->first();
+        if (!$receiver_country) {
+            return response()->json([
+                "status" => 'error',
+                "message" => "Receiver Country Is Not Valid",
+                "data" => null
+            ], 400);
+        }
+
+        $cardCharge = TransactionSetting::where('slug', 'gift_card')->where('status', 1)->first();
+        $charges = $this->giftCardCharge($request->all(), $cardCharge, $userWallet, $sender_country, $receiver_country);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'charge returned',
+            'data' => $charges
+        ]);
     }
 }

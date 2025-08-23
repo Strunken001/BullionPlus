@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Helpers\PushNotificationHelper;
 use App\Http\Helpers\VTPass;
+use App\Http\Requests\GetMobileTopupChargeRequest;
 use App\Models\VTPassAPIDiscount;
 use Illuminate\Support\Facades\Log;
 
@@ -476,5 +477,36 @@ class MobileTopupController extends Controller
                 ->send();
         } catch (Exception $e) {
         }
+    }
+
+    public function getCharges(GetMobileTopupChargeRequest $request)
+    {
+        $phone = remove_special_char($request['mobile_code']) . $request['mobile_number'];
+        $operator = (new AirtimeHelper())->autoDetectOperator($phone, $request['country_code']);
+        if ($operator['status'] === false) {
+            return response()->json([
+                "status" => "error",
+                "message" => $operator['message'] ?? "",
+                "data" => null
+            ], 500);
+        }
+
+        $sender_wallet = UserWallet::where('user_id', auth()->id())->first();
+        if (!$sender_wallet) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User Wallet not found',
+                'data' => null
+            ], 404);
+        }
+
+        $topupCharge = TransactionSetting::where('slug', 'mobile_topup')->where('status', 1)->first();
+        $charges = $this->topupChargeAutomatic($request['amount'], $operator, $sender_wallet, $topupCharge);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'charge returned',
+            'data' => $charges
+        ]);
     }
 }
